@@ -41,10 +41,13 @@ export class LoginComponent {
           // Check if login was actually successful
           if (response.status === 'OK') {
             console.log('Authentication successful, navigating to dashboard...');
-            this.router.navigate(['/dashboard']).then(
-              (success) => console.log('Navigation result:', success),
-              (error) => console.error('Navigation error:', error)
-            );
+            // Give a small delay to ensure the session cookie is set
+            setTimeout(() => {
+              this.router.navigate(['/dashboard']).then(
+                (success) => console.log('Navigation result:', success),
+                (error) => console.error('Navigation error:', error)
+              );
+            }, 100);
           } else if (response.status === 'WRONG_CREDENTIALS_ERROR') {
             console.error('Login failed: Wrong credentials');
             this.errorMessage = 'Invalid email or password';

@@ -5,9 +5,10 @@ import {
   HttpHandler,
   HttpEvent,
   HttpResponse,
+  HttpErrorResponse,
 } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 
 @Injectable()
 export class SessionInterceptor implements HttpInterceptor {
@@ -17,20 +18,22 @@ export class SessionInterceptor implements HttpInterceptor {
   ): Observable<HttpEvent<any>> {
     let modifiedReq = req;
 
+    // Add access token to headers if available
     const accessToken = localStorage.getItem('st-access-token');
     if (accessToken) {
       modifiedReq = modifiedReq.clone({
         setHeaders: {
-          'st-access-token': accessToken,
+          'Authorization': `Bearer ${accessToken}`,
         },
       });
     }
 
-    const frontToken = localStorage.getItem('front-token');
-    if (frontToken) {
+    // Add refresh token to headers if available
+    const refreshToken = localStorage.getItem('st-refresh-token');
+    if (refreshToken) {
       modifiedReq = modifiedReq.clone({
         setHeaders: {
-          'front-token': frontToken,
+          'st-refresh-token': refreshToken,
         },
       });
     }
@@ -38,15 +41,32 @@ export class SessionInterceptor implements HttpInterceptor {
     return next.handle(modifiedReq).pipe(
       tap((event) => {
         if (event instanceof HttpResponse) {
+          // Save new tokens from response headers
           const newAccessToken = event.headers.get('st-access-token');
           if (newAccessToken) {
             localStorage.setItem('st-access-token', newAccessToken);
           }
-          const newFrontToken = event.headers.get('front-token');
-          if (newFrontToken) {
-            localStorage.setItem('front-token', newFrontToken);
+          
+          const newRefreshToken = event.headers.get('st-refresh-token');
+          if (newRefreshToken) {
+            localStorage.setItem('st-refresh-token', newRefreshToken);
+          }
+
+          // Handle tokens from response body (for login response)
+          if (event.body && event.body.accessToken) {
+            localStorage.setItem('st-access-token', event.body.accessToken);
+          }
+          if (event.body && event.body.refreshToken) {
+            localStorage.setItem('st-refresh-token', event.body.refreshToken);
           }
         }
+      }),
+      catchError((error: HttpErrorResponse) => {
+        // If we get a 401, clear tokens
+        if (error.status === 401) {
+          this.clearTokens();
+        }
+        return throwError(() => error);
       })
     );
   }
@@ -58,6 +78,10 @@ export class SessionInterceptor implements HttpInterceptor {
   static clearTokens(): void {
     localStorage.removeItem('st-access-token');
     localStorage.removeItem('st-refresh-token');
-    localStorage.removeItem('front-token');
+    localStorage.removeItem('user-info');
+  }
+
+  private clearTokens(): void {
+    SessionInterceptor.clearTokens();
   }
 }

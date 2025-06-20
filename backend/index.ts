@@ -34,15 +34,15 @@ supertokens.init({
             }
         }),
         Session.init({
-            cookieSecure: false,
-            cookieSameSite: 'lax'
+            getTokenTransferMethod: () => "header",
+            antiCsrf: "NONE"
         })
     ]
 });
 
 // CORS configuration
 app.use(cors({
-    origin: 'http://localhost:4200',
+    origin: ['http://localhost:4200', 'http://localhost'],
     allowedHeaders: ['content-type', ...supertokens.getAllCORSHeaders()],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true
