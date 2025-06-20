@@ -8,6 +8,7 @@
     "dev": "ts-node index.ts",
     "build": "tsc",
     "setup-users": "ts-node setup-users.ts",
+    "setup-users-prod": "node setup-users.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

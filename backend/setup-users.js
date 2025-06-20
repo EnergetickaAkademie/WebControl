@@ -1,6 +1,6 @@
-import supertokens from 'supertokens-node';
-import EmailPassword from 'supertokens-node/recipe/emailpassword';
-import Session from 'supertokens-node/recipe/session';
+const supertokens = require('supertokens-node');
+const EmailPassword = require('supertokens-node/recipe/emailpassword');
+const Session = require('supertokens-node/recipe/session');
 
 // Initialize SuperTokens with the same configuration as the main app
 supertokens.init({

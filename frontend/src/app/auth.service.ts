@@ -36,16 +36,12 @@ export class AuthService {
   }
 
   // Get user session info
-  getSessionInfo(): Observable<any> {
+  profile(): Observable<any> {
     return this.http.get(`${this.api}/dashboard`, { withCredentials: true });
   }
 
-  // Check if user is logged in
+  // Check if user is logged in by trying to get profile
   isLoggedIn(): Observable<any> {
-    return this.getSessionInfo();
-  }
-
-  profile(): Observable<any> {
-    return this.getSessionInfo();
+    return this.profile();
   }
 }
