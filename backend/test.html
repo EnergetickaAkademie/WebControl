@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lecturer Login Test - Middleware Approach</title>
+</head>
+<body>
+    <h1>Lecturer Login Test - Same Origin</h1>
+    <p>Testing middleware approach with cookie-based sessions</p>
+    
+    <form id="loginForm">
+        <div>
+            <label>Email: <input type="email" id="email" value="john.smith@university.edu"></label>
+        </div>
+        <div>
+            <label>Password: <input type="password" id="password" value="SecurePassword123!"></label>
+        </div>
+        <button type="submit">Login</button>
+    </form>
+    
+    <div id="result"></div>
+    <button id="checkSession" style="display:none;">Check Dashboard</button>
+    <button id="logout" style="display:none;">Logout</button>
+    
+    <div id="debug" style="margin-top: 20px; border: 1px solid #ccc; padding: 10px; background: #f9f9f9;">
+        <h3>Debug Info:</h3>
+        <div id="cookies"></div>
+        <div id="headers"></div>
+    </div>
+    
+    <script>
+        function updateCookieInfo() {
+            document.getElementById('cookies').innerHTML = '<strong>Cookies:</strong> ' + document.cookie;
+        }
+        
+        updateCookieInfo();
+        
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                console.log('Attempting login...');
+                const response = await fetch('/api/public/signin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        formFields: [
+                            { id: "email", value: email },
+                            { id: "password", value: password }
+                        ]
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Login response:', data);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                updateCookieInfo();
+                
+                if (data.status === 'OK') {
+                    document.getElementById('result').innerHTML = 
+                        '<p style="color: green;">✅ Login successful! User: ' + data.user.emails[0] + '</p>';
+                    document.getElementById('checkSession').style.display = 'block';
+                    document.getElementById('logout').style.display = 'block';
+                } else {
+                    document.getElementById('result').innerHTML = 
+                        '<p style="color: red;">❌ Login failed: ' + data.status + '</p>';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                document.getElementById('result').innerHTML = 
+                    '<p style="color: red;">❌ Login error: ' + error.message + '</p>';
+            }
+        });
+        
+        document.getElementById('checkSession').addEventListener('click', async () => {
+            try {
+                console.log('Checking dashboard access...');
+                const response = await fetch('/api/dashboard', {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                console.log('Dashboard response:', data);
+                console.log('Dashboard status:', response.status);
+                
+                if (response.ok) {
+                    document.getElementById('result').innerHTML += 
+                        '<p style="color: green;">✅ Dashboard access successful!</p>' +
+                        '<p><strong>Message:</strong> ' + data.message + '</p>' +
+                        '<p><strong>User ID:</strong> ' + data.userId + '</p>';
+                } else {
+                    document.getElementById('result').innerHTML += 
+                        '<p style="color: red;">❌ Dashboard access failed (' + response.status + '): ' + data.message + '</p>';
+                }
+            } catch (error) {
+                console.error('Dashboard error:', error);
+                document.getElementById('result').innerHTML += 
+                    '<p style="color: red;">❌ Dashboard error: ' + error.message + '</p>';
+            }
+        });
+        
+        document.getElementById('logout').addEventListener('click', async () => {
+            try {
+                console.log('Logging out...');
+                const response = await fetch('/api/public/signout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                console.log('Logout response:', data);
+                
+                updateCookieInfo();
+                
+                document.getElementById('result').innerHTML = 
+                    '<p style="color: blue;">🔓 Logged out successfully</p>';
+                document.getElementById('checkSession').style.display = 'none';
+                document.getElementById('logout').style.display = 'none';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        });
+        
+        // Update cookie info every 2 seconds
+        setInterval(updateCookieInfo, 2000);
+    </script>
+</body>
+</html>

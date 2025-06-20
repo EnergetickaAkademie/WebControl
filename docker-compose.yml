@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  # SuperTokens Core
+  core:
+    image: registry.supertokens.io/supertokens/supertokens-postgresql:latest
+    environment:
+      - DISABLE_TELEMETRY=true
+      - SUPERTOKENS_CORE_CONFIG_PATH=/config.yaml
+    volumes:
+      - ./supertokens-config.yaml:/config.yaml
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Backend API
+  api:
+    build: ./backend
+    environment:
+      - SUPERTOKENS_CORE_URI=http://core:3567
+      - PORT=3000
+      - NODE_ENV=production
+    depends_on: 
+      - core
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Nginx (Frontend + Reverse Proxy)
+  nginx:
+    build: ./frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge

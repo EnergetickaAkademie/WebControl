@@ -1,0 +1,48 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Welcome to Lecturer Dashboard</h1>
+    <button class="logout-btn" (click)="logout()">Logout</button>
+  </div>
+
+  <div *ngIf="isLoading" class="loading">
+    <p>Loading...</p>
+  </div>
+
+  <div *ngIf="!isLoading && userInfo" class="dashboard-content">
+    <div class="welcome-card">
+      <h2>Hello, Lecturer!</h2>
+      <p>You are successfully logged in.</p>
+      <div class="user-info">
+        <p><strong>User ID:</strong> {{ userInfo.userId }}</p>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="content-card">
+        <h3>🎓 Hello World</h3>
+        <p>This is your secure lecturer dashboard. No traces are left on this computer when you log out.</p>
+        
+        <div class="features">
+          <div class="feature-item">
+            <h4>🔒 Secure Authentication</h4>
+            <p>HttpOnly cookies ensure no credentials are stored in browser memory accessible to JavaScript.</p>
+          </div>
+          
+          <div class="feature-item">
+            <h4>🚫 No Traces</h4>
+            <p>Session cookies are cleared when you logout or close the browser.</p>
+          </div>
+          
+          <div class="feature-item">
+            <h4>📚 Ready for Content</h4>
+            <p>This is where your educational content will be displayed.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && !userInfo" class="error-state">
+    <p>Unable to load user information. Please try logging in again.</p>
+  </div>
+</div>
