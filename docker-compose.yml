@@ -1,27 +1,10 @@
-version: "3.9"
-
 services:
-  # SuperTokens Core
-  core:
-    image: registry.supertokens.io/supertokens/supertokens-postgresql:latest
+  # CoreAPI (Now uses Simple Auth)
+  coreapi:
+    build: ./CoreAPI
+    container_name: webcontrol-coreapi-1
     environment:
-      - DISABLE_TELEMETRY=true
-      - SUPERTOKENS_CORE_CONFIG_PATH=/config.yaml
-    volumes:
-      - ./supertokens-config.yaml:/config.yaml
-    networks:
-      - app-network
-    restart: unless-stopped
-
-  # Backend API
-  api:
-    build: ./backend
-    environment:
-      - SUPERTOKENS_CORE_URI=http://core:3567
-      - PORT=3000
-      - NODE_ENV=production
-    depends_on: 
-      - core
+      - JWT_SECRET=your-secret-key-change-in-production
     networks:
       - app-network
     restart: unless-stopped
@@ -34,7 +17,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - api
+      - coreapi
     networks:
       - app-network
     restart: unless-stopped

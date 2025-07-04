@@ -5,7 +5,7 @@ import { tap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private api = '/api'; // Relative URL for production proxy
+  private api = '/coreapi'; // Use CoreAPI for authentication
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
@@ -15,53 +15,40 @@ export class AuthService {
   }
 
   private getHeaders(): HttpHeaders {
-    let headers = new HttpHeaders();
+    let headers = new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
     
-    const accessToken = localStorage.getItem('st-access-token');
-    if (accessToken) {
-      headers = headers.set('Authorization', `Bearer ${accessToken}`);
-    }
-
-    const refreshToken = localStorage.getItem('st-refresh-token');
-    if (refreshToken) {
-      headers = headers.set('st-refresh-token', refreshToken);
+    const token = localStorage.getItem('auth-token');
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
     }
 
     return headers;
   }
 
   private saveTokens(response: any): void {
-    // Extract tokens from response headers or body
-    if (response.accessToken) {
-      localStorage.setItem('st-access-token', response.accessToken);
-    }
-    if (response.refreshToken) {
-      localStorage.setItem('st-refresh-token', response.refreshToken);
+    // Save JWT token and user info from CoreAPI response
+    if (response.token) {
+      localStorage.setItem('auth-token', response.token);
     }
     if (response.user) {
       localStorage.setItem('user-info', JSON.stringify(response.user));
     }
   }
 
-  signin(email: string, password: string): Observable<any> {
+  signin(username: string, password: string): Observable<any> {
     return this.http.post(
-      `${this.api}/public/signin`,
+      `${this.api}/login`,
       {
-        formFields: [
-          {
-            id: "email",
-            value: email
-          },
-          {
-            id: "password", 
-            value: password
-          }
-        ]
-      }
+        username: username,
+        password: password
+      },
+      { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) }
     ).pipe(
       tap((response: any) => {
         console.log('Login response:', response);
-        if (response.status === 'OK') {
+        if (response.success && response.token) {
           this.saveTokens(response);
           this.isAuthenticatedSubject.next(true);
         }
@@ -70,19 +57,18 @@ export class AuthService {
   }
 
   signout(): Observable<any> {
-    return this.http.post(
-      `${this.api}/public/signout`,
-      {},
-      { headers: this.getHeaders() }
-    ).pipe(
-      tap(() => {
-        this.clearTokens();
-        this.isAuthenticatedSubject.next(false);
-      })
-    );
+    // Since we're using stateless JWT tokens, we just clear local storage
+    this.clearTokens();
+    this.isAuthenticatedSubject.next(false);
+    
+    // Return a simple observable that completes immediately
+    return new Observable(observer => {
+      observer.next({ success: true });
+      observer.complete();
+    });
   }
 
-  // Get user session info
+  // Get user session info from a protected CoreAPI endpoint
   profile(): Observable<any> {
     return this.http.get(`${this.api}/dashboard`, { headers: this.getHeaders() });
   }
@@ -97,9 +83,9 @@ export class AuthService {
   }
 
   private checkAuthStatus(): void {
-    // Only check if we have tokens stored
-    const accessToken = localStorage.getItem('st-access-token');
-    if (accessToken) {
+    // Only check if we have a token stored
+    const token = localStorage.getItem('auth-token');
+    if (token) {
       this.profile().subscribe({
         next: () => this.isAuthenticatedSubject.next(true),
         error: () => {
@@ -113,8 +99,7 @@ export class AuthService {
   }
 
   private clearTokens(): void {
-    localStorage.removeItem('st-access-token');
-    localStorage.removeItem('st-refresh-token');
+    localStorage.removeItem('auth-token');
     localStorage.removeItem('user-info');
   }
 

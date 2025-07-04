@@ -9,11 +9,24 @@ export class CredsInterceptor implements HttpInterceptor {
   constructor(private router: Router) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler) {
-    const cloned = req.clone({ withCredentials: true });
+    let cloned = req;
+    
+    // Add JWT token to Authorization header if available
+    const token = localStorage.getItem('auth-token');
+    if (token) {
+      cloned = req.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+    }
+    
     return next.handle(cloned).pipe(
       catchError((err: HttpErrorResponse) => {
         if (err.status === 401) {
-          // Redirect to login on 401
+          // Clear token and redirect to login on 401
+          localStorage.removeItem('auth-token');
+          localStorage.removeItem('user-info');
           this.router.navigate(['/login']);
         }
         return throwError(() => err);

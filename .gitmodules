@@ -1,0 +1,3 @@
+[submodule "CoreAPI"]
+	path = CoreAPI
+	url = git@github.com:EnergetickaAkademie/CoreAPI.git

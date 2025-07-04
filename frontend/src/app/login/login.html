@@ -3,17 +3,17 @@
     <h2>Lecturer Login</h2>
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
       <div class="form-group">
-        <label for="email">Email:</label>
+        <label for="username">Username:</label>
         <input 
-          type="email" 
-          id="email" 
-          formControlName="email" 
-          placeholder="Enter your email"
-          [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+          type="text" 
+          id="username" 
+          formControlName="username" 
+          placeholder="Enter your username"
+          [class.error]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched"
         >
-        <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="error-text">
-          <span *ngIf="loginForm.get('email')?.errors?.['required']">Email is required</span>
-          <span *ngIf="loginForm.get('email')?.errors?.['email']">Please enter a valid email</span>
+        <div *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched" class="error-text">
+          <span *ngIf="loginForm.get('username')?.errors?.['required']">Username is required</span>
+          <span *ngIf="loginForm.get('username')?.errors?.['minlength']">Username must be at least 3 characters</span>
         </div>
       </div>
 
@@ -48,10 +48,10 @@
 
     <div class="demo-users">
       <h3>Demo Users:</h3>
-      <p><strong>lecturer1&#64;school.edu</strong> / SecurePass123!</p>
-      <p><strong>lecturer2&#64;school.edu</strong> / TeachSafe456!</p>
-      <p><strong>lecturer3&#64;school.edu</strong> / EduSecure789!</p>
-      <p><strong>admin&#64;school.edu</strong> / AdminPass000!</p>
+      <p><strong>lecturer1</strong> / password123</p>
+      <p><strong>lecturer2</strong> / password123</p>
+      <p><strong>board1</strong> / password123</p>
+      <p><strong>board2</strong> / password123</p>
     </div>
   </div>
 </div>

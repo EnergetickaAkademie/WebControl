@@ -21,7 +21,7 @@ export class LoginComponent {
     private router: Router
   ) {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      username: ['', [Validators.required, Validators.minLength(3)]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
@@ -31,17 +31,17 @@ export class LoginComponent {
       this.isLoading = true;
       this.errorMessage = '';
       
-      const { email, password } = this.loginForm.value;
+      const { username, password } = this.loginForm.value;
       
-      this.authService.signin(email, password).subscribe({
+      this.authService.signin(username, password).subscribe({
         next: (response) => {
           this.isLoading = false;
           console.log('Login successful', response);
           
           // Check if login was actually successful
-          if (response.status === 'OK') {
+          if (response.success && response.token) {
             console.log('Authentication successful, navigating to dashboard...');
-            // Give a small delay to ensure the session cookie is set
+            // Give a small delay to ensure the token is saved
             setTimeout(() => {
               this.router.navigate(['/dashboard']).then(
                 (success) => console.log('Navigation result:', success),

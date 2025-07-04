@@ -1,7 +1,7 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { SessionInterceptor } from './session.interceptor';
+import { CredsInterceptor } from './creds.interceptor';
 
 import { routes } from './app.routes';
 
@@ -12,7 +12,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptorsFromDi()),
     {
       provide: HTTP_INTERCEPTORS,
-      useClass: SessionInterceptor,
+      useClass: CredsInterceptor,
       multi: true
     }
   ]

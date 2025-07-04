@@ -1,106 +1,212 @@
-# Lecturer Login App
+# WebControl - Energy Management System
 
-A secure login system for lecturers that ensures no traces are left on school computers.
+A comprehensive energy management system with secure lecturer authentication and IoT board integration.
 
 ## Features
 
-- **🔒 Secure Authentication**: Uses SuperTokens with HttpOnly cookies
-- **🚫 No Traces**: Session cookies are cleared when browser closes
-- **👥 Predefined Users**: No registration - only predefined lecturer accounts
+- **🔒 Secure Authentication**: Uses SuperTokens with persistent PostgreSQL storage
+- **🌟 CoreAPI Integration**: Manages IoT boards and energy data
+- **� Real-time Monitoring**: Track power generation and consumption
+- **🎮 Game Management**: Control rounds and scoring for educational purposes
 - **📱 Mobile Friendly**: Responsive design for all devices
+
+## System Components
+
+- **Frontend**: Angular 17 application
+- **Backend API**: Express.js with SuperTokens authentication  
+- **CoreAPI**: Flask-based API for IoT board management
+- **Database**: PostgreSQL for persistent data storage
+- **Reverse Proxy**: Nginx for routing and CORS handling
 
 ## Demo Users
 
-- **lecturer1@school.edu** / SecurePass123!
-- **lecturer2@school.edu** / TeachSafe456!
-- **lecturer3@school.edu** / EduSecure789!
-- **admin@school.edu** / AdminPass000!
+After running setup, these accounts will be available:
+
+### Lecturer Accounts (Game Control)
+- **john.smith@university.edu** / SecurePassword123! (Electrical Engineering)
+- **maria.garcia@university.edu** / SecurePassword456! (Renewable Energy)
+- **david.johnson@university.edu** / SecurePassword789! (Computer Science)
+- **admin@university.edu** / AdminPassword123! (IT Administration)
+
+### Board Accounts (IoT Devices)
+- **board1@iot.local** / BoardSecure001! (Solar Panel Board)
+- **board2@iot.local** / BoardSecure002! (Wind Turbine Board)
+- **board3@iot.local** / BoardSecure003! (Battery Storage Board)
+- **board4@iot.local** / BoardSecure004! (Load Monitor Board)
 
 ## Quick Start
 
+### Production Mode (Recommended)
+
+1. **Start all services:**
+   ```bash
+   docker-compose up --build -d
+   ```
+
+2. **Setup users (run once):**
+   ```bash
+   ./setup-production-users.sh
+   ```
+
+3. **Visit:** http://localhost
+
 ### Development Mode
 
-1. **Start SuperTokens Core:**
+1. **Start infrastructure:**
    ```bash
-   docker run -d -p 3567:3567 --name st-core registry.supertokens.io/supertokens/supertokens-postgresql:latest
+   docker-compose up postgres core -d
    ```
 
 2. **Start Backend:**
    ```bash
    cd backend
    npm install
+   npm run setup-users  # Setup users first
    npm run dev
    ```
 
-3. **Start Frontend:**
+3. **Start CoreAPI:**
+   ```bash
+   cd CoreAPI
+   pip install -r requirements.txt
+   python src/main.py
+   ```
+
+4. **Start Frontend:**
    ```bash
    cd frontend
    npm install
    ng serve --port 4200
    ```
 
-4. **Visit:** http://localhost:4200
+## User Setup
 
-### Production Mode (Docker)
+### First Time Setup
+After starting the system, you need to create the predefined user accounts:
 
+**Production:**
 ```bash
-docker-compose up --build
+./setup-production-users.sh
 ```
 
-Then visit: http://localhost:4200
+**Development:**
+```bash
+cd backend
+npm run setup-users
+```
+
+### Persistence
+- ✅ **User data is now persistent** (stored in PostgreSQL)
+- ✅ **Survives container restarts**
+- ✅ **Data stored in named Docker volume**
+
+## API Endpoints
+
+### Authentication API (`/api/`)
+- `POST /api/signin` - Login with email/password
+- `POST /api/signout` - Logout and clear session
+- `GET /api/dashboard` - Protected dashboard endpoint (shows user role)
+
+### CoreAPI (`/coreapi/`) - Role-Based Access
+
+#### Lecturer-Only Endpoints (Game Control)
+- `GET /coreapi/pollforusers` - Get all boards status (lecturer auth required)
+- `POST /coreapi/game/start` - Start game (lecturer auth required)
+- `POST /coreapi/game/next_round` - Advance game round (lecturer auth required)
+
+#### Board-Only Endpoints (IoT Operations)
+- `POST /coreapi/register` - Register new IoT board (board auth required)
+- `POST /coreapi/power_generation` - Update power generation (board auth required)
+- `POST /coreapi/power_consumption` - Update power consumption (board auth required)
+- `GET /coreapi/poll/<board_id>` - Get specific board status (board auth required)
+- `GET /coreapi/poll_binary/<board_id>` - Get binary board status (board auth required)
+- `POST /coreapi/submit_binary` - Submit binary data (board auth required)
+
+#### Public Endpoints
+- `GET /coreapi/health` - Health check
+- `GET /coreapi/game/status` - Get game status (enhanced info for authenticated users)
 
 ## Security Features
 
 | Feature | Description |
 |---------|-------------|
+| **Role-Based Access** | Lecturers control games, boards manage IoT operations |
 | **HttpOnly Cookies** | Tokens are not accessible to JavaScript, preventing XSS attacks |
-| **Session Expiry** | Sessions expire when browser closes (no persistent login) |
+| **Session Management** | Persistent sessions with configurable expiry |
 | **CORS Protection** | Configured to only allow requests from the frontend domain |
 | **Anti-CSRF** | SuperTokens handles CSRF protection automatically |
-| **Predefined Users** | No user registration - only authorized lecturer accounts |
+| **Predefined Users** | No user registration - only authorized accounts |
+| **Endpoint Separation** | Different user types cannot access each other's endpoints |
 
 ## Architecture
 
 - **Frontend**: Angular 17 with reactive forms
 - **Backend**: Express.js with SuperTokens authentication
-- **Database**: In-memory (perfect for demos, no data persistence)
+- **CoreAPI**: Flask API for IoT board management
+- **Database**: PostgreSQL for persistent storage
 - **Authentication**: SuperTokens with EmailPassword recipe
+- **Reverse Proxy**: Nginx for routing and CORS
 
-## Perfect for School Environments
+## Perfect for Educational Environments
 
-This app is designed specifically for lecturers who need to login on school computers:
+This system is designed for educational energy management scenarios:
 
-1. **No Registration**: Only predefined accounts can login
-2. **No Persistent State**: Sessions clear when browser closes
-3. **Secure Cookies**: No credentials stored in localStorage or sessionStorage
-4. **Easy Logout**: One-click logout clears all session data
+1. **IoT Board Integration**: ESP32 boards can register and send power data
+2. **Game Mechanics**: Round-based scoring system for educational purposes
+3. **User Management**: Lecturers can control game flow and monitor all boards
+4. **Real-time Data**: Live power generation and consumption tracking
 
-## API Endpoints
-
-- `POST /api/auth/signin` - Login with email/password
-- `POST /api/auth/signout` - Logout and clear session
-- `GET /api/profile` - Get user profile (protected)
-- `GET /api/hello` - Hello world endpoint (protected)
-
-## Files Structure
+## File Structure
 
 ```
-├── docker-compose.yml          # Docker orchestration
+├── docker-compose.yml          # Docker orchestration with PostgreSQL
+├── nginx.conf                  # Reverse proxy configuration
+├── supertokens-config.yaml     # SuperTokens configuration
+├── setup-production-users.sh   # User setup script
+├── test_coreapi.py            # API testing script
 ├── backend/
 │   ├── Dockerfile
 │   ├── index.ts               # Main server file
+│   ├── setup-users.ts         # User creation script
 │   └── package.json
-└── frontend/
+├── frontend/
+│   ├── Dockerfile
+│   ├── src/app/
+│   │   ├── auth.service.ts    # Authentication service
+│   │   ├── auth.guard.ts      # Route protection
+│   │   ├── creds.interceptor.ts # HTTP interceptor
+│   │   ├── login/             # Login component
+│   │   └── dashboard/         # Protected dashboard
+│   └── package.json
+└── CoreAPI/
     ├── Dockerfile
-    ├── src/app/
-    │   ├── auth.service.ts    # Authentication service
-    │   ├── auth.guard.ts      # Route protection
-    │   ├── creds.interceptor.ts # HTTP interceptor
-    │   ├── login/             # Login component
-    │   └── dashboard/         # Protected dashboard
-    └── package.json
+    ├── src/
+    │   ├── main.py           # Flask application
+    │   ├── state.py          # Game state management
+    │   └── auth.py           # SuperTokens integration
+    └── requirements.txt
 ```
+
+## Testing
+
+Test the CoreAPI integration:
+```bash
+python3 test_coreapi.py
+```
+
+## Troubleshooting
+
+### Users Not Persisting
+If users don't persist after container restart:
+1. Ensure PostgreSQL volume is properly mounted
+2. Check database connection in logs: `docker-compose logs core`
+3. Re-run user setup: `./setup-production-users.sh`
+
+### CoreAPI Authentication Issues
+1. Verify SuperTokens Core is running: `curl http://localhost/coreapi/health`
+2. Check nginx routing: `docker-compose logs nginx`
+3. Test with authentication headers
 
 ## Support
 
-This application follows the SuperTokens tutorial and best practices for secure authentication in educational environments.
+This application integrates SuperTokens authentication with a Flask-based IoT management system for educational energy monitoring scenarios.
