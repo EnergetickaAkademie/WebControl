@@ -1,0 +1,47 @@
+services:
+  coreapi:
+    build: ./CoreAPI
+    container_name: webcontrol-coreapi-1
+    environment:
+      - JWT_SECRET=your-secret-key-change-in-production
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.debug
+    container_name: webcontrol-frontend-debug-1
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  nginx:
+    image: nginx:alpine
+    container_name: webcontrol-nginx-debug-1
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.debug.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      coreapi:
+        condition: service_started
+      frontend:
+        condition: service_healthy # Wait for frontend to be healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge

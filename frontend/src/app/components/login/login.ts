@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService } from '../auth.service';
+import { AuthService } from '../../services';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -39,7 +39,7 @@ export class LoginComponent {
           console.log('Login successful', response);
           
           // Check if login was actually successful
-          if (response.success && response.token) {
+          if (response.token) {
             console.log('Authentication successful, navigating to dashboard...');
             // Give a small delay to ensure the token is saved
             setTimeout(() => {
@@ -48,12 +48,9 @@ export class LoginComponent {
                 (error) => console.error('Navigation error:', error)
               );
             }, 100);
-          } else if (response.status === 'WRONG_CREDENTIALS_ERROR') {
-            console.error('Login failed: Wrong credentials');
-            this.errorMessage = 'Invalid email or password';
           } else {
-            console.error('Login failed with status:', response.status);
-            this.errorMessage = 'Login failed: ' + response.status;
+            console.error('Login failed: No token received');
+            this.errorMessage = 'Login failed: No authentication token received';
           }
         },
         error: (error) => {

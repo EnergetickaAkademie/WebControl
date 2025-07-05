@@ -32,9 +32,16 @@ export class AuthService {
     if (response.token) {
       localStorage.setItem('auth-token', response.token);
     }
-    if (response.user) {
-      localStorage.setItem('user-info', JSON.stringify(response.user));
-    }
+    
+    // Create user object from response
+    const user = {
+      username: response.username,
+      name: response.name,
+      user_type: response.user_type,
+      metadata: response.metadata
+    };
+    
+    localStorage.setItem('user-info', JSON.stringify(user));
   }
 
   signin(username: string, password: string): Observable<any> {
@@ -48,7 +55,7 @@ export class AuthService {
     ).pipe(
       tap((response: any) => {
         console.log('Login response:', response);
-        if (response.success && response.token) {
+        if (response.token) {
           this.saveTokens(response);
           this.isAuthenticatedSubject.next(true);
         }

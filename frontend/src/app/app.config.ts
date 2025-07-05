@@ -1,7 +1,7 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { CredsInterceptor } from './creds.interceptor';
+import { CredsInterceptor } from './interceptors';
 
 import { routes } from './app.routes';
 
