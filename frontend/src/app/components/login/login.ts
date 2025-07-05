@@ -40,12 +40,19 @@ export class LoginComponent {
           
           // Check if login was actually successful
           if (response.token) {
+            // Check user type - only lecturers can access the dashboard
+            if (response.user_type === 'board') {
+              this.errorMessage = 'Board users cannot access the lecturer dashboard. This interface is for lecturers only.';
+              this.authService.signout().subscribe(); // Clear any stored tokens
+              return;
+            }
+            
             console.log('Authentication successful, navigating to dashboard...');
             // Give a small delay to ensure the token is saved
             setTimeout(() => {
               this.router.navigate(['/dashboard']).then(
-                (success) => console.log('Navigation result:', success),
-                (error) => console.error('Navigation error:', error)
+                (success: boolean) => console.log('Navigation result:', success),
+                (error: any) => console.error('Navigation error:', error)
               );
             }, 100);
           } else {
@@ -53,7 +60,7 @@ export class LoginComponent {
             this.errorMessage = 'Login failed: No authentication token received';
           }
         },
-        error: (error) => {
+        error: (error: any) => {
           this.isLoading = false;
           console.error('Login failed', error);
           if (error.status === 403) {

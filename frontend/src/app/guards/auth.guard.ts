@@ -17,11 +17,20 @@ export class AuthGuard implements CanActivate {
   canActivate(): Observable<boolean> {
     console.log('AuthGuard: Checking authentication...');
     return this.authService.isLoggedIn().pipe(
-      map((profile) => {
+      map((profile: any) => {
         console.log('AuthGuard: User is authenticated', profile);
-        return true; // User is logged in
+        
+        // Check if user is a lecturer (only lecturers can access dashboard)
+        const userInfo = this.authService.getUserInfo();
+        if (userInfo && userInfo.user_type === 'board') {
+          console.log('AuthGuard: Board user attempted to access dashboard');
+          this.router.navigate(['/login']);
+          return false;
+        }
+        
+        return true; // User is logged in and is a lecturer
       }),
-      catchError((error) => {
+      catchError((error: any) => {
         console.log('AuthGuard: User is not authenticated', error);
         // User is not logged in, redirect to login
         this.router.navigate(['/login']);

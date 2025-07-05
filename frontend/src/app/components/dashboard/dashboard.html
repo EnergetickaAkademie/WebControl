@@ -1,6 +1,6 @@
 <div class="dashboard-container">
   <div class="dashboard-header">
-    <h1>Welcome to Lecturer Dashboard</h1>
+    <h1>Lecturer Dashboard - Energy Game Control</h1>
     <button class="logout-btn" (click)="logout()">Logout</button>
   </div>
 
@@ -10,32 +10,129 @@
 
   <div *ngIf="!isLoading && userInfo" class="dashboard-content">
     <div class="welcome-card">
-      <h2>Hello, Lecturer!</h2>
-      <p>You are successfully logged in.</p>
-      <div class="user-info">
-        <p><strong>User ID:</strong> {{ userInfo.userId }}</p>
+      <h2>Welcome, {{ userInfo.user?.name || 'Lecturer' }}!</h2>
+      <p><strong>Department:</strong> {{ userInfo.user?.metadata?.department || 'Unknown' }}</p>
+      <p><strong>User Type:</strong> {{ userInfo.user?.user_type }}</p>
+    </div>
+
+    <!-- Game Control Section -->
+    <div class="game-control-section">
+      <div class="content-card">
+        <h3>🎮 Game Control</h3>
+        
+        <div *ngIf="gameStatus" class="game-status">
+          <div class="status-header">
+            <h4>Game Status</h4>
+            <div class="status-badges">
+              <span class="badge" [class.active]="gameStatus.game_active" [class.inactive]="!gameStatus.game_active">
+                {{ gameStatus.game_active ? 'Game Active' : 'Game Inactive' }}
+              </span>
+              <span class="badge round-type" *ngIf="gameStatus.round_type">
+                {{ gameStatus.round_type | titlecase }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="game-info">
+            <p><strong>Current Round:</strong> {{ gameStatus.current_round }} / {{ gameStatus.total_rounds }}</p>
+            <p><strong>Registered Boards:</strong> {{ gameStatus.boards }}</p>
+          </div>
+
+          <div class="game-controls">
+            <button 
+              *ngIf="!gameStatus.game_active" 
+              class="btn btn-start" 
+              (click)="startGame()"
+              [disabled]="isGameLoading">
+              {{ isGameLoading ? 'Starting...' : 'Start Game' }}
+            </button>
+            
+            <button 
+              *ngIf="gameStatus.game_active && gameStatus.current_round < gameStatus.total_rounds" 
+              class="btn btn-next" 
+              (click)="nextRound()"
+              [disabled]="isGameLoading">
+              {{ isGameLoading ? 'Processing...' : 'Next Round' }}
+            </button>
+            
+            <span *ngIf="gameStatus.game_active && gameStatus.current_round >= gameStatus.total_rounds" class="game-finished">
+              🏁 Game Completed
+            </span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="main-content">
+    <!-- Board Details Section -->
+    <div class="boards-section">
       <div class="content-card">
-        <h3>🎓 Hello World</h3>
-        <p>This is your secure lecturer dashboard. No traces are left on this computer when you log out.</p>
+        <h3>📊 Board Status</h3>
         
-        <div class="features">
-          <div class="feature-item">
-            <h4>🔒 Secure Authentication</h4>
-            <p>HttpOnly cookies ensure no credentials are stored in browser memory accessible to JavaScript.</p>
+        <div *ngIf="gameStatus?.board_details && gameStatus.board_details.length > 0; else noBoardsTemplate">
+          <div class="boards-grid">
+            <div class="board-card" *ngFor="let board of gameStatus.board_details">
+              <div class="board-header">
+                <h4>{{ board.name || 'Board #' + board.board_id }}</h4>
+                <span class="board-type">{{ board.type }}</span>
+              </div>
+              
+              <div class="board-stats">
+                <div class="stat">
+                  <span class="stat-label">ID:</span>
+                  <span class="stat-value">{{ board.board_id }}</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-label">Generation:</span>
+                  <span class="stat-value energy-positive">{{ board.current_generation || 0 }} kW</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-label">Consumption:</span>
+                  <span class="stat-value energy-negative">{{ board.current_consumption || 0 }} kW</span>
+                </div>
+                <div class="stat">
+                  <span class="stat-label">Net Power:</span>
+                  <span class="stat-value" 
+                        [class.energy-positive]="(board.current_generation || 0) - (board.current_consumption || 0) > 0"
+                        [class.energy-negative]="(board.current_generation || 0) - (board.current_consumption || 0) < 0">
+                    {{ ((board.current_generation || 0) - (board.current_consumption || 0)).toFixed(2) }} kW
+                  </span>
+                </div>
+                <div class="stat">
+                  <span class="stat-label">Total Score:</span>
+                  <span class="stat-value score">{{ board.total_score || 0 }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <ng-template #noBoardsTemplate>
+          <div class="no-boards">
+            <p>No boards registered yet. Boards will appear here when they register and start sending data.</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Instructions Section -->
+    <div class="instructions-section">
+      <div class="content-card">
+        <h3>📚 How to Use</h3>
+        
+        <div class="instructions">
+          <div class="instruction-item">
+            <h4>� Starting the Game</h4>
+            <p>Click "Start Game" to begin the energy simulation. This will start round 1 and boards can begin reporting data.</p>
           </div>
           
-          <div class="feature-item">
-            <h4>🚫 No Traces</h4>
-            <p>Session cookies are cleared when you logout or close the browser.</p>
+          <div class="instruction-item">
+            <h4>⏭️ Advancing Rounds</h4>
+            <p>Use "Next Round" to advance to the next round. This calculates scores for the current round and moves the game forward.</p>
           </div>
           
-          <div class="feature-item">
-            <h4>📚 Ready for Content</h4>
-            <p>This is where your educational content will be displayed.</p>
+          <div class="instruction-item">
+            <h4>� Monitoring Boards</h4>
+            <p>Watch real-time data from registered boards including power generation, consumption, and accumulated scores.</p>
           </div>
         </div>
       </div>

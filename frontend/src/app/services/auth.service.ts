@@ -114,4 +114,17 @@ export class AuthService {
     const userInfo = localStorage.getItem('user-info');
     return userInfo ? JSON.parse(userInfo) : null;
   }
+
+  // Game-related methods
+  getGameStatus(): Observable<any> {
+    return this.http.get(`${this.api}/game/status`, { headers: this.getHeaders() });
+  }
+
+  nextRound(): Observable<any> {
+    return this.http.post(`${this.api}/game/next_round`, {}, { headers: this.getHeaders() });
+  }
+
+  startGame(): Observable<any> {
+    return this.http.post(`${this.api}/game/start`, {}, { headers: this.getHeaders() });
+  }
 }
