@@ -127,4 +127,13 @@ export class AuthService {
   startGame(): Observable<any> {
     return this.http.post(`${this.api}/game/start`, {}, { headers: this.getHeaders() });
   }
+
+  // Building table management methods
+  getBuildingTable(): Observable<any> {
+    return this.http.get(`${this.api}/building_table`, { headers: this.getHeaders() });
+  }
+
+  updateBuildingTable(table: any): Observable<any> {
+    return this.http.post(`${this.api}/building_table`, { table }, { headers: this.getHeaders() });
+  }
 }

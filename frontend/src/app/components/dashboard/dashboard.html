@@ -19,7 +19,7 @@
     <div class="game-control-section">
       <div class="content-card">
         <h3>🎮 Game Control</h3>
-        
+
         <div *ngIf="gameStatus" class="game-status">
           <div class="status-header">
             <h4>Game Status</h4>
@@ -32,30 +32,25 @@
               </span>
             </div>
           </div>
-          
+
           <div class="game-info">
             <p><strong>Current Round:</strong> {{ gameStatus.current_round }} / {{ gameStatus.total_rounds }}</p>
             <p><strong>Registered Boards:</strong> {{ gameStatus.boards }}</p>
           </div>
 
           <div class="game-controls">
-            <button 
-              *ngIf="!gameStatus.game_active" 
-              class="btn btn-start" 
-              (click)="startGame()"
+            <button *ngIf="!gameStatus.game_active" class="btn btn-start" (click)="startGame()"
               [disabled]="isGameLoading">
               {{ isGameLoading ? 'Starting...' : 'Start Game' }}
             </button>
-            
-            <button 
-              *ngIf="gameStatus.game_active && gameStatus.current_round < gameStatus.total_rounds" 
-              class="btn btn-next" 
-              (click)="nextRound()"
-              [disabled]="isGameLoading">
+
+            <button *ngIf="gameStatus.game_active && gameStatus.current_round < gameStatus.total_rounds"
+              class="btn btn-next" (click)="nextRound()" [disabled]="isGameLoading">
               {{ isGameLoading ? 'Processing...' : 'Next Round' }}
             </button>
-            
-            <span *ngIf="gameStatus.game_active && gameStatus.current_round >= gameStatus.total_rounds" class="game-finished">
+
+            <span *ngIf="gameStatus.game_active && gameStatus.current_round >= gameStatus.total_rounds"
+              class="game-finished">
               🏁 Game Completed
             </span>
           </div>
@@ -67,7 +62,7 @@
     <div class="boards-section">
       <div class="content-card">
         <h3>📊 Board Status</h3>
-        
+
         <div *ngIf="gameStatus?.board_details && gameStatus.board_details.length > 0; else noBoardsTemplate">
           <div class="boards-grid">
             <div class="board-card" *ngFor="let board of gameStatus.board_details">
@@ -75,7 +70,7 @@
                 <h4>{{ board.name || 'Board #' + board.board_id }}</h4>
                 <span class="board-type">{{ board.type }}</span>
               </div>
-              
+
               <div class="board-stats">
                 <div class="stat">
                   <span class="stat-label">ID:</span>
@@ -91,9 +86,9 @@
                 </div>
                 <div class="stat">
                   <span class="stat-label">Net Power:</span>
-                  <span class="stat-value" 
-                        [class.energy-positive]="(board.current_generation || 0) - (board.current_consumption || 0) > 0"
-                        [class.energy-negative]="(board.current_generation || 0) - (board.current_consumption || 0) < 0">
+                  <span class="stat-value"
+                    [class.energy-positive]="(board.current_generation || 0) - (board.current_consumption || 0) > 0"
+                    [class.energy-negative]="(board.current_generation || 0) - (board.current_consumption || 0) < 0">
                     {{ ((board.current_generation || 0) - (board.current_consumption || 0)).toFixed(2) }} kW
                   </span>
                 </div>
@@ -105,7 +100,7 @@
             </div>
           </div>
         </div>
-        
+
         <ng-template #noBoardsTemplate>
           <div class="no-boards">
             <p>No boards registered yet. Boards will appear here when they register and start sending data.</p>
@@ -114,25 +109,113 @@
       </div>
     </div>
 
+    <!-- Building Management Section -->
+    <div class="building-management-section">
+      <div class="content-card">
+        <h3>🏢 Building Power Consumption Management</h3>
+
+        <div class="building-table-info">
+          <p><strong>Current Table Version:</strong> {{ buildingTable?.version || 'Loading...' }}</p>
+          <p>Manage power consumption values for different building types. Changes will be automatically distributed to
+            all ESP boards.</p>
+        </div>
+
+        <div *ngIf="buildingTable?.table" class="building-table">
+          <div class="table-header">
+            <span>Building Type</span>
+            <span>Power Consumption (W)</span>
+            <span>Actions</span>
+          </div>
+
+          <div *ngFor="let entry of getBuildingTableEntries()" class="table-row">
+            <span class="building-type">{{ getBuildingTypeName(entry.type) }}</span>
+            <div class="consumption-control">
+              <input #slider type="range" min="0" max="10000" step="5" class="consumption-slider"
+                [value]="entry.consumption" [disabled]="isSavingBuildingTable"
+                (input)="updateBuildingConsumption(entry.type, slider.valueAsNumber)">
+
+              <input #field type="number" min="0" max="10000" step="1" class="consumption-input-small"
+                [value]="entry.consumption" [disabled]="isSavingBuildingTable"
+                (input)="updateBuildingConsumption(entry.type, field.valueAsNumber)">
+
+              <span class="unit">W</span>
+            </div>
+
+            <button *ngIf="!isDefaultBuildingType(entry.type)" class="btn btn-delete-small"
+              (click)="removeBuildingType(entry.type)" [disabled]="isSavingBuildingTable">
+              Remove
+            </button>
+            <span *ngIf="isDefaultBuildingType(entry.type)" class="default-type">Default</span>
+          </div>
+
+          <div class="add-building-row">
+            <select [(ngModel)]="newBuildingType" class="building-type-select">
+              <option value="">Select Building Type</option>
+              <option *ngFor="let type of getAvailableBuildingTypes()" [value]="type">
+                {{ getBuildingTypeName(type) }}
+              </option>
+            </select>
+            <div class="consumption-control">
+              <input type="range" [(ngModel)]="newBuildingConsumption" class="consumption-slider" min="0" max="10000"
+                step="5">
+              <input type="number" [(ngModel)]="newBuildingConsumption" placeholder="Power (W)"
+                class="consumption-input-small" min="0" max="10000" step="1">
+              <span class="unit">W</span>
+            </div>
+            <button class="btn btn-add-small" (click)="addBuildingType()"
+              [disabled]="!newBuildingType || !newBuildingConsumption || isSavingBuildingTable">
+              Add
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="!buildingTable" class="loading-state">
+          <p>Loading building table...</p>
+        </div>
+
+        <div *ngIf="buildingTable?.error" class="error-state">
+          <p>Error loading building table: {{ buildingTable.error }}</p>
+          <button class="btn btn-retry" (click)="loadBuildingTable()">Retry</button>
+        </div>
+
+        <div class="building-table-actions">
+          <button class="btn btn-save" (click)="saveBuildingTable()"
+            [disabled]="!isBuildingTableDirty || isSavingBuildingTable">
+            {{ isSavingBuildingTable ? 'Saving...' : 'Save Changes' }}
+          </button>
+          <button class="btn btn-reset" (click)="resetBuildingTable()"
+            [disabled]="!isBuildingTableDirty || isSavingBuildingTable">
+            Reset Changes
+          </button>
+          <span *ngIf="buildingTableSaveStatus" [class]="buildingTableSaveStatus.type">
+            {{ buildingTableSaveStatus.message }}
+          </span>
+        </div>
+      </div>
+    </div>
+
     <!-- Instructions Section -->
     <div class="instructions-section">
       <div class="content-card">
         <h3>📚 How to Use</h3>
-        
+
         <div class="instructions">
           <div class="instruction-item">
             <h4>� Starting the Game</h4>
-            <p>Click "Start Game" to begin the energy simulation. This will start round 1 and boards can begin reporting data.</p>
+            <p>Click "Start Game" to begin the energy simulation. This will start round 1 and boards can begin reporting
+              data.</p>
           </div>
-          
+
           <div class="instruction-item">
             <h4>⏭️ Advancing Rounds</h4>
-            <p>Use "Next Round" to advance to the next round. This calculates scores for the current round and moves the game forward.</p>
+            <p>Use "Next Round" to advance to the next round. This calculates scores for the current round and moves the
+              game forward.</p>
           </div>
-          
+
           <div class="instruction-item">
             <h4>� Monitoring Boards</h4>
-            <p>Watch real-time data from registered boards including power generation, consumption, and accumulated scores.</p>
+            <p>Watch real-time data from registered boards including power generation, consumption, and accumulated
+              scores.</p>
           </div>
         </div>
       </div>
