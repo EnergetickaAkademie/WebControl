@@ -79,7 +79,7 @@ Offset | Size | Type   | Description
 ### 4. Board Status Poll
 
 **Endpoint:** `GET /coreapi/poll_binary/{board_id}`  
-**Size:** 24 bytes (fixed)  
+**Size:** 32 bytes (fixed)  
 **Content-Type:** `application/octet-stream`
 
 ```
@@ -91,14 +91,16 @@ Offset | Size | Type   | Description
 11     | 4    | uint32 | Score (big-endian)
 15     | 4    | int32  | Generation (watts * 100, big-endian)
 19     | 4    | int32  | Consumption (watts * 100, big-endian)
-23     | 1    | uint8  | Status flags (see below)
+23     | 8    | uint64 | Building table version (big-endian)
+31     | 1    | uint8  | Status flags (see below)
 ```
 
 **Status Flags:**
 - Bit 0: Round type (0=night, 1=day)
 - Bit 1: Game active (0=inactive, 1=active)
 - Bit 2: Expecting data (0=no, 1=yes)
-- Bits 3-7: Reserved
+- Bit 3: Building table updated (0=no, 1=yes)
+- Bits 4-7: Reserved
 
 ## Error Responses
 

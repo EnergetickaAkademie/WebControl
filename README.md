@@ -21,16 +21,13 @@ A comprehensive energy management system with secure lecturer authentication and
 The system includes predefined user accounts for testing:
 
 ### Lecturer Accounts (Game Control)
-- **john.smith@university.edu** / SecurePassword123! (Electrical Engineering)
-- **maria.garcia@university.edu** / SecurePassword456! (Renewable Energy)  
-- **david.johnson@university.edu** / SecurePassword789! (Computer Science)
-- **admin@university.edu** / AdminPassword123! (IT Administration)
+- **lecturer1** / lecturer123 (Dr. John Smith, Computer Science)
+- **lecturer2** / lecturer456 (Prof. Maria Garcia, Physics)
 
 ### Board Accounts (IoT Devices)
-- **board1@iot.local** / BoardSecure001! (Solar Panel Board)
-- **board2@iot.local** / BoardSecure002! (Wind Turbine Board)
-- **board3@iot.local** / BoardSecure003! (Battery Storage Board)
-- **board4@iot.local** / BoardSecure004! (Load Monitor Board)
+- **board1** / board123 (Solar Panel Board #1)
+- **board2** / board456 (Wind Turbine Board #2)
+- **board3** / board789 (Battery Storage Board #3)
 
 ## Quick Start
 
@@ -41,7 +38,7 @@ The system includes predefined user accounts for testing:
    docker-compose up --build -d
    ```
 
-2. **Visit:** http://localhost
+2. **Visit:** http://localhost (users are created automatically on first start)
 
 ### Development Mode
 
@@ -55,17 +52,83 @@ The system includes predefined user accounts for testing:
    python3 esp32_board_simulation.py
    ```
 
-3. **Or test with single board:**
+### Debug Mode
+
+For debugging with detailed logs and hot reloading:
+
+1. **Start services in debug mode:**
    ```bash
-   python3 demo_single_board.py
+   docker-compose -f docker-compose.debug.yml up --build
    ```
+
+2. **Debug mode features:**
+   - Frontend hot reloading enabled
+   - Detailed logging in CoreAPI
+   - Source maps for easier debugging
+   - Development server ports exposed
+
+## 🔧 Development - Important Cache Management
+
+**⚠️ CRITICAL: After making changes to CoreAPI, you MUST clear Docker cache to see updates!**
+
+### Force CoreAPI Updates After Changes
+
+1. **Stop all services:**
+   ```bash
+   docker-compose down
+   ```
+
+2. **Remove CoreAPI image and cache:**
+   ```bash
+   docker rmi webcontrol-coreapi-1 || true
+   docker builder prune -f
+   ```
+
+3. **Rebuild and start with fresh cache:**
+   ```bash
+   docker-compose up --build --force-recreate
+   ```
+
+### Alternative: Complete Cache Reset
+
+If you're still seeing old code after changes:
+
+```bash
+# Nuclear option - removes ALL Docker cache
+docker-compose down
+docker system prune -a -f
+docker-compose up --build
+```
+
+### Quick Development Workflow
+
+```bash
+# After making changes to CoreAPI code:
+docker-compose down
+docker rmi webcontrol-coreapi-1
+docker-compose up --build
+```
 
 ## Testing
 
-The project includes two Python scripts for testing:
+The project includes a Python script for testing:
 
 - **`esp32_board_simulation.py`** - Simulates multiple ESP32 boards using the binary protocol
-- **`demo_single_board.py`** - Simple demonstration with a single board
+
+### Running Tests
+
+```bash
+# Test with board simulation
+python3 esp32_board_simulation.py
+
+# Test CoreAPI health
+curl http://localhost/coreapi/health
+
+# Test with authentication
+curl -X POST http://localhost/coreapi/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "lecturer1", "password": "lecturer123"}'
+```
 
 ## Project Structure
 
@@ -74,9 +137,9 @@ WebControl/
 ├── CoreAPI/              # Flask-based API backend
 ├── frontend/             # Angular frontend application
 ├── docker-compose.yml    # Docker setup for production
+├── docker-compose.debug.yml  # Docker setup for debug mode
 ├── nginx.conf           # Nginx configuration
-├── esp32_board_simulation.py  # Multi-board simulation
-└── demo_single_board.py       # Single board demo
+└── esp32_board_simulation.py  # Multi-board simulation
 ```
 
 ## API Endpoints
@@ -122,30 +185,63 @@ For issues and questions, please use the GitHub issue tracker.
     ├── src/
     │   ├── main.py           # Flask application
     │   ├── state.py          # Game state management
-    │   └── auth.py           # SuperTokens integration
+    │   └── simple_auth.py    # Simple JWT authentication
     └── requirements.txt
-```
-
-## Testing
-
-Test the CoreAPI integration:
-```bash
-python3 test_coreapi.py
 ```
 
 ## Troubleshooting
 
-### Users Not Persisting
-If users don't persist after container restart:
-1. Ensure PostgreSQL volume is properly mounted
-2. Check database connection in logs: `docker-compose logs core`
-3. Re-run user setup: `./setup-production-users.sh`
+### Users Not Created
+If users are not created automatically:
+1. Check CoreAPI logs: `docker-compose logs coreapi`
+2. Ensure the database file is writable
+3. Restart the CoreAPI service: `docker-compose restart coreapi`
 
 ### CoreAPI Authentication Issues
-1. Verify SuperTokens Core is running: `curl http://localhost/coreapi/health`
+1. Verify CoreAPI is running: `curl http://localhost/coreapi/health`
 2. Check nginx routing: `docker-compose logs nginx`
-3. Test with authentication headers
+3. Test with proper authentication headers
+
+### CoreAPI Code Changes Not Reflected
+**This is the most common issue!**
+
+1. **Stop services:**
+   ```bash
+   docker-compose down
+   ```
+
+2. **Remove CoreAPI image:**
+   ```bash
+   docker rmi webcontrol-coreapi-1
+   ```
+
+3. **Rebuild:**
+   ```bash
+   docker-compose up --build
+   ```
+
+### Frontend Changes Not Reflected
+1. **For debug mode:** Changes should auto-reload
+2. **For production mode:** Rebuild frontend container:
+   ```bash
+   docker-compose down
+   docker rmi webcontrol-nginx-1
+   docker-compose up --build
+   ```
+
+### View Container Logs
+```bash
+# View all logs
+docker-compose logs
+
+# View specific service logs
+docker-compose logs coreapi
+docker-compose logs nginx
+
+# Follow logs in real-time
+docker-compose logs -f coreapi
+```
 
 ## Support
 
-This application integrates SuperTokens authentication with a Flask-based IoT management system for educational energy monitoring scenarios.
+This application uses simple JWT authentication with a Flask-based IoT management system for educational energy monitoring scenarios.
