@@ -26,11 +26,11 @@ The lecturer dashboard now includes:
 
 ### 3. Automated Board Simulation
 
-Two test scripts have been created to simulate board behavior:
+Two test scripts are available to simulate board behavior:
 
-#### Board Simulation Script (`test_board_simulation.py`)
+#### ESP32 Board Simulation Script (`esp32_board_simulation.py`)
 
-Creates 8 different simulated boards with realistic power patterns:
+Creates multiple simulated boards with realistic power patterns using the binary protocol:
 
 - **Solar Farms**: Generate power during daylight hours (6 AM - 6 PM) with peak at noon
 - **Wind Turbines**: Variable generation with some daily patterns
@@ -39,29 +39,79 @@ Creates 8 different simulated boards with realistic power patterns:
 - **Residential**: Peak consumption in evenings (5 PM - 10 PM) and mornings (6 AM - 9 AM)
 - **Generic Stations**: Basic generation and consumption patterns
 
-#### Quick Test Script (`test_quick_board.py`)
+#### Single Board Demo Script (`demo_single_board.py`)
 
 A simpler script for testing basic functionality:
-- Tests board login, registration, and data submission
-- Tests lecturer login and game control
-- Validates API endpoints
+- Tests single board registration and data submission
+- Demonstrates realistic power patterns
+- Validates API endpoints with one board
 
 ## Usage Instructions
 
 ### Starting the System
 
-1. **Build and start all services**:
+1. **Production Mode (Recommended):**
+   ```bash
+   docker-compose up --build -d
+   ```
+
+2. **Development Mode:**
    ```bash
    docker-compose up --build
    ```
 
-2. **Access the lecturer dashboard**:
-   - Open `http://localhost` in your browser
-   - Login with lecturer credentials (e.g., `lecturer1` / `lecturer123`)
+### Running Board Simulation
 
-### Running Board Simulations
+1. **Multiple Boards (Binary Protocol):**
+   ```bash
+   python3 esp32_board_simulation.py
+   ```
 
-1. **Quick test** (recommended first):
+2. **Single Board Demo:**
+   ```bash
+   python3 demo_single_board.py
+   ```
+
+### Accessing the Dashboard
+
+1. Visit: http://localhost
+2. Use lecturer credentials from the demo users section
+3. Monitor real-time board data and control game rounds
+
+### Testing Different Scenarios
+
+The simulation scripts allow you to test various scenarios:
+- Solar generation patterns throughout the day
+- Wind turbine variability
+- Industrial vs residential consumption patterns
+- Game round progression and scoring
+
+## Technical Details
+
+### Dashboard Features
+- **Real-time Updates**: Dashboard automatically refreshes every 3 seconds
+- **Board Status**: Shows comprehensive board information including power balance
+- **Game Control**: Easy-to-use buttons for game management
+- **Responsive Design**: Works on desktop and mobile devices
+
+### Security Features
+- **Role-based Access**: Only lecturers can access the dashboard
+- **Board Isolation**: Board users cannot access lecturer features
+- **Authentication**: JWT-based authentication for secure access
+
+### Data Formats
+- **Power Values**: Displayed in kilowatts (kW) with 2 decimal precision
+- **Score System**: Accumulated points based on power balance
+- **Round Management**: Support for different round types (day/night)
+
+## Future Enhancements
+
+Potential areas for improvement:
+- Historical data visualization
+- Advanced board analytics
+- Custom scoring algorithms
+- Export functionality for game results
+- Multi-game session management
    ```bash
    python3 test_quick_board.py
    ```

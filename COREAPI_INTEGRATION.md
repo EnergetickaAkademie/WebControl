@@ -1,17 +1,17 @@
-# CoreAPI Integration with SuperTokens
+# CoreAPI Integration with Simple Authentication
 
-This document describes the integration of CoreAPI with the SuperTokens authentication system and Docker Compose setup.
+This document describes the integration of CoreAPI with the simple JWT authentication system and Docker Compose setup.
 
 ## Overview
 
-The CoreAPI is now integrated into the Docker Compose setup and accessible at `/coreapi/` with SuperTokens authentication for user-facing endpoints.
+The CoreAPI is integrated into the Docker Compose setup and accessible at `/coreapi/` with JWT authentication for user-facing endpoints.
 
 ## Architecture
 
 ```
 Client/Frontend → Nginx → CoreAPI (Docker)
                       ↓
-                SuperTokens Core (Authentication)
+                JWT Authentication
 ```
 
 ## Endpoints
@@ -36,7 +36,7 @@ These provide additional data for authenticated users:
 
 ### Protected Endpoints (Authentication Required)
 
-These endpoints require valid SuperTokens session:
+These endpoints require valid JWT token:
 
 - `GET /coreapi/pollforusers` - **NEW**: Get status of all boards in user-friendly format
 - `POST /coreapi/game/start` - Start the game
@@ -48,7 +48,7 @@ These endpoints require valid SuperTokens session:
 
 **Purpose**: Provides frontend applications with a comprehensive view of all registered boards and game state.
 
-**Authentication**: Required (SuperTokens)
+**Authentication**: Required (JWT)
 
 **Response Format**:
 ```json
@@ -78,26 +78,67 @@ These endpoints require valid SuperTokens session:
 ### 2. Enhanced Authentication
 
 - **Board Endpoints**: No authentication (allows direct ESP32/board access)
-- **User Endpoints**: SuperTokens session validation
+- **User Endpoints**: JWT token validation
 - **Game Control**: Restricted to authenticated users only
 
 ### 3. CORS Configuration
 
-Properly configured for frontend integration with SuperTokens headers.
+Properly configured for frontend integration with JWT headers.
 
 ## Docker Setup
 
-### Services Added
+### Services Configuration
 
 ```yaml
 coreapi:
   build: ./CoreAPI
   environment:
-    - FLASK_ENV=production
-    - SUPERTOKENS_CORE_URI=http://core:3567
-  depends_on:
-    - core
+    - JWT_SECRET=your-secret-key-change-in-production
   networks:
+    - app-network
+  restart: unless-stopped
+```
+
+### Network Configuration
+
+- **Internal network**: `app-network`
+- **External access**: Through Nginx reverse proxy
+- **Port binding**: None (internal only)
+
+## Usage Examples
+
+### Testing with Python Scripts
+
+1. **Multiple Board Simulation:**
+   ```bash
+   python3 esp32_board_simulation.py
+   ```
+
+2. **Single Board Demo:**
+   ```bash
+   python3 demo_single_board.py
+   ```
+
+### Manual API Testing
+
+```bash
+# Register a board
+curl -X POST http://localhost/coreapi/register \
+  -H "Content-Type: application/json" \
+  -d '{"board_id": 1, "board_name": "Test Board", "board_type": "solar"}'
+
+# Submit power data
+curl -X POST http://localhost/coreapi/power_generation \
+  -H "Content-Type: application/json" \
+  -d '{"board_id": 1, "generation": 100.5}'
+```
+
+## Security Notes
+
+- Board endpoints are public for ESP32 device access
+- User endpoints require JWT authentication
+- Game control is restricted to authenticated users
+- CORS is properly configured for frontend integration
     - app-network
   restart: unless-stopped
 ```

@@ -4,27 +4,25 @@ A comprehensive energy management system with secure lecturer authentication and
 
 ## Features
 
-- **🔒 Secure Authentication**: Uses SuperTokens with persistent PostgreSQL storage
+- **🔒 Simple Authentication**: JWT-based authentication for user management
 - **🌟 CoreAPI Integration**: Manages IoT boards and energy data
-- **� Real-time Monitoring**: Track power generation and consumption
+- **⚡ Real-time Monitoring**: Track power generation and consumption
 - **🎮 Game Management**: Control rounds and scoring for educational purposes
 - **📱 Mobile Friendly**: Responsive design for all devices
 
 ## System Components
 
 - **Frontend**: Angular 17 application
-- **Backend API**: Express.js with SuperTokens authentication  
-- **CoreAPI**: Flask-based API for IoT board management
-- **Database**: PostgreSQL for persistent data storage
+- **CoreAPI**: Flask-based API for IoT board management with simple authentication
 - **Reverse Proxy**: Nginx for routing and CORS handling
 
 ## Demo Users
 
-After running setup, these accounts will be available:
+The system includes predefined user accounts for testing:
 
 ### Lecturer Accounts (Game Control)
 - **john.smith@university.edu** / SecurePassword123! (Electrical Engineering)
-- **maria.garcia@university.edu** / SecurePassword456! (Renewable Energy)
+- **maria.garcia@university.edu** / SecurePassword456! (Renewable Energy)  
 - **david.johnson@university.edu** / SecurePassword789! (Computer Science)
 - **admin@university.edu** / AdminPassword123! (IT Administration)
 
@@ -43,139 +41,80 @@ After running setup, these accounts will be available:
    docker-compose up --build -d
    ```
 
-2. **Setup users (run once):**
-   ```bash
-   ./setup-production-users.sh
-   ```
-
-3. **Visit:** http://localhost
+2. **Visit:** http://localhost
 
 ### Development Mode
 
-1. **Start infrastructure:**
+1. **Start services:**
    ```bash
-   docker-compose up postgres core -d
+   docker-compose up --build
    ```
 
-2. **Start Backend:**
+2. **Test with simulation:**
    ```bash
-   cd backend
-   npm install
-   npm run setup-users  # Setup users first
-   npm run dev
+   python3 esp32_board_simulation.py
    ```
 
-3. **Start CoreAPI:**
+3. **Or test with single board:**
    ```bash
-   cd CoreAPI
-   pip install -r requirements.txt
-   python src/main.py
+   python3 demo_single_board.py
    ```
 
-4. **Start Frontend:**
-   ```bash
-   cd frontend
-   npm install
-   ng serve --port 4200
-   ```
+## Testing
 
-## User Setup
+The project includes two Python scripts for testing:
 
-### First Time Setup
-After starting the system, you need to create the predefined user accounts:
+- **`esp32_board_simulation.py`** - Simulates multiple ESP32 boards using the binary protocol
+- **`demo_single_board.py`** - Simple demonstration with a single board
 
-**Production:**
-```bash
-./setup-production-users.sh
+## Project Structure
+
 ```
-
-**Development:**
-```bash
-cd backend
-npm run setup-users
+WebControl/
+├── CoreAPI/              # Flask-based API backend
+├── frontend/             # Angular frontend application
+├── docker-compose.yml    # Docker setup for production
+├── nginx.conf           # Nginx configuration
+├── esp32_board_simulation.py  # Multi-board simulation
+└── demo_single_board.py       # Single board demo
 ```
-
-### Persistence
-- ✅ **User data is now persistent** (stored in PostgreSQL)
-- ✅ **Survives container restarts**
-- ✅ **Data stored in named Docker volume**
 
 ## API Endpoints
 
-### Authentication API (`/api/`)
-- `POST /api/signin` - Login with email/password
-- `POST /api/signout` - Logout and clear session
-- `GET /api/dashboard` - Protected dashboard endpoint (shows user role)
+See `COREAPI_INTEGRATION.md` for detailed API documentation.
 
-### CoreAPI (`/coreapi/`) - Role-Based Access
+## Binary Protocol
 
-#### Lecturer-Only Endpoints (Game Control)
-- `GET /coreapi/pollforusers` - Get all boards status (lecturer auth required)
-- `POST /coreapi/game/start` - Start game (lecturer auth required)
-- `POST /coreapi/game/next_round` - Advance game round (lecturer auth required)
+ESP32 devices can use an optimized binary protocol. See `ESP32_BINARY_PROTOCOL.md` for details.
 
-#### Board-Only Endpoints (IoT Operations)
-- `POST /coreapi/register` - Register new IoT board (board auth required)
-- `POST /coreapi/power_generation` - Update power generation (board auth required)
-- `POST /coreapi/power_consumption` - Update power consumption (board auth required)
-- `GET /coreapi/poll/<board_id>` - Get specific board status (board auth required)
-- `GET /coreapi/poll_binary/<board_id>` - Get binary board status (board auth required)
-- `POST /coreapi/submit_binary` - Submit binary data (board auth required)
+## Development
 
-#### Public Endpoints
-- `GET /coreapi/health` - Health check
-- `GET /coreapi/game/status` - Get game status (enhanced info for authenticated users)
+The system is designed for educational energy management games where:
+- Lecturers can control game rounds and monitor all boards
+- IoT boards (ESP32) can register and submit power data
+- Real-time dashboard shows power generation/consumption
 
-## Security Features
+## Security
 
-| Feature | Description |
-|---------|-------------|
-| **Role-Based Access** | Lecturers control games, boards manage IoT operations |
-| **HttpOnly Cookies** | Tokens are not accessible to JavaScript, preventing XSS attacks |
-| **Session Management** | Persistent sessions with configurable expiry |
-| **CORS Protection** | Configured to only allow requests from the frontend domain |
-| **Anti-CSRF** | SuperTokens handles CSRF protection automatically |
-| **Predefined Users** | No user registration - only authorized accounts |
-| **Endpoint Separation** | Different user types cannot access each other's endpoints |
+- Simple JWT-based authentication
+- CORS properly configured for frontend integration
+- Board endpoints are public for ESP32 device access
+- User endpoints require authentication
+## License
 
-## Architecture
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-- **Frontend**: Angular 17 with reactive forms
-- **Backend**: Express.js with SuperTokens authentication
-- **CoreAPI**: Flask API for IoT board management
-- **Database**: PostgreSQL for persistent storage
-- **Authentication**: SuperTokens with EmailPassword recipe
-- **Reverse Proxy**: Nginx for routing and CORS
+## Contributing
 
-## Perfect for Educational Environments
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-This system is designed for educational energy management scenarios:
+## Support
 
-1. **IoT Board Integration**: ESP32 boards can register and send power data
-2. **Game Mechanics**: Round-based scoring system for educational purposes
-3. **User Management**: Lecturers can control game flow and monitor all boards
-4. **Real-time Data**: Live power generation and consumption tracking
-
-## File Structure
-
-```
-├── docker-compose.yml          # Docker orchestration with PostgreSQL
-├── nginx.conf                  # Reverse proxy configuration
-├── supertokens-config.yaml     # SuperTokens configuration
-├── setup-production-users.sh   # User setup script
-├── test_coreapi.py            # API testing script
-├── backend/
-│   ├── Dockerfile
-│   ├── index.ts               # Main server file
-│   ├── setup-users.ts         # User creation script
-│   └── package.json
-├── frontend/
-│   ├── Dockerfile
-│   ├── src/app/
-│   │   ├── auth.service.ts    # Authentication service
-│   │   ├── auth.guard.ts      # Route protection
-│   │   ├── creds.interceptor.ts # HTTP interceptor
-│   │   ├── login/             # Login component
+For issues and questions, please use the GitHub issue tracker.
 │   │   └── dashboard/         # Protected dashboard
 │   └── package.json
 └── CoreAPI/
