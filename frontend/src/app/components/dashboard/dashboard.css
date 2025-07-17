@@ -724,3 +724,124 @@
     align-items: stretch;
   }
 }
+
+/* New styles for group-based features */
+.scenario-section {
+  margin-bottom: 20px;
+}
+
+.scenario-controls {
+  padding: 20px 0;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.scenario-select {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px 15px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.scenario-select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.no-scenarios {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+.badge.scenario-name {
+  background: #9b59b6;
+}
+
+.btn-end {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  margin-left: 10px;
+}
+
+.btn-end:hover:not(:disabled) {
+  background: #c0392b;
+  transform: translateY(-2px);
+}
+
+.btn-end:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.board-info {
+  margin-top: 20px;
+}
+
+.board-status-info {
+  margin-top: 15px;
+  padding: 15px;
+  background: #ecf0f1;
+  border-radius: 6px;
+  border-left: 4px solid #3498db;
+}
+
+.board-status-info p {
+  margin: 5px 0;
+  color: #555;
+}
+
+.board-connections {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.connections-section {
+  margin-bottom: 10px;
+}
+
+.connections-section h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #666;
+  font-weight: 600;
+}
+
+.connection-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.connection-item {
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #555;
+  border: 1px solid #dee2e6;
+}

@@ -38,7 +38,8 @@ export class AuthService {
       username: response.username,
       name: response.name,
       user_type: response.user_type,
-      metadata: response.metadata
+      metadata: response.metadata,
+      group_id: response.group_id || 'group1' // Include group_id
     };
     
     localStorage.setItem('user-info', JSON.stringify(user));
@@ -115,17 +116,42 @@ export class AuthService {
     return userInfo ? JSON.parse(userInfo) : null;
   }
 
-  // Game-related methods
-  getGameStatus(): Observable<any> {
-    return this.http.get(`${this.api}/game/status`, { headers: this.getHeaders() });
+  // Game-related methods - Updated for new lecturer API
+  getScenarios(): Observable<any> {
+    return this.http.get(`${this.api}/scenarios`, { headers: this.getHeaders() });
+  }
+
+  startGameWithScenario(scenarioId: number): Observable<any> {
+    return this.http.post(`${this.api}/start_game`, 
+      { scenario_id: scenarioId }, 
+      { headers: this.getHeaders() }
+    );
+  }
+
+  getGameStatistics(): Observable<any> {
+    return this.http.get(`${this.api}/get_statistics`, { headers: this.getHeaders() });
   }
 
   nextRound(): Observable<any> {
-    return this.http.post(`${this.api}/game/next_round`, {}, { headers: this.getHeaders() });
+    return this.http.post(`${this.api}/next_round`, {}, { headers: this.getHeaders() });
+  }
+
+  endGame(): Observable<any> {
+    return this.http.post(`${this.api}/end_game`, {}, { headers: this.getHeaders() });
+  }
+
+  getPdfUrl(): Observable<any> {
+    return this.http.get(`${this.api}/get_pdf`, { headers: this.getHeaders() });
+  }
+
+  // Legacy methods for backwards compatibility
+  getGameStatus(): Observable<any> {
+    return this.getGameStatistics();
   }
 
   startGame(): Observable<any> {
-    return this.http.post(`${this.api}/game/start`, {}, { headers: this.getHeaders() });
+    // For backwards compatibility, start with scenario 1
+    return this.startGameWithScenario(1);
   }
 
   // Building table management methods

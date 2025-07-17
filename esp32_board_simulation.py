@@ -10,6 +10,7 @@ import random
 import sys
 import os
 import threading
+import struct
 from typing import Optional
 
 # Add the CoreAPI src directory to the path
@@ -242,6 +243,69 @@ class ESP32BoardSimulator:
             # ESP32-like polling interval (conserve battery/processing)
             time.sleep(3)
     
+    def test_new_endpoints(self):
+        """Test the new binary endpoints"""
+        print(f"[{self.board_name}] 🧪 Testing new endpoints...")
+        
+        try:
+            # Test getting production values
+            response = requests.get(f"{COREAPI_URL}/prod_vals", headers=self.headers)
+            if response.status_code == 200:
+                data = response.content
+                if len(data) > 0:
+                    count = struct.unpack('B', data[:1])[0]
+                    print(f"[{self.board_name}] 📊 Production values: {count} power plants available")
+                else:
+                    print(f"[{self.board_name}] ❌ No production data received")
+            
+            # Test getting consumption values  
+            response = requests.get(f"{COREAPI_URL}/cons_vals", headers=self.headers)
+            if response.status_code == 200:
+                data = response.content
+                if len(data) > 0:
+                    count = struct.unpack('B', data[:1])[0]
+                    print(f"[{self.board_name}] 📊 Consumption values: {count} consumers available")
+                else:
+                    print(f"[{self.board_name}] ❌ No consumption data received")
+            
+            # Test posting connected power plants
+            power_plants_data = struct.pack('B', 2)  # 2 power plants
+            power_plants_data += struct.pack('>Ii', 1, 50)  # FVE with 50W set power
+            power_plants_data += struct.pack('>Ii', 2, 30)  # Wind with 30W set power
+            
+            response = requests.post(f"{COREAPI_URL}/prod_connected", 
+                                   data=power_plants_data,
+                                   headers={**self.headers, 'Content-Type': 'application/octet-stream'})
+            if response.status_code == 200:
+                print(f"[{self.board_name}] ✅ Connected power plants reported")
+            else:
+                print(f"[{self.board_name}] ❌ Failed to report power plants: {response.status_code}")
+            
+            # Test posting connected consumers
+            consumers_data = struct.pack('B', 1)  # 1 consumer
+            consumers_data += struct.pack('>I', 3)  # Housing units
+            
+            response = requests.post(f"{COREAPI_URL}/cons_connected", 
+                                   data=consumers_data,
+                                   headers={**self.headers, 'Content-Type': 'application/octet-stream'})
+            if response.status_code == 200:
+                print(f"[{self.board_name}] ✅ Connected consumers reported")
+            else:
+                print(f"[{self.board_name}] ❌ Failed to report consumers: {response.status_code}")
+            
+            # Test posting production/consumption values
+            post_data = struct.pack('>ii', 45, 25)  # 45W production, 25W consumption
+            response = requests.post(f"{COREAPI_URL}/post_vals", 
+                                   data=post_data,
+                                   headers={**self.headers, 'Content-Type': 'application/octet-stream'})
+            if response.status_code == 200:
+                print(f"[{self.board_name}] ✅ Posted power values (45W production, 25W consumption)")
+            else:
+                print(f"[{self.board_name}] ❌ Failed to post power values: {response.status_code}")
+                
+        except Exception as e:
+            print(f"[{self.board_name}] ❌ Error testing new endpoints: {e}")
+    
     def run(self):
         """Run the complete ESP32 board simulation"""
         print(f"[{self.board_name}] 🔌 Starting ESP32 simulation...")
@@ -253,6 +317,9 @@ class ESP32BoardSimulator:
         # Step 2: Register using binary protocol
         if not self.register_binary():
             return False
+        
+        # Step 2.5: Test new endpoints
+        self.test_new_endpoints()
         
         # Step 3: Wait for game to start
         if not self.wait_for_game_start():

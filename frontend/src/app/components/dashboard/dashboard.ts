@@ -14,12 +14,14 @@ import { interval, Subscription } from 'rxjs';
 export class DashboardComponent implements OnInit, OnDestroy {
   userInfo: any = null;
   gameStatus: any = null;
+  scenarios: any[] = [];
+  selectedScenario: number | null = null;
   isLoading = true;
   isGameLoading = false;
   private gameStatusSubscription?: Subscription;
   private pollSubscription?: Subscription;
 
-  // Building management properties
+  // Building management properties - keeping for backwards compatibility
   buildingTable: any = null;
   originalBuildingTable: any = null;
   isBuildingTableDirty = false;
@@ -51,8 +53,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadProfile();
+    this.loadScenarios();
     this.startGameStatusPolling();
-    this.loadBuildingTable();
+    this.loadBuildingTable(); // Keep for backwards compatibility
   }
 
   ngOnDestroy() {
@@ -61,6 +64,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
     if (this.pollSubscription) {
       this.pollSubscription.unsubscribe();
+    }
+  }
+
+  loadScenarios() {
+    if (this.userInfo?.user_type === 'lecturer') {
+      this.authService.getScenarios().subscribe({
+        next: (response: any) => {
+          this.scenarios = response.scenarios || [];
+          if (this.scenarios.length > 0) {
+            this.selectedScenario = this.scenarios[0].id;
+          }
+        },
+        error: (error: any) => {
+          console.error('Failed to load scenarios', error);
+        }
+      });
     }
   }
 
@@ -75,21 +94,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadGameStatus() {
-    this.gameStatusSubscription = this.authService.getGameStatus().subscribe({
-      next: (status: any) => {
-        this.gameStatus = status;
+    this.gameStatusSubscription = this.authService.getGameStatistics().subscribe({
+      next: (response: any) => {
+        this.gameStatus = {
+          ...response.game_status,
+          statistics: response.statistics
+        };
       },
       error: (error: any) => {
         console.error('Failed to load game status', error);
+        // If statistics fail, fall back to the old endpoint structure
+        this.gameStatus = null;
       }
     });
   }
 
   loadProfile() {
     this.authService.profile().subscribe({
-      next: (profile: any) => {
-        this.userInfo = profile;
+      next: (response: any) => {
+        // New API returns { success: true, user: { ... } }
+        this.userInfo = response.user || response;
         this.isLoading = false;
+        // Load scenarios after we know the user type
+        this.loadScenarios();
       },
       error: (error: any) => {
         console.error('Failed to load profile', error);
@@ -123,7 +150,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.isGameLoading) return;
     
     this.isGameLoading = true;
-    this.authService.startGame().subscribe({
+    
+    // Use selected scenario if available, otherwise fall back to default behavior
+    const startGameObservable = this.selectedScenario 
+      ? this.authService.startGameWithScenario(this.selectedScenario)
+      : this.authService.startGame();
+    
+    startGameObservable.subscribe({
       next: (response: any) => {
         console.log('Game started successfully', response);
         this.isGameLoading = false;
@@ -132,6 +165,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       error: (error: any) => {
         console.error('Failed to start game', error);
+        this.isGameLoading = false;
+      }
+    });
+  }
+
+  endGame() {
+    if (this.isGameLoading) return;
+    
+    this.isGameLoading = true;
+    this.authService.endGame().subscribe({
+      next: (response: any) => {
+        console.log('Game ended successfully', response);
+        this.isGameLoading = false;
+        // Immediately refresh game status
+        this.loadGameStatus();
+      },
+      error: (error: any) => {
+        console.error('Failed to end game', error);
         this.isGameLoading = false;
       }
     });
