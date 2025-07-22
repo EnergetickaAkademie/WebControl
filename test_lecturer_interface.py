@@ -5,9 +5,9 @@ Tests the new scenario-based game management system
 """
 
 import requests
-import time
 import json
-import sys
+import time
+from typing import Dict, Optional
 
 BASE_URL = "http://localhost"
 COREAPI_URL = f"{BASE_URL}/coreapi"
@@ -24,16 +24,17 @@ class LecturerInterface:
     def login(self) -> bool:
         """Login to get authentication token"""
         try:
-            response = requests.post(f"{COREAPI_URL}/login", json={
-                "username": self.username,
-                "password": self.password
-            })
+            response = requests.post(f"{COREAPI_URL}/login", 
+                                   json={
+                                       'username': self.username,
+                                       'password': self.password
+                                   })
             
             if response.status_code == 200:
                 data = response.json()
                 self.token = data['token']
                 self.headers = {'Authorization': f'Bearer {self.token}'}
-                print(f"✅ Login successful as {data['name']} ({data['user_type']})")
+                print(f"✅ Logged in as {data['username']} ({data['user_type']})")
                 return True
             else:
                 print(f"❌ Login failed: {response.status_code}")
@@ -44,199 +45,214 @@ class LecturerInterface:
             return False
     
     def get_scenarios(self):
-        """Test /scenarios endpoint"""
-        print("\n🎯 Testing /scenarios endpoint...")
+        """Get available scenarios"""
         try:
             response = requests.get(f"{COREAPI_URL}/scenarios", headers=self.headers)
             
             if response.status_code == 200:
                 data = response.json()
                 scenarios = data.get('scenarios', [])
-                print(f"✅ Available scenarios: {len(scenarios)}")
-                for scenario in scenarios:
-                    print(f"   - ID: {scenario['id']}, Name: {scenario['name']}")
+                print(f"📋 Available scenarios: {list(scenarios)}")
                 return scenarios
             else:
-                print(f"❌ Failed to get scenarios: {response.status_code}")
-                return []
+                print(f"❌ Get scenarios failed: {response.status_code}")
+                return None
                 
         except Exception as e:
-            print(f"❌ Error getting scenarios: {e}")
-            return []
+            print(f"❌ Get scenarios error: {e}")
+            return None
     
-    def start_game(self, scenario_id: int):
-        """Test /start_game endpoint"""
-        print(f"\n🚀 Testing /start_game with scenario {scenario_id}...")
+    def start_game(self, scenario_id: str):
+        """Start game with specific scenario"""
         try:
             response = requests.post(f"{COREAPI_URL}/start_game", 
-                                   json={"scenario_id": scenario_id},
+                                   json={'scenario_id': scenario_id},
                                    headers=self.headers)
             
             if response.status_code == 200:
                 data = response.json()
-                print(f"✅ Game started: {data['message']}")
-                print(f"   Started by: {data['started_by']}")
+                print(f"🎮 Game started: {data.get('message')}")
+                print(f"   Started by: {data.get('started_by')}")
                 return True
             else:
-                print(f"❌ Failed to start game: {response.status_code}")
-                if response.headers.get('content-type', '').startswith('application/json'):
+                print(f"❌ Start game failed: {response.status_code}")
+                try:
                     error_data = response.json()
-                    print(f"   Error: {error_data.get('error', 'Unknown error')}")
+                    print(f"   Error: {error_data.get('error')}")
+                except:
+                    pass
                 return False
                 
         except Exception as e:
-            print(f"❌ Error starting game: {e}")
+            print(f"❌ Start game error: {e}")
             return False
     
     def get_pdf(self):
-        """Test /get_pdf endpoint"""
-        print("\n📄 Testing /get_pdf endpoint...")
+        """Get PDF URL for current scenario"""
         try:
             response = requests.get(f"{COREAPI_URL}/get_pdf", headers=self.headers)
             
             if response.status_code == 200:
                 data = response.json()
-                print(f"✅ PDF URL: {data['url']}")
-                return data['url']
+                url = data.get('url')
+                print(f"📄 PDF URL: {url}")
+                return url
             else:
-                print(f"❌ Failed to get PDF: {response.status_code}")
+                print(f"❌ Get PDF failed: {response.status_code}")
                 return None
                 
         except Exception as e:
-            print(f"❌ Error getting PDF: {e}")
+            print(f"❌ Get PDF error: {e}")
             return None
     
     def next_round(self):
-        """Test /next_round endpoint"""
-        print("\n⏭️ Testing /next_round endpoint...")
+        """Advance to next round"""
         try:
             response = requests.post(f"{COREAPI_URL}/next_round", headers=self.headers)
             
             if response.status_code == 200:
                 data = response.json()
-                if data['status'] == 'success':
-                    print(f"✅ Advanced to round {data['round']}")
-                    print(f"   Advanced by: {data['advanced_by']}")
-                elif data['status'] == 'game_finished':
-                    print(f"🏁 Game finished: {data['message']}")
-                    print(f"   Finished by: {data['finished_by']}")
-                return True
+                if data.get('status') == 'success':
+                    print(f"⏭️ Advanced to round {data.get('round')}")
+                    print(f"   Advanced by: {data.get('advanced_by')}")
+                    return True
+                elif data.get('status') == 'game_finished':
+                    print(f"🏁 Game finished: {data.get('message')}")
+                    print(f"   Finished by: {data.get('finished_by')}")
+                    return False
             else:
-                print(f"❌ Failed to advance round: {response.status_code}")
+                print(f"❌ Next round failed: {response.status_code}")
                 return False
                 
         except Exception as e:
-            print(f"❌ Error advancing round: {e}")
+            print(f"❌ Next round error: {e}")
             return False
     
     def get_statistics(self):
-        """Test /get_statistics endpoint"""
-        print("\n📊 Testing /get_statistics endpoint...")
+        """Get game statistics"""
         try:
             response = requests.get(f"{COREAPI_URL}/get_statistics", headers=self.headers)
             
             if response.status_code == 200:
                 data = response.json()
-                statistics = data.get('statistics', [])
+                stats = data.get('statistics', [])
                 game_status = data.get('game_status', {})
                 
-                print(f"✅ Statistics for {len(statistics)} boards:")
-                print(f"   Game Status: Round {game_status.get('current_round', 0)}/{game_status.get('total_rounds', 0)}")
-                print(f"   Active: {game_status.get('game_active', False)}")
+                print(f"📊 Game Statistics:")
+                print(f"   Current Round: {game_status.get('current_round', 0)}")
+                print(f"   Total Rounds: {game_status.get('total_rounds', 0)}")
+                print(f"   Game Active: {game_status.get('game_active', False)}")
                 print(f"   Scenario: {game_status.get('scenario', 'None')}")
                 
-                for board in statistics:
-                    print(f"   Board {board['board_id']} ({board['board_name']}):")
-                    print(f"     - Generation: {board['current_generation']}W")
-                    print(f"     - Consumption: {board['current_consumption']}W")
-                    print(f"     - Score: {board['total_score']}")
-                    print(f"     - Connected Power Plants: {board['connected_power_plants']}")
-                    print(f"     - Connected Consumers: {board['connected_consumers']}")
+                for stat in stats:
+                    print(f"   Board {stat.get('board_id')}: "
+                          f"Prod={stat.get('current_production', 0)}W, "
+                          f"Cons={stat.get('current_consumption', 0)}W, "
+                          f"History={len(stat.get('production_history', []))} entries")
                 
-                return statistics
+                return data
             else:
-                print(f"❌ Failed to get statistics: {response.status_code}")
-                return []
+                print(f"❌ Get statistics failed: {response.status_code}")
+                return None
                 
         except Exception as e:
-            print(f"❌ Error getting statistics: {e}")
-            return []
+            print(f"❌ Get statistics error: {e}")
+            return None
     
     def end_game(self):
-        """Test /end_game endpoint"""
-        print("\n🔚 Testing /end_game endpoint...")
+        """End the current game"""
         try:
             response = requests.post(f"{COREAPI_URL}/end_game", headers=self.headers)
             
             if response.status_code == 200:
                 data = response.json()
-                print(f"✅ Game ended: {data['message']}")
-                print(f"   Ended by: {data['ended_by']}")
+                print(f"🛑 Game ended: {data.get('message')}")
+                print(f"   Ended by: {data.get('ended_by')}")
                 return True
             else:
-                print(f"❌ Failed to end game: {response.status_code}")
+                print(f"❌ End game failed: {response.status_code}")
                 return False
                 
         except Exception as e:
-            print(f"❌ Error ending game: {e}")
+            print(f"❌ End game error: {e}")
             return False
     
     def run_full_test(self):
-        """Run complete test of lecturer interface"""
-        print("🧪 Starting lecturer interface test...")
-        print("=" * 60)
+        """Run a complete test sequence"""
+        print("\n🧪 Running full lecturer interface test...")
         
-        # Step 1: Login
-        if not self.login():
-            return False
-        
-        # Step 2: Get scenarios
+        # 1. Get available scenarios
         scenarios = self.get_scenarios()
         if not scenarios:
-            print("❌ No scenarios available")
-            return False
+            print("❌ Cannot proceed without scenarios")
+            return
         
-        # Step 3: Start game with first scenario
-        first_scenario_id = scenarios[0]['id']
-        if not self.start_game(first_scenario_id):
-            return False
+        # 2. Start a game with the first scenario
+        first_scenario = list(scenarios)[0] if scenarios else "demo"
+        print(f"\n📅 Starting game with scenario: {first_scenario}")
+        if not self.start_game(first_scenario):
+            print("❌ Cannot start game")
+            return
         
-        # Step 4: Get PDF
+        # 3. Get PDF
+        print(f"\n📄 Getting PDF...")
         self.get_pdf()
         
-        # Step 5: Wait a bit for boards to connect
-        print("\n⏳ Waiting 3 seconds for boards to connect...")
-        time.sleep(3)
-        
-        # Step 6: Get statistics
+        # 4. Get initial statistics
+        print(f"\n📊 Getting initial statistics...")
         self.get_statistics()
         
-        # Step 7: Advance a couple of rounds
+        # 5. Wait a bit for boards to connect (if running)
+        print(f"\n⏳ Waiting 5 seconds for any board connections...")
+        time.sleep(5)
+        
+        # 6. Advance a few rounds
         for i in range(3):
-            print(f"\n⏳ Waiting 2 seconds before advancing round {i+1}...")
-            time.sleep(2)
+            print(f"\n⏭️ Advancing to next round (attempt {i+1})...")
             if not self.next_round():
                 break
+            time.sleep(2)
+            
+            # Get statistics after each round
+            print(f"📊 Statistics after round advance:")
             self.get_statistics()
         
-        # Step 8: End game
+        # 7. End the game
+        print(f"\n🛑 Ending game...")
         self.end_game()
         
-        print("\n✅ Lecturer interface test completed!")
-        return True
+        print(f"\n✅ Full test completed!")
+
 
 def main():
     print("👨‍🏫 Lecturer Interface Test")
     print("=" * 60)
     
+    # Test API connectivity first
+    try:
+        response = requests.get(f"{COREAPI_URL}/health", timeout=5)
+        if response.status_code == 200:
+            print("✅ CoreAPI is accessible")
+        else:
+            print(f"⚠️ CoreAPI returned status {response.status_code}")
+    except Exception as e:
+        print(f"❌ Cannot connect to CoreAPI: {e}")
+        print("Make sure Docker services are running: docker-compose up")
+        return
+    
     # Test with lecturer account
     lecturer = LecturerInterface("lecturer1", "lecturer123")
     
     try:
-        lecturer.run_full_test()
+        if lecturer.login():
+            lecturer.run_full_test()
+        else:
+            print("❌ Cannot proceed without login")
+            
     except KeyboardInterrupt:
-        print("\n🛑 Test stopped by user")
-        lecturer.end_game()
+        print("\n🛑 Test interrupted by user")
+        print("✅ Test completed (interrupted)")
+
 
 if __name__ == "__main__":
     main()

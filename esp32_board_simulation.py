@@ -1,60 +1,49 @@
 #!/usr/bin/env python3
 """
-ESP32 Board Simulation using Binary Protocol
-Simulates ESP32 boards with minimal memory usage using binary endpoints.
+ESP32 Board Simulation Script
+Simulates ESP32 boards communicating with the CoreAPI using binary protocol
 """
 
 import requests
+import struct
 import time
 import random
-import sys
-import os
 import threading
-import struct
-from typing import Optional
+from typing import Dict, Any
 
-# Add the CoreAPI src directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'CoreAPI', 'src'))
-
-try:
-    from binary_protocol import BoardBinaryProtocol, BinaryProtocolError
-except ImportError as e:
-    print(f"❌ Could not import binary protocol: {e}")
-    sys.exit(1)
-
+# Configuration
 BASE_URL = "http://localhost"
 COREAPI_URL = f"{BASE_URL}/coreapi"
 
 class ESP32BoardSimulator:
-    """Simulates an ESP32 board with minimal memory usage"""
-    
-    def __init__(self, username: str, password: str, board_id: int, 
-                 board_name: str, board_type: str):
+    def __init__(self, board_name: str, username: str, password: str):
+        self.board_name = board_name
         self.username = username
         self.password = password
-        self.board_id = board_id
-        self.board_name = board_name
-        self.board_type = board_type
-        self.token: Optional[str] = None
-        self.headers: dict = {}
-        self.running = False
-        self.current_round = 0
-        self.last_generation = 0.0
-        self.last_consumption = 0.0
+        self.token = None
+        self.headers = {}
+        self.running = True
         
+        # Simulation state
+        self.production = 0.0
+        self.consumption = 0.0
+        self.connected_power_plants = []
+        self.connected_consumers = []
+    
     def login(self) -> bool:
-        """Login to get authentication token"""
+        """Authenticate with the API and get JWT token"""
         try:
-            response = requests.post(f"{COREAPI_URL}/login", json={
-                "username": self.username,
-                "password": self.password
-            })
+            response = requests.post(f"{COREAPI_URL}/login", 
+                                   json={
+                                       'username': self.username,
+                                       'password': self.password
+                                   })
             
             if response.status_code == 200:
                 data = response.json()
                 self.token = data['token']
                 self.headers = {'Authorization': f'Bearer {self.token}'}
-                print(f"[{self.board_name}] ✅ Login successful")
+                print(f"[{self.board_name}] ✅ Logged in successfully")
                 return True
             else:
                 print(f"[{self.board_name}] ❌ Login failed: {response.status_code}")
@@ -64,327 +53,212 @@ class ESP32BoardSimulator:
             print(f"[{self.board_name}] ❌ Login error: {e}")
             return False
     
-    def register_binary(self) -> bool:
-        """Register board using binary protocol"""
+    def register_board(self) -> bool:
+        """Register the board with the API using binary protocol"""
         try:
-            # Pack registration data
-            registration_data = BoardBinaryProtocol.pack_registration_request(
-                self.board_id, self.board_name, self.board_type
-            )
+            # Binary registration now requires only JWT authentication
+            # No board data needed in request - board ID comes from JWT token
             
-            # Send binary registration
-            response = requests.post(f"{COREAPI_URL}/register_binary",
-                                   data=registration_data,
+            response = requests.post(f"{COREAPI_URL}/register",
+                                   data=b'',  # Empty data - board ID extracted from JWT
                                    headers={**self.headers, 'Content-Type': 'application/octet-stream'})
             
             if response.status_code == 200:
-                success, message = BoardBinaryProtocol.unpack_registration_response(response.content)
-                if success:
-                    print(f"[{self.board_name}] ✅ Binary registration successful: {message}")
-                    return True
-                else:
-                    print(f"[{self.board_name}] ❌ Registration failed: {message}")
-                    return False
+                print(f"[{self.board_name}] ✅ Board registered successfully")
+                return True
             else:
-                print(f"[{self.board_name}] ❌ Registration request failed: {response.status_code}")
+                print(f"[{self.board_name}] ❌ Registration failed: {response.status_code}")
                 return False
                 
-        except BinaryProtocolError as e:
-            print(f"[{self.board_name}] ❌ Binary protocol error: {e}")
-            return False
         except Exception as e:
             print(f"[{self.board_name}] ❌ Registration error: {e}")
             return False
     
-    def poll_binary(self) -> Optional[dict]:
-        """Poll board status using binary protocol"""
+    def poll_binary(self) -> bool:
+        """Poll the board status using binary protocol"""
         try:
-            response = requests.get(f"{COREAPI_URL}/poll_binary/{self.board_id}", 
+            response = requests.get(f"{COREAPI_URL}/poll_binary",
                                   headers=self.headers)
             
             if response.status_code == 200:
-                return BoardBinaryProtocol.unpack_poll_response(response.content)
-            elif response.status_code == 404:
-                print(f"[{self.board_name}] ❌ Board not found")
-                return None
+                print(f"[{self.board_name}] 📡 Received game coefficients")
+                return True
             else:
-                print(f"[{self.board_name}] ❌ Poll failed: {response.status_code}")
-                return None
+                print(f"[{self.board_name}] ⚠️ Poll failed: {response.status_code}")
+                return False
                 
-        except BinaryProtocolError as e:
-            print(f"[{self.board_name}] ❌ Poll protocol error: {e}")
-            return None
         except Exception as e:
             print(f"[{self.board_name}] ❌ Poll error: {e}")
-            return None
+            return False
     
-    def send_power_data_binary(self, generation: Optional[float], 
-                             consumption: Optional[float]) -> bool:
-        """Send power data using binary protocol"""
+    def send_power_data(self, production: float, consumption: float) -> bool:
+        """Send power data using binary protocol (post_vals endpoint)"""
         try:
-            # Pack power data with current Unix timestamp
-            power_data = BoardBinaryProtocol.pack_power_data(
-                self.board_id, generation, consumption, int(time.time())
-            )
+            # Pack production and consumption as signed integers (W to mW conversion)
+            prod_int = int(production * 1000)
+            cons_int = int(consumption * 1000)
             
-            # Send binary power data
-            response = requests.post(f"{COREAPI_URL}/power_data_binary",
-                                   data=power_data,
+            data = struct.pack('>ii', prod_int, cons_int)
+            
+            response = requests.post(f"{COREAPI_URL}/post_vals",
+                                   data=data,
                                    headers={**self.headers, 'Content-Type': 'application/octet-stream'})
             
             if response.status_code == 200:
+                self.production = production
+                self.consumption = consumption
                 return True
             else:
-                error_text = response.content.decode('utf-8', errors='ignore')
-                print(f"[{self.board_name}] ❌ Power data failed: {response.status_code} - {error_text}")
+                print(f"[{self.board_name}] ⚠️ Power data failed: {response.status_code}")
                 return False
                 
-        except BinaryProtocolError as e:
-            print(f"[{self.board_name}] ❌ Power data protocol error: {e}")
-            return False
         except Exception as e:
             print(f"[{self.board_name}] ❌ Power data error: {e}")
             return False
     
-    def generate_realistic_data(self, round_type: str) -> tuple[float, float]:
-        """Generate realistic power data based on board type and round"""
-        if self.board_type == "solar":
-            if round_type == "day":
-                # Solar panels generate more during day
-                base_generation = random.uniform(25, 50)
-                variation = random.uniform(-5, 5)
-                generation = max(0, base_generation + variation)
-            else:
-                # Minimal generation at night
-                generation = random.uniform(0, 2)
-            
-            # Solar panels consume minimal power
-            consumption = random.uniform(1, 3)
-            
-        elif self.board_type == "wind":
-            # Wind is more random but less dependent on day/night
-            base_generation = random.uniform(10, 30)
-            variation = random.uniform(-8, 8)
-            generation = max(0, base_generation + variation)
-            consumption = random.uniform(2, 5)
-            
-        elif self.board_type == "battery":
-            # Battery storage - more consumption during day (charging)
-            if round_type == "day":
-                generation = random.uniform(0, 5)  # Minimal generation
-                consumption = random.uniform(20, 40)  # Higher consumption (charging)
-            else:
-                generation = random.uniform(15, 35)  # Discharging at night
-                consumption = random.uniform(5, 15)  # Lower consumption
-        else:
-            # Generic board
-            generation = random.uniform(5, 20)
-            consumption = random.uniform(5, 15)
-        
-        return generation, consumption
-    
-    def wait_for_game_start(self) -> bool:
-        """Wait for the game to start using binary polling"""
-        print(f"[{self.board_name}] 🕐 Waiting for game to start...")
-        
-        while True:
-            status = self.poll_binary()
-            if status is None:
-                time.sleep(1)
-                continue
-            
-            if status['game_active']:
-                print(f"[{self.board_name}] 🚀 Game started! Round {status['round']}")
-                self.current_round = status['round']
-                
-                # Send initial data if expected
-                if status['expecting_data']:
-                    generation, consumption = self.generate_realistic_data(status['round_type'])
-                    if self.send_power_data_binary(generation, consumption):
-                        self.last_generation = generation
-                        self.last_consumption = consumption
-                        print(f"[{self.board_name}] 📊 Initial data sent - Gen: {generation:.2f}kW, Cons: {consumption:.2f}kW")
-                
-                return True
-            
-            time.sleep(1)  # Poll every second
-    
-    def main_loop(self):
-        """Main ESP32 simulation loop with minimal memory usage"""
-        print(f"[{self.board_name}] 🎮 Entering main game loop...")
-        
-        while self.running:
-            status = self.poll_binary()
-            if status is None:
-                time.sleep(2)
-                continue
-            
-            # Check if game is still active
-            if not status['game_active']:
-                print(f"[{self.board_name}] 🏁 Game ended")
-                break
-            
-            # Check for new round
-            if status['round'] != self.current_round:
-                print(f"[{self.board_name}] ⏭️ New round {status['round']} ({status['round_type']})")
-                self.current_round = status['round']
-            
-            # Send data only if expected
-            if status['expecting_data']:
-                generation, consumption = self.generate_realistic_data(status['round_type'])
-                
-                if self.send_power_data_binary(generation, consumption):
-                    self.last_generation = generation
-                    self.last_consumption = consumption
-                    print(f"[{self.board_name}] 📊 Round {status['round']} data - Gen: {generation:.2f}kW, Cons: {consumption:.2f}kW")
-                else:
-                    print(f"[{self.board_name}] ❌ Failed to send data for round {status['round']}")
-            
-            # ESP32-like polling interval (conserve battery/processing)
-            time.sleep(3)
-    
-    def test_new_endpoints(self):
-        """Test the new binary endpoints"""
-        print(f"[{self.board_name}] 🧪 Testing new endpoints...")
-        
+    def report_connected_production(self, plant_ids: list) -> bool:
+        """Report connected power plants"""
         try:
-            # Test getting production values
-            response = requests.get(f"{COREAPI_URL}/prod_vals", headers=self.headers)
-            if response.status_code == 200:
-                data = response.content
-                if len(data) > 0:
-                    count = struct.unpack('B', data[:1])[0]
-                    print(f"[{self.board_name}] 📊 Production values: {count} power plants available")
-                else:
-                    print(f"[{self.board_name}] ❌ No production data received")
+            count = len(plant_ids)
+            data = struct.pack('B', count)
             
-            # Test getting consumption values  
-            response = requests.get(f"{COREAPI_URL}/cons_vals", headers=self.headers)
-            if response.status_code == 200:
-                data = response.content
-                if len(data) > 0:
-                    count = struct.unpack('B', data[:1])[0]
-                    print(f"[{self.board_name}] 📊 Consumption values: {count} consumers available")
-                else:
-                    print(f"[{self.board_name}] ❌ No consumption data received")
+            for plant_id in plant_ids:
+                set_power = random.randint(500, 2000)  # Random set power in mW
+                data += struct.pack('>Ii', plant_id, set_power)
             
-            # Test posting connected power plants
-            power_plants_data = struct.pack('B', 2)  # 2 power plants
-            power_plants_data += struct.pack('>Ii', 1, 50)  # FVE with 50W set power
-            power_plants_data += struct.pack('>Ii', 2, 30)  # Wind with 30W set power
-            
-            response = requests.post(f"{COREAPI_URL}/prod_connected", 
-                                   data=power_plants_data,
+            response = requests.post(f"{COREAPI_URL}/prod_connected",
+                                   data=data,
                                    headers={**self.headers, 'Content-Type': 'application/octet-stream'})
-            if response.status_code == 200:
-                print(f"[{self.board_name}] ✅ Connected power plants reported")
-            else:
-                print(f"[{self.board_name}] ❌ Failed to report power plants: {response.status_code}")
             
-            # Test posting connected consumers
-            consumers_data = struct.pack('B', 1)  # 1 consumer
-            consumers_data += struct.pack('>I', 3)  # Housing units
-            
-            response = requests.post(f"{COREAPI_URL}/cons_connected", 
-                                   data=consumers_data,
-                                   headers={**self.headers, 'Content-Type': 'application/octet-stream'})
             if response.status_code == 200:
-                print(f"[{self.board_name}] ✅ Connected consumers reported")
+                self.connected_power_plants = plant_ids
+                print(f"[{self.board_name}] ✅ Reported {count} connected power plants")
+                return True
             else:
-                print(f"[{self.board_name}] ❌ Failed to report consumers: {response.status_code}")
-            
-            # Test posting production/consumption values
-            post_data = struct.pack('>ii', 45, 25)  # 45W production, 25W consumption
-            response = requests.post(f"{COREAPI_URL}/post_vals", 
-                                   data=post_data,
-                                   headers={**self.headers, 'Content-Type': 'application/octet-stream'})
-            if response.status_code == 200:
-                print(f"[{self.board_name}] ✅ Posted power values (45W production, 25W consumption)")
-            else:
-                print(f"[{self.board_name}] ❌ Failed to post power values: {response.status_code}")
+                print(f"[{self.board_name}] ⚠️ Production report failed: {response.status_code}")
+                return False
                 
         except Exception as e:
-            print(f"[{self.board_name}] ❌ Error testing new endpoints: {e}")
+            print(f"[{self.board_name}] ❌ Production report error: {e}")
+            return False
     
-    def run(self):
-        """Run the complete ESP32 board simulation"""
-        print(f"[{self.board_name}] 🔌 Starting ESP32 simulation...")
-        
-        # Step 1: Login
-        if not self.login():
-            return False
-        
-        # Step 2: Register using binary protocol
-        if not self.register_binary():
-            return False
-        
-        # Step 2.5: Test new endpoints
-        self.test_new_endpoints()
-        
-        # Step 3: Wait for game to start
-        if not self.wait_for_game_start():
-            return False
-        
-        # Step 4: Run main loop
-        self.running = True
+    def report_connected_consumption(self, consumer_ids: list) -> bool:
+        """Report connected consumers"""
         try:
-            self.main_loop()
-        except KeyboardInterrupt:
-            print(f"[{self.board_name}] 🛑 Simulation stopped by user")
-        finally:
-            self.running = False
+            count = len(consumer_ids)
+            data = struct.pack('B', count)
+            
+            for consumer_id in consumer_ids:
+                data += struct.pack('>I', consumer_id)
+            
+            response = requests.post(f"{COREAPI_URL}/cons_connected",
+                                   data=data,
+                                   headers={**self.headers, 'Content-Type': 'application/octet-stream'})
+            
+            if response.status_code == 200:
+                self.connected_consumers = consumer_ids
+                print(f"[{self.board_name}] ✅ Reported {count} connected consumers")
+                return True
+            else:
+                print(f"[{self.board_name}] ⚠️ Consumption report failed: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"[{self.board_name}] ❌ Consumption report error: {e}")
+            return False
+    
+    def generate_realistic_data(self) -> tuple[float, float]:
+        """Generate realistic power data based on board type"""
+        # Simple simulation - random values for demonstration
+        production = random.uniform(800, 1500)  # 800-1500W
+        consumption = random.uniform(200, 600)  # 200-600W
         
-        return True
+        return production, consumption
+    
+    def simulate_board_operation(self):
+        """Main simulation loop"""
+        print(f"[{self.board_name}] 🎮 Starting board simulation")
+        
+        # Login and register
+        if not self.login():
+            return
+        
+        if not self.register_board():
+            return
+            
+        # Report some initial connections
+        self.report_connected_production([1, 2, 3])  # Connected to power plants 1, 2, 3
+        self.report_connected_consumption([1, 2])     # Connected to consumers 1, 2
+        
+        # Main simulation loop
+        while self.running:
+            try:
+                # Poll for game status
+                if self.poll_binary():
+                    # Generate and send power data
+                    prod, cons = self.generate_realistic_data()
+                    if self.send_power_data(prod, cons):
+                        print(f"[{self.board_name}] 📊 Sent: Production={prod:.1f}W, Consumption={cons:.1f}W")
+                
+                # Wait before next update
+                time.sleep(5)
+                
+            except KeyboardInterrupt:
+                print(f"[{self.board_name}] 🛑 Stopping simulation")
+                self.running = False
+                break
+            except Exception as e:
+                print(f"[{self.board_name}] ❌ Simulation error: {e}")
+                time.sleep(2)
+    
+    def stop(self):
+        """Stop the simulation"""
+        self.running = False
 
-def run_board_simulation(config):
-    """Run a single board simulation"""
-    simulator = ESP32BoardSimulator(**config)
-    simulator.run()
 
 def main():
-    print("🤖 ESP32 Binary Protocol Board Simulation")
-    print("=" * 60)
+    print("🤖 ESP32 Board Simulator")
+    print("=" * 50)
     
-    # Board configurations optimized for ESP32
-    board_configs = [
-        {
-            "username": "board1",
-            "password": "board123", 
-            "board_id": 4001,
-            "board_name": "ESP32 Solar #1",
-            "board_type": "solar"
-        },
-        {
-            "username": "board2", 
-            "password": "board456",
-            "board_id": 4002,
-            "board_name": "ESP32 Wind #1",
-            "board_type": "wind"
-        },
-        {
-            "username": "board3",
-            "password": "board789", 
-            "board_id": 4003,
-            "board_name": "ESP32 Battery #1",
-            "board_type": "battery"
-        }
+    # Test API connectivity first
+    try:
+        response = requests.get(f"{COREAPI_URL}/health", timeout=5)
+        if response.status_code == 200:
+            print("✅ CoreAPI is accessible")
+        else:
+            print(f"⚠️ CoreAPI returned status {response.status_code}")
+    except Exception as e:
+        print(f"❌ Cannot connect to CoreAPI: {e}")
+        print("Make sure Docker services are running: docker-compose up")
+        return
+    
+    # Create board simulators
+    boards = [
+        ESP32BoardSimulator("Solar Panel Board #1", "board1", "board123"),
+        ESP32BoardSimulator("Wind Turbine Board #2", "board2", "board456"), 
+        ESP32BoardSimulator("Battery Storage Board #3", "board3", "board789")
     ]
     
-    # Start all board simulations in parallel
+    # Start simulation threads
     threads = []
-    for config in board_configs:
-        thread = threading.Thread(target=run_board_simulation, args=(config,))
+    for board in boards:
+        thread = threading.Thread(target=board.simulate_board_operation)
         thread.daemon = True
-        thread.start()
         threads.append(thread)
-        time.sleep(0.5)  # Stagger startup
+        thread.start()
+        time.sleep(1)  # Stagger the starts
     
-    # Wait for all threads or user interrupt
     try:
-        for thread in threads:
-            thread.join()
+        print("\n🔄 Boards are running. Press Ctrl+C to stop all simulations.")
+        while True:
+            time.sleep(1)
     except KeyboardInterrupt:
-        print("\n🛑 Stopping all simulations...")
+        print("\n🛑 Stopping all board simulations...")
+        for board in boards:
+            board.stop()
+        
+        print("✅ All simulations stopped.")
+
 
 if __name__ == "__main__":
     main()
