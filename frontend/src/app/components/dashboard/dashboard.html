@@ -1,299 +1,179 @@
 <div class="dashboard-container">
+  <!-- Header -->
   <div class="dashboard-header">
-    <h1>Lecturer Dashboard - Energy Game Control</h1>
-    <button class="logout-btn" (click)="logout()">Logout</button>
-  </div>
-
-  <div *ngIf="isLoading" class="loading">
-    <p>Loading...</p>
-  </div>
-
-  <div *ngIf="!isLoading && userInfo" class="dashboard-content">
-    <div class="welcome-card">
-      <h2>Welcome, {{ userInfo.name || 'Lecturer' }}!</h2>
-      <p><strong>Group:</strong> {{ userInfo.group_id || 'group1' }}</p>
-      <p><strong>Department:</strong> {{ userInfo.metadata?.department || 'Unknown' }}</p>
-      <p><strong>User Type:</strong> {{ userInfo.user_type }}</p>
+    <h1>Energy Game - Lecturer Dashboard</h1>
+    <div class="header-controls">
+      <span *ngIf="userInfo" class="user-info">
+        Welcome, {{ userInfo.username }}! ({{ userInfo.user_type }})
+      </span>
+      <button class="logout-btn" (click)="logout()">Logout</button>
     </div>
+  </div>
 
-    <!-- Lecturer-only sections -->
-    <div *ngIf="userInfo.user_type === 'lecturer'">
-      <!-- Scenario Selection Section -->
-      <div class="scenario-section">
-        <div class="content-card">
-          <h3>📋 Scenario Selection</h3>
-          
-          <div *ngIf="scenarios.length > 0" class="scenario-controls">
-            <div class="form-group">
-              <label for="scenario-select">Choose Scenario:</label>
-              <select id="scenario-select" [(ngModel)]="selectedScenario" class="scenario-select">
-                <option *ngFor="let scenario of scenarios" [value]="scenario.id">
-                  {{ scenario.name }}
-                </option>
-              </select>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading">
+    <p>Loading dashboard...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading && userInfo" class="dashboard-content">
+    
+    <!-- Setup View - Before Game Starts -->
+    <div *ngIf="currentView === 'setup'" class="setup-view">
+      <div class="setup-section">
+        <h2>Game Setup</h2>
+        
+        <!-- Connected Boards -->
+        <div class="connected-boards-section">
+          <h3>📱 Connected Boards</h3>
+          <div class="boards-list">
+            <div *ngIf="connectedBoards.length === 0" class="no-boards">
+              <p>No boards connected yet. Waiting for ESP32 boards to connect...</p>
             </div>
-          </div>
-
-          <div *ngIf="scenarios.length === 0" class="no-scenarios">
-            <p>No scenarios available.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Game Control Section -->
-      <div class="game-control-section">
-        <div class="content-card">
-          <h3>🎮 Game Control</h3>
-
-          <div *ngIf="gameStatus" class="game-status">
-            <div class="status-header">
-              <h4>Game Status - {{ userInfo.group_id || 'group1' }}</h4>
-              <div class="status-badges">
-                <span class="badge" [class.active]="gameStatus.game_active" [class.inactive]="!gameStatus.game_active">
-                  {{ gameStatus.game_active ? 'Game Active' : 'Game Inactive' }}
-                </span>
-                <span class="badge scenario-name" *ngIf="gameStatus.scenario">
-                  {{ gameStatus.scenario }}
-                </span>
-              </div>
-            </div>
-
-            <div class="game-info">
-              <p><strong>Current Round:</strong> {{ gameStatus.current_round }} / {{ gameStatus.total_rounds }}</p>
-              <p><strong>Registered Boards:</strong> {{ gameStatus.statistics?.length || 0 }}</p>
-            </div>
-
-            <div class="game-controls">
-              <button *ngIf="!gameStatus.game_active" class="btn btn-start" (click)="startGame()"
-                [disabled]="isGameLoading || !selectedScenario">
-                {{ isGameLoading ? 'Starting...' : 'Start Game' }}
-              </button>
-
-              <button *ngIf="gameStatus.game_active && gameStatus.current_round < gameStatus.total_rounds"
-                class="btn btn-next" (click)="nextRound()" [disabled]="isGameLoading">
-                {{ isGameLoading ? 'Processing...' : 'Next Round' }}
-              </button>
-
-              <button *ngIf="gameStatus.game_active" class="btn btn-end" (click)="endGame()"
-                [disabled]="isGameLoading">
-                {{ isGameLoading ? 'Ending...' : 'End Game' }}
-              </button>
-
-              <span *ngIf="gameStatus.game_active && gameStatus.current_round >= gameStatus.total_rounds"
-                class="game-finished">
-                🏁 Game Completed
+            <div *ngFor="let board of connectedBoards" class="board-item">
+              <span class="board-id">Board {{ board.board_id }}</span>
+              <span class="board-status" [class.online]="board.last_updated">
+                {{ board.last_updated ? 'Online' : 'Offline' }}
               </span>
             </div>
           </div>
         </div>
+
+        <!-- Scenario Selection -->
+        <div class="scenario-section">
+          <h3>📋 Scenario Selection</h3>
+          <div class="scenario-controls">
+            <select [(ngModel)]="selectedScenario" class="scenario-select">
+              <option value="" disabled>Select a scenario...</option>
+              <option *ngFor="let scenario of scenarios" [value]="scenario.id">
+                {{ scenario.name }}
+              </option>
+            </select>
+            <button 
+              class="btn btn-start" 
+              (click)="startGame()" 
+              [disabled]="!selectedScenario || isGameLoading">
+              {{ isGameLoading ? 'Starting...' : 'Start Game' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Game Status -->
+        <div *ngIf="gameStatus" class="game-status">
+          <h3>🎮 Game Status</h3>
+          <p><strong>Status:</strong> {{ gameStatus.game_active ? 'Active' : 'Inactive' }}</p>
+          <p><strong>Current Round:</strong> {{ gameStatus.current_round }} / {{ gameStatus.total_rounds }}</p>
+          <p><strong>Connected Boards:</strong> {{ connectedBoards.length }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Presentation View - For Slides -->
+    <div *ngIf="currentView === 'presentation'" class="presentation-view">
+      <div class="presentation-header">
+        <h2>📖 Presentation Mode</h2>
+        <div class="presentation-controls">
+          <button class="btn btn-next" (click)="nextRound()" [disabled]="isGameLoading">
+            {{ isGameLoading ? 'Loading...' : 'Next Round' }}
+          </button>
+          <button class="btn btn-end" (click)="endGame()" [disabled]="isGameLoading">
+            End Game
+          </button>
+        </div>
       </div>
 
-      <!-- Board Details Section -->
-      <div class="boards-section">
-        <div class="content-card">
-          <h3>📊 Board Status - {{ userInfo.group_id || 'group1' }}</h3>
+      <!-- PDF Viewer -->
+      <div class="pdf-container" *ngIf="pdfUrl">
+        <iframe [src]="pdfUrl" class="pdf-viewer" frameborder="0">
+          <p>Your browser does not support PDFs. 
+             <a [href]="pdfUrl" target="_blank">Download the PDF</a>
+          </p>
+        </iframe>
+      </div>
 
-          <div *ngIf="gameStatus?.statistics && gameStatus.statistics.length > 0; else noBoardsTemplate">
-            <div class="boards-grid">
-              <div class="board-card" *ngFor="let board of gameStatus.statistics">
-                <div class="board-header">
-                  <h4>{{ board.board_name || 'Board #' + board.board_id }}</h4>
-                  <span class="board-type">{{ board.board_type }}</span>
-                </div>
+      <!-- Slide Information -->
+      <div *ngIf="currentRound && currentRound.slide_range" class="slide-info">
+        <h3>Current Slides</h3>
+        <p>Showing slides {{ currentRound.slide_range.start }} - {{ currentRound.slide_range.end }}</p>
+      </div>
+    </div>
 
-                <div class="board-stats">
-                  <div class="stat">
-                    <span class="stat-label">ID:</span>
-                    <span class="stat-value">{{ board.board_id }}</span>
-                  </div>
-                  <div class="stat">
-                    <span class="stat-label">Generation:</span>
-                    <span class="stat-value energy-positive">{{ (board.current_generation || 0).toFixed(2) }} kW</span>
-                  </div>
-                  <div class="stat">
-                    <span class="stat-label">Consumption:</span>
-                    <span class="stat-value energy-negative">{{ (board.current_consumption || 0).toFixed(2) }} kW</span>
-                  </div>
-                  <div class="stat">
-                    <span class="stat-label">Net Power:</span>
-                    <span class="stat-value"
-                      [class.energy-positive]="(board.current_generation || 0) - (board.current_consumption || 0) > 0"
-                      [class.energy-negative]="(board.current_generation || 0) - (board.current_consumption || 0) < 0">
-                      {{ ((board.current_generation || 0) - (board.current_consumption || 0)).toFixed(2) }} kW
-                    </span>
-                  </div>
-                  <div class="stat">
-                    <span class="stat-label">Total Score:</span>
-                    <span class="stat-value score">{{ board.total_score || 0 }}</span>
-                  </div>
-                  <div class="stat" *ngIf="board.last_update">
-                    <span class="stat-label">Last Update:</span>
-                    <span class="stat-value">{{ board.last_update | date:'medium' }}</span>
-                  </div>
-                </div>
+    <!-- Game View - For Day/Night Rounds -->
+    <div *ngIf="currentView === 'game'" class="game-view">
+      <div class="game-header">
+        <h2>⚡ Game Board - {{ currentRound?.round_type?.toUpperCase() }} Round</h2>
+        <div class="game-controls">
+          <button class="btn btn-next" (click)="nextRound()" [disabled]="isGameLoading">
+            {{ isGameLoading ? 'Loading...' : 'Next Round' }}
+          </button>
+          <button class="btn btn-end" (click)="endGame()" [disabled]="isGameLoading">
+            End Game
+          </button>
+        </div>
+      </div>
 
-                <!-- Power Plants & Consumers -->
-                <div class="board-connections" *ngIf="board.connected_power_plants || board.connected_consumers">
-                  <div class="connections-section" *ngIf="board.connected_power_plants?.length > 0">
-                    <h5>⚡ Power Plants</h5>
-                    <div class="connection-list">
-                      <span *ngFor="let plant of board.connected_power_plants" class="connection-item">
-                        Type {{ plant.type }} ({{ plant.power }}W)
-                      </span>
-                    </div>
-                  </div>
-                  <div class="connections-section" *ngIf="board.connected_consumers?.length > 0">
-                    <h5>🏠 Consumers</h5>
-                    <div class="connection-list">
-                      <span *ngFor="let consumer of board.connected_consumers" class="connection-item">
-                        Type {{ consumer.type }} ({{ consumer.consumption }}W)
-                      </span>
-                    </div>
-                  </div>
-                </div>
+      <!-- Round Information -->
+      <div *ngIf="currentRound" class="round-info">
+        <h3>Round {{ currentRound.round }} - {{ currentRound.round_type.toUpperCase() }}</h3>
+        
+        <!-- Game Data -->
+        <div *ngIf="currentRound.game_data" class="game-data">
+          <div class="data-section">
+            <h4>🔋 Production Coefficients</h4>
+            <div class="data-grid">
+              <div *ngFor="let item of objectKeys(currentRound.game_data.production_coefficients)" class="data-item">
+                <span class="data-label">{{ item }}:</span>
+                <span class="data-value">{{ currentRound.game_data.production_coefficients[item] }} MW</span>
               </div>
             </div>
           </div>
-
-          <ng-template #noBoardsTemplate>
-            <div class="no-boards">
-              <p>No boards registered yet in {{ userInfo.group_id || 'group1' }}. Boards will appear here when they register and start sending data.</p>
+          
+          <div class="data-section">
+            <h4>🏢 Consumption Modifiers</h4>
+            <div class="data-grid">
+              <div *ngFor="let item of objectKeys(currentRound.game_data.consumption_modifiers)" class="data-item">
+                <span class="data-label">{{ item }}:</span>
+                <span class="data-value">{{ currentRound.game_data.consumption_modifiers[item] }} MW</span>
+              </div>
             </div>
-          </ng-template>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Board-only sections -->
-    <div *ngIf="userInfo.user_type === 'board'" class="board-info">
-      <div class="content-card">
-        <h3>🔌 Board Information</h3>
-        <p><strong>Board Name:</strong> {{ userInfo.name }}</p>
-        <p><strong>Group:</strong> {{ userInfo.group_id }}</p>
-        <p><strong>Board Type:</strong> {{ userInfo.metadata?.board_type || 'Generic' }}</p>
-        <p><strong>Location:</strong> {{ userInfo.metadata?.location || 'Unknown' }}</p>
+      <!-- Connected Boards Real-time Data -->
+      <div class="boards-realtime">
+        <h3>📊 Board Data (Real-time)</h3>
+        <div class="boards-grid">
+          <div *ngFor="let board of connectedBoards" class="board-card">
+            <div class="board-header">
+              <h4>Board {{ board.board_id }}</h4>
+              <span class="board-status" [class.online]="board.last_updated">
+                {{ board.last_updated ? 'Online' : 'Offline' }}
+              </span>
+            </div>
+            <div class="board-data">
+              <div class="power-info">
+                <div class="power-item production">
+                  <span class="power-label">Production:</span>
+                  <span class="power-value">{{ board.current_production || 0 | number:'1.1-1' }} W</span>
+                </div>
+                <div class="power-item consumption">
+                  <span class="power-label">Consumption:</span>
+                  <span class="power-value">{{ board.current_consumption || 0 | number:'1.1-1' }} W</span>
+                </div>
+              </div>
+              <div class="connections">
+                <p><strong>Connected Production:</strong> {{ board.connected_production?.length || 0 }} units</p>
+                <p><strong>Connected Consumption:</strong> {{ board.connected_consumption?.length || 0 }} units</p>
+              </div>
+            </div>
+          </div>
+        </div>
         
-        <div class="board-status-info">
-          <p>This board is registered and ready to participate in energy management games.</p>
-          <p>Game control is managed by your group's lecturer.</p>
+        <div *ngIf="connectedBoards.length === 0" class="no-boards">
+          <p>No boards connected or sending data.</p>
         </div>
       </div>
     </div>
-
-    <!-- Building Management Section -->
-    <div class="building-management-section">
-      <div class="content-card">
-        <h3>🏢 Building Power Consumption Management</h3>
-
-        <div class="building-table-info">
-          <p><strong>Current Table Version:</strong> {{ buildingTable?.version || 'Loading...' }}</p>
-          <p>Manage power consumption values for different building types. Changes will be automatically distributed to
-            all ESP boards.</p>
-        </div>
-
-        <div *ngIf="buildingTable?.table" class="building-table">
-          <div class="table-header">
-            <span>Building Type</span>
-            <span>Power Consumption (W)</span>
-            <span>Actions</span>
-          </div>
-
-          <div *ngFor="let entry of getBuildingTableEntries()" class="table-row">
-            <span class="building-type">{{ getBuildingTypeName(entry.type) }}</span>
-            <div class="consumption-control">
-              <input #slider type="range" min="0" max="10000" step="5" class="consumption-slider"
-                [value]="entry.consumption" [disabled]="isSavingBuildingTable"
-                (input)="updateBuildingConsumption(entry.type, slider.valueAsNumber)">
-
-              <input #field type="number" min="0" max="10000" step="1" class="consumption-input-small"
-                [value]="entry.consumption" [disabled]="isSavingBuildingTable"
-                (input)="updateBuildingConsumption(entry.type, field.valueAsNumber)">
-
-              <span class="unit">W</span>
-            </div>
-
-            <button *ngIf="!isDefaultBuildingType(entry.type)" class="btn btn-delete-small"
-              (click)="removeBuildingType(entry.type)" [disabled]="isSavingBuildingTable">
-              Remove
-            </button>
-            <span *ngIf="isDefaultBuildingType(entry.type)" class="default-type">Default</span>
-          </div>
-
-          <div class="add-building-row">
-            <select [(ngModel)]="newBuildingType" class="building-type-select">
-              <option value="">Select Building Type</option>
-              <option *ngFor="let type of getAvailableBuildingTypes()" [value]="type">
-                {{ getBuildingTypeName(type) }}
-              </option>
-            </select>
-            <div class="consumption-control">
-              <input type="range" [(ngModel)]="newBuildingConsumption" class="consumption-slider" min="0" max="10000"
-                step="5">
-              <input type="number" [(ngModel)]="newBuildingConsumption" placeholder="Power (W)"
-                class="consumption-input-small" min="0" max="10000" step="1">
-              <span class="unit">W</span>
-            </div>
-            <button class="btn btn-add-small" (click)="addBuildingType()"
-              [disabled]="!newBuildingType || !newBuildingConsumption || isSavingBuildingTable">
-              Add
-            </button>
-          </div>
-        </div>
-
-        <div *ngIf="!buildingTable" class="loading-state">
-          <p>Loading building table...</p>
-        </div>
-
-        <div *ngIf="buildingTable?.error" class="error-state">
-          <p>Error loading building table: {{ buildingTable.error }}</p>
-          <button class="btn btn-retry" (click)="loadBuildingTable()">Retry</button>
-        </div>
-
-        <div class="building-table-actions">
-          <button class="btn btn-save" (click)="saveBuildingTable()"
-            [disabled]="!isBuildingTableDirty || isSavingBuildingTable">
-            {{ isSavingBuildingTable ? 'Saving...' : 'Save Changes' }}
-          </button>
-          <button class="btn btn-reset" (click)="resetBuildingTable()"
-            [disabled]="!isBuildingTableDirty || isSavingBuildingTable">
-            Reset Changes
-          </button>
-          <span *ngIf="buildingTableSaveStatus" [class]="buildingTableSaveStatus.type">
-            {{ buildingTableSaveStatus.message }}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Instructions Section -->
-    <div class="instructions-section">
-      <div class="content-card">
-        <h3>📚 How to Use</h3>
-
-        <div class="instructions">
-          <div class="instruction-item">
-            <h4>� Starting the Game</h4>
-            <p>Click "Start Game" to begin the energy simulation. This will start round 1 and boards can begin reporting
-              data.</p>
-          </div>
-
-          <div class="instruction-item">
-            <h4>⏭️ Advancing Rounds</h4>
-            <p>Use "Next Round" to advance to the next round. This calculates scores for the current round and moves the
-              game forward.</p>
-          </div>
-
-          <div class="instruction-item">
-            <h4>� Monitoring Boards</h4>
-            <p>Watch real-time data from registered boards including power generation, consumption, and accumulated
-              scores.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div *ngIf="!isLoading && !userInfo" class="error-state">
-    <p>Unable to load user information. Please try logging in again.</p>
   </div>
 </div>

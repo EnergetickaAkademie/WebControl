@@ -121,7 +121,7 @@ export class AuthService {
     return this.http.get(`${this.api}/scenarios`, { headers: this.getHeaders() });
   }
 
-  startGameWithScenario(scenarioId: number): Observable<any> {
+  startGameWithScenario(scenarioId: string): Observable<any> {
     return this.http.post(`${this.api}/start_game`, 
       { scenario_id: scenarioId }, 
       { headers: this.getHeaders() }
@@ -132,6 +132,10 @@ export class AuthService {
     return this.http.get(`${this.api}/get_statistics`, { headers: this.getHeaders() });
   }
 
+  pollForUsers(): Observable<any> {
+    return this.http.get(`${this.api}/pollforusers`, { headers: this.getHeaders() });
+  }
+
   nextRound(): Observable<any> {
     return this.http.post(`${this.api}/next_round`, {}, { headers: this.getHeaders() });
   }
@@ -140,8 +144,19 @@ export class AuthService {
     return this.http.post(`${this.api}/end_game`, {}, { headers: this.getHeaders() });
   }
 
-  getPdfUrl(): Observable<any> {
+  getPDF(): Observable<any> {
     return this.http.get(`${this.api}/get_pdf`, { headers: this.getHeaders() });
+  }
+
+  // Get user profile
+  getProfile(): Observable<any> {
+    return this.http.get(`${this.api}/dashboard`, { headers: this.getHeaders() });
+  }
+
+  // Logout method
+  logout(): void {
+    this.clearTokens();
+    this.isAuthenticatedSubject.next(false);
   }
 
   // Legacy methods for backwards compatibility
@@ -150,8 +165,8 @@ export class AuthService {
   }
 
   startGame(): Observable<any> {
-    // For backwards compatibility, start with scenario 1
-    return this.startGameWithScenario(1);
+    // For backwards compatibility, start with demo scenario
+    return this.startGameWithScenario('demo');
   }
 
   // Building table management methods
