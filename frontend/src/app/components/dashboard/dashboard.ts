@@ -4,10 +4,19 @@ import { AuthService } from '../../services';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { interval, Subscription } from 'rxjs';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+
+// Enum matching the Python RoundType enum
+enum RoundType {
+  DAY = 1,
+  NIGHT = 2,
+  SLIDE = 3,
+  SLIDE_RANGE = 4
+}
 
 interface GameRound {
   round: number;
-  round_type: 'slides' | 'day' | 'night';
+  round_type: number; // Changed to number to match the backend
   slide_range?: { start: number; end: number };
   game_data?: {
     production_coefficients: any;
@@ -34,13 +43,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   currentView: 'setup' | 'presentation' | 'game' = 'setup';
   currentRound: GameRound | null = null;
   pdfUrl: string | null = null;
+  sanitizedPdfUrl: SafeResourceUrl | null = null;
   
   private gameStatusSubscription?: Subscription;
   private pollSubscription?: Subscription;
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit() {
@@ -128,16 +139,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   startGame() {
-    if (!this.selectedScenario) return;
+    if (!this.selectedScenario || this.selectedScenario === '') {
+      console.error('No scenario selected');
+      return;
+    }
     
     this.isGameLoading = true;
+    console.log('Starting game with scenario:', this.selectedScenario);
     this.authService.startGameWithScenario(this.selectedScenario).subscribe({
       next: (response: any) => {
         console.log('Game started:', response);
-        this.currentView = 'presentation';
         this.loadPDF();
         this.loadConnectedBoards();
-        this.isGameLoading = false;
+        // Immediately call next round to get the first round information
+        // Don't set isGameLoading = false here, let nextRound handle it
+        this.callNextRoundFromStart();
       },
       error: (error: any) => {
         console.error('Failed to start game:', error);
@@ -146,10 +162,49 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  callNextRoundFromStart() {
+    // Special version of nextRound called from startGame - don't reset loading state
+    console.log('Calling next round from start...');
+    this.authService.nextRound().subscribe({
+      next: (response: any) => {
+        console.log('Advanced to next round:', response);
+        this.currentRound = response;
+        
+        if (response.status === 'game_finished') {
+          console.log('Game finished, switching to setup view');
+          this.currentView = 'setup';
+          this.currentRound = null;
+        } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
+          console.log('Slides round, switching to presentation view');
+          this.currentView = 'presentation';
+        } else if (response.round_type === RoundType.DAY || response.round_type === RoundType.NIGHT) {
+          console.log('Game round, switching to game view');
+          this.currentView = 'game';
+        }
+        
+        this.isGameLoading = false;
+      },
+      error: (error: any) => {
+        console.error('Failed to advance round:', error);
+        this.isGameLoading = false;
+      }
+    });
+  }
+
   loadPDF() {
+    console.log('Loading PDF...');
     this.authService.getPDF().subscribe({
       next: (response: any) => {
-        this.pdfUrl = response.url;
+        console.log('PDF response:', response);
+        if (response.success && response.url) {
+          // Make the URL absolute for the iframe
+          this.pdfUrl = `http://localhost${response.url}`;
+          // Sanitize the URL for Angular security
+          this.sanitizedPdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfUrl);
+          console.log('PDF URL set to:', this.pdfUrl);
+        } else {
+          console.error('Invalid PDF response:', response);
+        }
       },
       error: (error: any) => {
         console.error('Failed to load PDF:', error);
@@ -159,17 +214,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   nextRound() {
     this.isGameLoading = true;
+    console.log('Calling next round...');
     this.authService.nextRound().subscribe({
       next: (response: any) => {
         console.log('Advanced to next round:', response);
         this.currentRound = response;
         
         if (response.status === 'game_finished') {
+          console.log('Game finished, switching to setup view');
           this.currentView = 'setup';
           this.currentRound = null;
-        } else if (response.round_type === 'slides') {
+        } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
+          console.log('Slides round, switching to presentation view');
           this.currentView = 'presentation';
-        } else if (response.round_type === 'day' || response.round_type === 'night') {
+        } else if (response.round_type === RoundType.DAY || response.round_type === RoundType.NIGHT) {
+          console.log('Game round, switching to game view');
           this.currentView = 'game';
         }
         
@@ -190,6 +249,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.currentView = 'setup';
         this.currentRound = null;
         this.pdfUrl = null;
+        this.sanitizedPdfUrl = null;
         this.isGameLoading = false;
       },
       error: (error: any) => {
@@ -208,5 +268,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Helper method for template to iterate over object keys
   objectKeys(obj: any): string[] {
     return obj ? Object.keys(obj) : [];
+  }
+
+  // Helper method to get round type name
+  getRoundTypeName(roundType: number): string {
+    switch (roundType) {
+      case RoundType.DAY:
+        return 'DAY';
+      case RoundType.NIGHT:
+        return 'NIGHT';
+      case RoundType.SLIDE:
+      case RoundType.SLIDE_RANGE:
+        return 'SLIDES';
+      default:
+        return 'UNKNOWN';
+    }
   }
 }

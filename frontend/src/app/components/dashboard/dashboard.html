@@ -83,8 +83,8 @@
       </div>
 
       <!-- PDF Viewer -->
-      <div class="pdf-container" *ngIf="pdfUrl">
-        <iframe [src]="pdfUrl" class="pdf-viewer" frameborder="0">
+      <div class="pdf-container" *ngIf="sanitizedPdfUrl">
+        <iframe [src]="sanitizedPdfUrl" class="pdf-viewer" frameborder="0" width="100%" height="600">
           <p>Your browser does not support PDFs. 
              <a [href]="pdfUrl" target="_blank">Download the PDF</a>
           </p>
@@ -101,7 +101,7 @@
     <!-- Game View - For Day/Night Rounds -->
     <div *ngIf="currentView === 'game'" class="game-view">
       <div class="game-header">
-        <h2>⚡ Game Board - {{ currentRound?.round_type?.toUpperCase() }} Round</h2>
+        <h2>⚡ Game Board - {{ getRoundTypeName(currentRound?.round_type || 0) }} Round</h2>
         <div class="game-controls">
           <button class="btn btn-next" (click)="nextRound()" [disabled]="isGameLoading">
             {{ isGameLoading ? 'Loading...' : 'Next Round' }}
@@ -114,7 +114,7 @@
 
       <!-- Round Information -->
       <div *ngIf="currentRound" class="round-info">
-        <h3>Round {{ currentRound.round }} - {{ currentRound.round_type.toUpperCase() }}</h3>
+        <h3>Round {{ currentRound.round }} - {{ getRoundTypeName(currentRound.round_type) }}</h3>
         
         <!-- Game Data -->
         <div *ngIf="currentRound.game_data" class="game-data">
