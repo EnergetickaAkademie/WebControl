@@ -101,7 +101,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   startPolling() {
     // Poll for game status and connected boards
     this.loadGameStatus();
-    this.pollSubscription = interval(3000).subscribe(() => {
+    this.pollSubscription = interval(500).subscribe(() => {
       this.loadGameStatus();
       if (this.currentView === 'game') {
         this.loadConnectedBoards();
