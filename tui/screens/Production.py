@@ -125,25 +125,35 @@ class SetProductionScreen(Screen):
 			self.app.pop_screen()
 
 	def on_data_table_cell_selected(self, event) -> None:
-		if event.data_table.id == "production_table" and event.coordinate.column == 4:
-			# Stop the event from bubbling up to the main app screen, which was causing the bug.
-			event.stop()
-			
-			row_key = event.cell_key.row_key.value
-			if row_key and row_key.startswith("production_"):
-				plant_type = row_key.split("_", 1)[1]
-				source_data = self.board.sources.get(plant_type)
-				if source_data:
-					plant_type_upper = plant_type.upper()
-					if plant_type_upper not in ["WIND", "PHOTOVOLTAIC"]:
-						# Use the dedicated PowerInputScreen for a modal dialog experience
-						min_val, max_val = self.board.get_power_plant_range(plant_type)
-						self.app.push_screen(
-							PowerInputScreen(
-								self.board,
-								plant_type,
-								source_data["set_production"],
-								min_val,
-								max_val
-							)
-						)
+		if event.data_table.id != "production_table":
+			return
+		# Stop bubbling to main screen to avoid unintended navigation
+		event.stop()
+		row_key = event.cell_key.row_key.value if event.cell_key else None
+		if not row_key or not row_key.startswith("production_"):
+			return
+		plant_type = row_key.split("_", 1)[1]
+		source_data = self.board.sources.get(plant_type)
+		if not source_data:
+			return
+		plant_type_upper = plant_type.upper()
+		# Columns: 0=Type,1=Count,2=Current,3=Max,4=Control
+		click_col = event.coordinate.column
+		# If clicking on Current or Control, open input for adjustable plants
+		if plant_type_upper not in ["WIND", "PHOTOVOLTAIC"] and click_col in (2, 4):
+			# Refresh latest ranges to avoid transient zero max
+			try:
+				self.board.refresh_prod_ranges()
+			except Exception:
+				pass
+			min_val, max_val = self.board.get_power_plant_range(plant_type)
+			self.app.push_screen(
+				PowerInputScreen(
+					self.board,
+					plant_type,
+					source_data["set_production"],
+					min_val,
+					max_val
+				)
+			)
+		# Otherwise do nothing

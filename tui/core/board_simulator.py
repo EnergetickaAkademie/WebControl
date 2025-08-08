@@ -10,6 +10,7 @@ import os
 from typing import Dict, Any, Callable
 
 from config import COREAPI_URL, POWER_PLANT_POWERS, CONSUMER_POWERS
+from Enak import Building
 
 # Import GLOBAL_PRODUCTION_COEFFICIENTS with path workaround
 sys.path.insert(0, os.path.dirname(__file__))
@@ -36,6 +37,8 @@ class ESP32BoardSimulator:
 		self.sources: Dict[str, Dict[str, Any]] = {}
 		self.connected_consumers: Dict[int, Dict[str, Any]] = {}
 		self.next_consumer_id = 1
+		# Cache last known max production per source type (W, considering count)
+		self._last_max_by_type: Dict[str, float] = {}
 		
 		# Game state
 		self.production_coefficients = {}
@@ -92,20 +95,81 @@ class ESP32BoardSimulator:
 			return False
 	
 	def poll_binary(self) -> bool:
-		"""Poll the board status using binary protocol"""
+		"""Poll the board status using binary protocol and apply updates"""
 		try:
 			response = requests.get(f"{COREAPI_URL}/poll_binary",
-								  headers=self.headers)
-			
-			if response.status_code == 200:
-				return True
-			else:
+							  headers=self.headers)
+			if response.status_code != 200:
 				self.log(f"[{self.board_name}] Poll failed: {response.status_code}")
 				return False
-				
+
+			# Parse binary payload: prod coeffs + building consumptions
+			from .game_state import unpack_coefficients_response, GLOBAL_PRODUCTION_COEFFICIENTS
+			prod_coeffs_raw, cons_vals_raw = unpack_coefficients_response(response.content)
+
+			# Map production coeffs (ids -> UPPER names) into global and local
+			source_names = {
+				1: "PHOTOVOLTAIC",
+				2: "WIND",
+				3: "NUCLEAR",
+				4: "GAS",
+				5: "HYDRO",
+				6: "HYDRO_STORAGE",
+				7: "COAL",
+				8: "BATTERY",
+			}
+			# Update globals only if we actually received coefficients to avoid transient 0s
+			if prod_coeffs_raw:
+				GLOBAL_PRODUCTION_COEFFICIENTS.clear()
+				for sid, coeff in prod_coeffs_raw.items():
+					name = source_names.get(sid)
+					if name:
+						GLOBAL_PRODUCTION_COEFFICIENTS[name] = coeff
+
+			# After coefficients changed, auto-adjust plant productions
+			self._apply_production_coefficients()
+
+			# Apply building consumption values to connected consumers (by Building enum id)
+			if cons_vals_raw:
+				self._apply_consumption_updates(cons_vals_raw)
+
+			# Recompute totals after updates
+			self.update_totals()
+			return True
 		except Exception as e:
 			self.log(f"[{self.board_name}] Poll error: {e}")
 			return False
+
+	def _apply_consumption_updates(self, cons_vals_raw: Dict[int, float]) -> None:
+		"""Update each connected consumer's consumption to current building value."""
+		for cid, consumer in list(self.connected_consumers.items()):
+			bname_upper = consumer.get("type", "").upper()
+			try:
+				# Map 'factory' -> Building.FACTORY, etc.
+				building_id = getattr(Building, bname_upper).value if hasattr(Building, bname_upper) else None
+			except Exception:
+				building_id = None
+			if building_id is None:
+				continue
+			if building_id in cons_vals_raw:
+				consumer["consumption"] = float(cons_vals_raw[building_id])
+
+	def _apply_production_coefficients(self) -> None:
+		"""Auto-update source productions based on latest coefficients.
+		- Weather-dependent sources (WIND, PHOTOVOLTAIC) track their max automatically.
+		- Other sources are clamped to the new max if coefficients reduced it.
+		"""
+		for plant_type, pdata in list(self.sources.items()):
+			_min, max_prod = self.get_power_plant_range(plant_type)
+			ptype_upper = plant_type.upper()
+			if ptype_upper in ("WIND", "PHOTOVOLTAIC"):
+				pdata["set_production"] = max_prod
+				# Cache for UI/range stability
+				self._last_max_by_type[plant_type] = pdata["set_production"]
+			else:
+				# Clamp to new max if needed
+				if pdata["set_production"] > max_prod:
+					pdata["set_production"] = max_prod
 
 	def fetch_game_state(self) -> bool:
 		"""Fetch current game state including production coefficients"""
@@ -266,11 +330,16 @@ class ESP32BoardSimulator:
 		base_max = POWER_PLANT_POWERS.get(plant_type, 0.0)
 		count = self.sources[plant_type].get("count", 0)
 		base_min = 0.0
-		
 		coefficient = self.production_coefficients.get(plant_type.upper(), 0.0)
 		
 		total_max = base_max * count * coefficient
 		total_min = base_min * count * coefficient
+
+		# Prefer cached server-provided max if available to avoid transient zeros
+		if plant_type in self._last_max_by_type:
+			cached_max = self._last_max_by_type[plant_type]
+			self.log(f"[{self.board_name}] Power range for {plant_type} (cached): total_max={cached_max}")
+			return (0.0, cached_max)
 
 		self.log(f"[{self.board_name}] Power range for {plant_type}: base_max={base_max}, count={count}, coefficient={coefficient}, total_max={total_max}")
 
@@ -296,21 +365,100 @@ class ESP32BoardSimulator:
 			
 		self.status = "Running"
 		self.running = True
+		last_ranges_fetch = 0.0
+		last_cons_fetch = 0.0
 		while self.running:
 			try:
-				# Fetch game state periodically
-				self.fetch_game_state()
+				now = time.time()
+				# Poll binary frequently to keep coefficients and consumptions fresh
+				self.poll_binary()
+
+				# Periodically fetch production ranges to reflect master-board behavior
+				if now - last_ranges_fetch > 5.0:
+					self._fetch_and_apply_prod_ranges()
+					last_ranges_fetch = now
+
+				# Periodically fetch explicit consumption values (backup to poll_binary)
+				if now - last_cons_fetch > 5.0:
+					self._fetch_and_apply_consumptions()
+					last_cons_fetch = now
+
+				# Always send current totals
+				self.send_power_data()
 				
-				if self.poll_binary():
-					if self.send_power_data():
-						pass
-				
-				time.sleep(2)
+				time.sleep(1)
 				
 			except Exception as e:
 				self.log(f"[{self.board_name}] Simulation error: {e}")
 				self.status = "Error"
 				time.sleep(2)
+
+	def _fetch_and_apply_prod_ranges(self) -> None:
+		"""Fetch production ranges and apply to weather-dependent plants; clamp others."""
+		try:
+			resp = requests.get(f"{COREAPI_URL}/prod_vals", headers=self.headers)
+			if resp.status_code != 200:
+				return
+			data = resp.content
+			offset = 0
+			if len(data) < 1:
+				return
+			num_entries = data[offset]
+			offset += 1
+			# Each entry: source_id(1) + min(4) + max(4)
+			for _ in range(num_entries):
+				if offset + 9 > len(data):
+					break
+				source_id, min_mw, max_mw = struct.unpack('>Bii', data[offset:offset+9])
+				offset += 9
+				# Map id->name lower key used in sources dict
+				name_map = {
+					1: 'photovoltaic', 2: 'wind', 3: 'nuclear', 4: 'gas',
+					5: 'hydro', 6: 'hydro_storage', 7: 'coal', 8: 'battery'
+				}
+				ptype = name_map.get(source_id)
+				if not ptype or ptype not in self.sources:
+					continue
+				# Prefer server-provided max (converted from mW to W) per source
+				server_max_per_source = max_mw / 1000.0
+				instances = self.sources.get(ptype, {}).get('count', 0)
+				calc_max = server_max_per_source * instances
+				if ptype.upper() in ("WIND", "PHOTOVOLTAIC"):
+					self.sources[ptype]['set_production'] = calc_max
+				else:
+					if self.sources[ptype]['set_production'] > calc_max:
+						self.sources[ptype]['set_production'] = calc_max
+			self.update_totals()
+		except Exception as e:
+			self.log(f"[{self.board_name}] prod_vals fetch error: {e}")
+
+	def refresh_prod_ranges(self) -> None:
+		"""Public method to refresh production ranges immediately."""
+		self._fetch_and_apply_prod_ranges()
+
+	def _fetch_and_apply_consumptions(self) -> None:
+		"""Fetch explicit consumption values and update consumers."""
+		try:
+			resp = requests.get(f"{COREAPI_URL}/cons_vals", headers=self.headers)
+			if resp.status_code != 200:
+				return
+			data = resp.content
+			offset = 0
+			if len(data) < 1:
+				return
+			count = data[offset]
+			offset += 1
+			cons_vals = {}
+			for _ in range(count):
+				if offset + 5 > len(data):
+					break
+				bid, cons_mw = struct.unpack('>Bi', data[offset:offset+5])
+				offset += 5
+				cons_vals[bid] = cons_mw / 1000.0
+			self._apply_consumption_updates(cons_vals)
+			self.update_totals()
+		except Exception as e:
+			self.log(f"[{self.board_name}] cons_vals fetch error: {e}")
 	
 	def stop(self):
 		"""Stop the simulation"""

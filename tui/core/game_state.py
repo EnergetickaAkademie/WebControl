@@ -107,14 +107,9 @@ def fetch_global_game_state():
 				with open("tui.log", "a") as log_file:
 					log_file.write(f"poll_binary error for board {board.board_name}: {e}\n")
 	
-	# Fallback: set empty coefficients
-	GLOBAL_PRODUCTION_COEFFICIENTS = {}
-	GLOBAL_WEATHER = []
-	GLOBAL_GAME_ACTIVE = False
-	
+	# Do not overwrite existing coefficients if no valid data received
 	with open("tui.log", "a") as log_file:
-		log_file.write(f"No valid board tokens available, setting empty coefficients\n")
-	
+		log_file.write(f"No valid board tokens available or poll failed; keeping previous coefficients\n")
 	return False
 
 def unpack_coefficients_response(data: bytes) -> tuple:
