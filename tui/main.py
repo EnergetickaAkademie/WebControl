@@ -1,4 +1,6 @@
 import threading
+import argparse
+import sys
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal
@@ -9,7 +11,8 @@ from config import BOARDS
 
 # Import core components
 from core.board_simulator import ESP32BoardSimulator
-from core.game_state import fetch_global_game_state
+from core.game_state import fetch_global_game_state, fetch_lecturer_view_state, calculate_board_status
+from config import BOARDS, STATUS_THRESHOLD_MW
 
 # Import screens  
 from screens import (
@@ -21,6 +24,16 @@ from screens import (
     DebugScreen
 )
 
+# Global debug flag
+DEBUG_MODE = False
+
+def debug_log(message):
+	"""Log debug message to tui.log if debug mode is enabled"""
+	if DEBUG_MODE:
+		with open("tui.log", "a") as log_file:
+			from datetime import datetime
+			log_file.write(f"[{datetime.now()}] DEBUG: {message}\n")
+
 class BoardSimTUI(App):
 	"""A Textual app to manage ESP32 board simulations."""
 
@@ -31,6 +44,7 @@ class BoardSimTUI(App):
 		super().__init__(**kwargs)
 		self.boards = []
 		self.threads = []
+		self.team_states = {}
 
 	def compose(self) -> ComposeResult:
 		"""Create child widgets for the app."""
@@ -47,7 +61,7 @@ class BoardSimTUI(App):
 	def on_mount(self) -> None:
 		"""Called when the app is mounted."""
 		table = self.query_one(DataTable)
-		table.add_columns("Board Name", "Status", "Production (W)", "Consumption (W)", "Consumers", "Sources", "Production")
+		table.add_columns("Board Name", "Status", "Consumers", "Sources", "Production")
 		
 		log = self.query_one("#log", Log)
 		
@@ -67,8 +81,6 @@ class BoardSimTUI(App):
 			table.add_row(
 				board.board_name,
 				board.status,
-				f"{board.production:.1f}",
-				f"{board.consumption:.1f}",
 				"Manage",
 				"Manage", 
 				"Set",
@@ -79,15 +91,20 @@ class BoardSimTUI(App):
 
 	def update_table(self) -> None:
 		"""Update the board status table."""
+		log = self.query_one(Log)
+		
+		try:
+			# We still fetch the state to know if the game is active, etc.
+			fetch_lecturer_view_state()
+		except Exception as e:
+			log.write_line(f"Error fetching lecturer view state: {e}")
+
 		table = self.query_one(DataTable)
 		for i, board in enumerate(self.boards):
 			row_key = str(i)
 			try:
 				table.update_cell(row_key, "Status", board.status)
-				table.update_cell(row_key, "Production (W)", f"{board.production:.1f}")
-				table.update_cell(row_key, "Consumption (W)", f"{board.consumption:.1f}")
 			except CellDoesNotExist:
-				# The cell may not be ready yet, just skip the update for this cycle
 				pass
 
 	def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -119,13 +136,13 @@ class BoardSimTUI(App):
 				return
 			
 			# Handle different column clicks
-			if event.coordinate.column == 4:  # Consumers
+			if event.coordinate.column == 2:  # Consumers
 				log.write_line(f"Opening Manage Buildings screen for {selected_board.board_name}")
 				self.push_screen(ManageSourcesScreen(selected_board))
-			elif event.coordinate.column == 5:  # Sources
+			elif event.coordinate.column == 3:  # Sources
 				log.write_line(f"Opening Manage Sources screen for {selected_board.board_name}")
 				self.push_screen(ManagePowerPlantsScreen(selected_board))
-			elif event.coordinate.column == 6:  # Production
+			elif event.coordinate.column == 4:  # Production
 				log.write_line(f"Opening Manage Production screen for {selected_board.board_name}")
 				self.push_screen(SetProductionScreen(selected_board))
 			else:
@@ -160,5 +177,16 @@ class BoardSimTUI(App):
 		self.dark = not self.dark
 
 if __name__ == "__main__":
+	parser = argparse.ArgumentParser(description="ESP32 Board Simulator TUI")
+	parser.add_argument("--debug", action="store_true", help="Enable debug logging to tui.log")
+	args = parser.parse_args()
+	
+	# Set global debug flag
+	DEBUG_MODE = args.debug
+	
+	# Also set debug mode in game_state module
+	import core.game_state
+	core.game_state.DEBUG_MODE = args.debug
+	
 	app = BoardSimTUI()
 	app.run()

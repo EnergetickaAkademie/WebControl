@@ -18,7 +18,7 @@ from textual.widgets._data_table import CellDoesNotExist
 
 from config import (
 	COREAPI_URL, AVAILABLE_POWER_PLANTS, AVAILABLE_CONSUMERS, 
-	BOARDS, POWER_PLANT_POWERS, CONSUMER_POWERS
+	BOARDS, POWER_PLANT_POWERS, CONSUMER_POWERS, LECTURER_CREDENTIALS, STATUS_THRESHOLD_MW
 )
 
 # Import ESP32BoardSimulator with path workaround
@@ -27,22 +27,25 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'core'))
 try:
 	from board_simulator import ESP32BoardSimulator
+	from game_state import fetch_lecturer_view_state, calculate_board_status
 except ImportError:
 	# Fallback - define a placeholder class
 	class ESP32BoardSimulator:
 		def __init__(self, *args, **kwargs):
 			pass
+	
+	def fetch_all_boards_state():
+		return {}
+	
+	def calculate_board_status(production, consumption):
+		return "Unknown", "gray"
 
-# ============================================================================
-# GLOBAL GAME STATE MODULE
-# ============================================================================
-
-# Global game state variables
 GLOBAL_PRODUCTION_COEFFICIENTS = {}
 GLOBAL_WEATHER = []
 GLOBAL_GAME_ACTIVE = False
 LECTURER_TOKEN = None
 LECTURER_HEADERS = {}
+TEAM_STATES = {}  # Store real team production/consumption data
 
 def get_lecturer_token():
 	"""Get lecturer authentication token"""
@@ -53,10 +56,7 @@ def get_lecturer_token():
 	
 	try:
 		response = requests.post(f"{COREAPI_URL}/login", 
-							   json={
-								   'username': 'lecturer',
-								   'password': 'password123'
-							   })
+							   json=LECTURER_CREDENTIALS)
 		
 		print(f"Lecturer login response status: {response.status_code}")
 		print(f"Lecturer login response text: {response.text}")
@@ -274,7 +274,7 @@ class BoardSimTUI(App):
 	def on_mount(self) -> None:
 		"""Called when the app is mounted."""
 		table = self.query_one(DataTable)
-		table.add_columns("Board Name", "Status", "Production (W)", "Consumption (W)", "Consumers", "Sources", "Production")
+		table.add_columns("Board Name", "Status", "Real Production (MW)", "Real Consumption (MW)", "Grid Status", "Consumers", "Sources", "Production")
 		
 		log = self.query_one("#log", Log)
 		
@@ -294,8 +294,9 @@ class BoardSimTUI(App):
 			table.add_row(
 				board.board_name,
 				board.status,
-				f"{board.production:.1f}",
-				f"{board.consumption:.1f}",
+				"0.0",  # Real production - will be updated
+				"0.0",  # Real consumption - will be updated
+				"Unknown",  # Grid status - will be updated
 				"Manage",
 				"Manage", 
 				"Set",
@@ -306,15 +307,39 @@ class BoardSimTUI(App):
 
 	def update_table(self) -> None:
 		"""Update the board status table."""
+		log = self.query_one(Log)
+		
+		# Fetch all game state from lecturer's perspective
+		try:
+			fetch_lecturer_view_state()
+		except Exception as e:
+			log.write_line(f"Error fetching lecturer view state: {e}")
+		
 		table = self.query_one(DataTable)
 		for i, board in enumerate(self.boards):
 			row_key = str(i)
 			try:
+				# Update simulator status
 				table.update_cell(row_key, "Status", board.status)
-				table.update_cell(row_key, "Production (W)", f"{board.production:.1f}")
-				table.update_cell(row_key, "Consumption (W)", f"{board.consumption:.1f}")
+				
+				# Get real team data based on board name
+				board_id = str(i + 1)
+				real_production = 0.0
+				real_consumption = 0.0
+				grid_status = "Unknown"
+				
+				if board_id in TEAM_STATES:
+					team_state = TEAM_STATES[board_id]
+					real_production = team_state.get('production', 0) / 1000.0
+					real_consumption = team_state.get('consumption', 0) / 1000.0
+					status_text, status_color = calculate_board_status(real_production, real_consumption)
+					grid_status = f"[{status_color}]{status_text}[/{status_color}]"
+				
+				table.update_cell(row_key, "Real Production (MW)", f"{real_production:.1f}")
+				table.update_cell(row_key, "Real Consumption (MW)", f"{real_consumption:.1f}")
+				table.update_cell(row_key, "Grid Status", grid_status)
+				
 			except CellDoesNotExist:
-				# The cell may not be ready yet, just skip the update for this cycle
 				pass
 
 	def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -343,14 +368,14 @@ class BoardSimTUI(App):
 				selected_board.log(f"[{selected_board.board_name}] Board not ready. Status: {selected_board.status}")
 				return
 			
-			# Handle different column clicks
-			if event.coordinate.column == 4:  # Consumers
+			# Handle different column clicks (updated for new columns)
+			if event.coordinate.column == 5:  # Consumers (was 4)
 				log.write_line(f"Opening Manage Buildings screen for {selected_board.board_name}")
 				self.push_screen(ManageSourcesScreen(selected_board))
-			elif event.coordinate.column == 5:  # Sources
+			elif event.coordinate.column == 6:  # Sources (was 5)
 				log.write_line(f"Opening Manage Sources screen for {selected_board.board_name}")
 				self.push_screen(ManagePowerPlantsScreen(selected_board))
-			elif event.coordinate.column == 6:  # Production
+			elif event.coordinate.column == 7:  # Production (was 6)
 				log.write_line(f"Opening Manage Production screen for {selected_board.board_name}")
 				self.push_screen(SetProductionScreen(selected_board))
 			else:

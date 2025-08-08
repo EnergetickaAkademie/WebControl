@@ -22,9 +22,11 @@ class ManageSourcesScreen(Screen):
 		with Container(id="main_container"):
 			with VerticalScroll(id="left_panel"):
 				yield Static("Energy Consumers", classes="title")
+				yield Label("Total Consumption: 0.0 W", id="total_consumption")
 				yield Select([(name, key) for key, name in AVAILABLE_CONSUMERS.items()], 
 							id="add_consumer_select", prompt="Add Consumer")
 				yield DataTable(id="consumers_table")
+				yield Button("Back to Main Menu", id="back_button")
 
 			with VerticalScroll(id="right_panel"):
 				yield Static("Game State", classes="title")
@@ -34,7 +36,6 @@ class ManageSourcesScreen(Screen):
 				yield Static("Production Coefficients", classes="title")
 				yield DataTable(id="coefficients_table")
 				
-				yield Button("Back to Main Menu", id="back_button")
 		yield Footer()
 
 	def on_mount(self) -> None:
@@ -75,6 +76,8 @@ class ManageSourcesScreen(Screen):
 
 	def update_display(self):
 		self.update_tables()
+		total_consumption = sum(c['consumption'] for c in self.board.connected_consumers.values())
+		self.query_one("#total_consumption", Label).renderable = f"Total Consumption: {total_consumption:.1f} W"
 
 	def update_game_state_display(self):
 		"""Update game state information"""

@@ -217,6 +217,9 @@ class ESP32BoardSimulator:
 
 			if self.sources[plant_type]["count"] == 0:
 				del self.sources[plant_type]
+			
+			self.update_totals()
+			self.report_connected_production()
 
 			self.update_totals()
 			self.report_connected_production()

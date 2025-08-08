@@ -22,16 +22,17 @@ class ManagePowerPlantsScreen(Screen):
 		with Container(id="main_container"):
 			with VerticalScroll(id="left_panel"):
 				yield Static("Energy Sources", classes="title")
+				yield Label("Total Production: 0.0 W", id="total_production")
 				yield Select([(name, key) for key, name in AVAILABLE_POWER_PLANTS.items()], 
 							id="add_plant_select", prompt="Add Energy Source")
 				yield DataTable(id="plants_table")
+				yield Button("Back to Main Menu", id="back_button")
 
 			with VerticalScroll(id="right_panel"):
 				yield Static("Board Status", classes="title")
-				yield Label(f"Production: {self.board.production:.1f} W", id="total_production")
-				yield Label(f"Consumption: {self.board.consumption:.1f} W", id="total_consumption")
+				yield Label(f"Production: {self.board.production:.1f} W", id="board_production")
+				yield Label(f"Consumption: {self.board.consumption:.1f} W", id="board_consumption")
 				
-				yield Button("Back to Main Menu", id="back_button")
 		yield Footer()
 
 	def on_mount(self) -> None:
@@ -49,8 +50,12 @@ class ManagePowerPlantsScreen(Screen):
 			plants_table.add_row(display_name, str(data['count']), "Remove", key=f"plant_{type}")
 
 	def update_display(self):
-		self.query_one("#total_production", Label).renderable = f"Production: {self.board.production:.1f} W"
-		self.query_one("#total_consumption", Label).renderable = f"Consumption: {self.board.consumption:.1f} W"
+		self.query_one("#board_production", Label).renderable = f"Production: {self.board.production:.1f} W"
+		self.query_one("#board_consumption", Label).renderable = f"Consumption: {self.board.consumption:.1f} W"
+		
+		total_production = sum(p['set_production'] for p in self.board.sources.values())
+		self.query_one("#total_production", Label).renderable = f"Total Production: {total_production:.1f} W"
+		
 		self.update_tables()
 
 	def on_select_changed(self, event: Select.Changed):

@@ -2,9 +2,19 @@ import requests
 import struct
 from datetime import datetime
 
-from config import COREAPI_URL
+from config import COREAPI_URL, LECTURER_CREDENTIALS, STATUS_THRESHOLD_MW
+
+# Global debug flag - will be set by main.py
+DEBUG_MODE = False
+
+def debug_log(message):
+	"""Log debug message to tui.log if debug mode is enabled"""
+	if DEBUG_MODE:
+		with open("tui.log", "a") as log_file:
+			log_file.write(f"[{datetime.now()}] DEBUG: {message}\n")
 
 # Global game state variables
+TEAM_STATES = {}
 GLOBAL_PRODUCTION_COEFFICIENTS = {}
 GLOBAL_WEATHER = []
 GLOBAL_GAME_ACTIVE = False
@@ -19,12 +29,9 @@ def get_lecturer_token():
 		return LECTURER_TOKEN
 	
 	try:
-		# Try logging in as a lecturer (first board credentials should work)
+		# Use credentials from config
 		response = requests.post(f"{COREAPI_URL}/login", 
-							   json={
-								   'username': 'lecturer',  # Default lecturer account
-								   'password': 'password123'
-							   })
+							   json=LECTURER_CREDENTIALS)
 		
 		print(f"Lecturer login response status: {response.status_code}")
 		print(f"Lecturer login response text: {response.text}")
@@ -47,27 +54,24 @@ def fetch_global_game_state():
 	"""Fetch global game state from API using poll_binary endpoint"""
 	global GLOBAL_PRODUCTION_COEFFICIENTS, GLOBAL_WEATHER, GLOBAL_GAME_ACTIVE
 
-	with open("tui.log", "a") as log_file:
-		log_file.write(f"DEBUG: Fetching global game state\n")
+	debug_log("Fetching global game state")
 
 	for board in getattr(fetch_global_game_state, 'boards', []):
 		if board.token and board.headers:
 			try:
 				response = requests.get(f"{COREAPI_URL}/poll_binary", headers=board.headers)
 				
-				with open("tui.log", "a") as log_file:
-					log_file.write(f"poll_binary API Response Status: {response.status_code}\n")
-					log_file.write(f"poll_binary API Response Headers: {response.headers}\n")
-					log_file.write(f"poll_binary Response Length: {len(response.content)} bytes\n")
+				debug_log(f"poll_binary API Response Status: {response.status_code}")
+				debug_log(f"poll_binary API Response Headers: {response.headers}")
+				debug_log(f"poll_binary Response Length: {len(response.content)} bytes")
 
 				if response.status_code == 200:
 					# Unpack binary coefficients response
 					data = response.content
 					production_coeffs, consumption_coeffs = unpack_coefficients_response(data)
 					
-					with open('tui.log', 'a') as log_file:
-						log_file.write(f"[{datetime.now()}] Parsed production coefficients: {production_coeffs}\n")
-						log_file.write(f"[{datetime.now()}] Parsed consumption coefficients: {consumption_coeffs}\n")
+					debug_log(f"Parsed production coefficients: {production_coeffs}")
+					debug_log(f"Parsed consumption coefficients: {consumption_coeffs}")
 					
 					# Convert source IDs to string names for compatibility
 					source_names = {
@@ -86,11 +90,10 @@ def fetch_global_game_state():
 						if source_id in source_names:
 							GLOBAL_PRODUCTION_COEFFICIENTS[source_names[source_id]] = coeff
 
-					with open("tui.log", "a") as log_file:
-						log_file.write(f"[{datetime.now()}] Unpacked production coefficients: {production_coeffs}\n")
-						log_file.write(f"[{datetime.now()}] Converted to GLOBAL_PRODUCTION_COEFFICIENTS: {GLOBAL_PRODUCTION_COEFFICIENTS}\n")
-						log_file.write(f"[{datetime.now()}] Unpacked consumption coefficients: {consumption_coeffs}\n")
-						log_file.write(f"[{datetime.now()}] Total coefficients count: {len(GLOBAL_PRODUCTION_COEFFICIENTS)}\n")
+					debug_log(f"Unpacked production coefficients: {production_coeffs}")
+					debug_log(f"Converted to GLOBAL_PRODUCTION_COEFFICIENTS: {GLOBAL_PRODUCTION_COEFFICIENTS}")
+					debug_log(f"Unpacked consumption coefficients: {consumption_coeffs}")
+					debug_log(f"Total coefficients count: {len(GLOBAL_PRODUCTION_COEFFICIENTS)}")
 					
 					# Set other defaults since we don't have weather/game status from this endpoint
 					GLOBAL_WEATHER = []
@@ -98,8 +101,7 @@ def fetch_global_game_state():
 
 					return True
 				else:
-					with open("tui.log", "a") as log_file:
-						log_file.write(f"poll_binary failed for board {board.board_name}: {response.status_code}\n")
+					debug_log(f"poll_binary failed for board {board.board_name}: {response.status_code}")
 						
 			except Exception as e:
 				with open("tui.log", "a") as log_file:
@@ -155,3 +157,53 @@ def unpack_coefficients_response(data: bytes) -> tuple:
 		offset += 5
 	
 	return production_coeffs, consumption_coeffs
+
+def fetch_lecturer_view_state():
+	"""Fetch all game state from the lecturer's perspective via /pollforusers."""
+	global TEAM_STATES, GLOBAL_PRODUCTION_COEFFICIENTS, GLOBAL_GAME_ACTIVE, GLOBAL_WEATHER
+	
+	try:
+		token = get_lecturer_token()
+		if not token:
+			debug_log("Cannot fetch lecturer view state: no token.")
+			return
+
+		response = requests.get(f"{COREAPI_URL}/pollforusers", headers=LECTURER_HEADERS)
+		
+		debug_log(f"/pollforusers API response status: {response.status_code}")
+		if response.status_code == 200:
+			debug_log(f"/pollforusers API response data: {response.text}")
+
+		if response.status_code == 200:
+			data = response.json()
+			
+			# Update team states
+			boards_data = data.get("boards", [])
+			TEAM_STATES = {board['board_id']: board for board in boards_data}
+
+			# Update global coefficients
+			coeffs = data.get("production_coefficients", {})
+			# Ensure keys are uppercase strings for consistency
+			GLOBAL_PRODUCTION_COEFFICIENTS = {str(k).upper(): v for k, v in coeffs.items()}
+
+			# Update game status
+			game_status = data.get("game_status", {})
+			GLOBAL_GAME_ACTIVE = game_status.get("game_active", False)
+			
+			# Update weather
+			GLOBAL_WEATHER = data.get("current_weather", [])
+
+	except Exception as e:
+		debug_log(f"Error in fetch_lecturer_view_state: {e}")
+
+
+def calculate_board_status(production, consumption):
+	"""Calculate status based on production and consumption"""
+	diff = abs(production - consumption)
+	
+	if diff == 0:
+		return "Balanced", "green"
+	elif diff <= STATUS_THRESHOLD_MW:
+		return "OK", "yellow"
+	else:
+		return "Blackout", "red"
