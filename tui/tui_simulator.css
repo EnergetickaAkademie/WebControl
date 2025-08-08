@@ -29,6 +29,32 @@ Screen {
     margin-bottom: 1;
 }
 
+/* Debug screen styling */
+.debug_title {
+    text-style: bold;
+    background: $accent;
+    color: $text;
+    padding: 0 1;
+    margin: 1 0;
+}
+
+#debug_container {
+    layout: horizontal;
+    height: 100%;
+}
+
+#debug_container #left_panel {
+    width: 60%;
+    padding: 1;
+    border: solid $primary;
+}
+
+#debug_container #right_panel {
+    width: 40%;
+    padding: 1;
+    border: solid $secondary;
+}
+
 /* Controls layout */
 #controls {
     layout: horizontal;
