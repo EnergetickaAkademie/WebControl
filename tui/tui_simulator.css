@@ -1,0 +1,117 @@
+/* tui_simulator.css */
+
+Screen {
+    layout: vertical;
+}
+
+#main_container {
+    layout: horizontal;
+}
+
+#left_panel {
+    width: 50%;
+    padding: 1;
+    border: solid $primary;
+}
+
+#right_panel {
+    width: 50%;
+    padding: 1;
+    border: solid $secondary;
+}
+
+/* Title styling */
+.title {
+    text-style: bold;
+    background: $primary;
+    color: $text;
+    padding: 1;
+    margin-bottom: 1;
+}
+
+/* Controls layout */
+#controls {
+    layout: horizontal;
+    height: 3;
+    margin: 1;
+}
+
+#controls Button {
+    margin: 0 1;
+}
+
+/* Table styling */
+DataTable {
+    margin-bottom: 1;
+}
+
+/* Log styling */
+Log {
+    height: 8;
+    border: solid $accent;
+    margin-top: 1;
+}
+
+/* Button styling */
+Button {
+    margin: 1;
+}
+
+/* Label styling for totals */
+#total_production, #total_consumption, #game_status, #weather_status {
+    margin: 0 1 1 1;
+    text-style: bold;
+}
+
+#board_status {
+    height: 1fr;
+}
+
+#controls {
+    padding: 1;
+    height: 5;
+}
+
+#log {
+    height: 10;
+    border-top: thick #000000;
+}
+
+.title {
+    background: $primary;
+    color: $text;
+    padding: 0 1;
+    margin-top: 1;
+}
+
+Button {
+    width: 100%;
+    margin-bottom: 1;
+}
+
+#plants_table, #consumers_table {
+    height: 15;
+    margin-bottom: 1;
+}
+
+/* Add to tui_simulator.css */
+#power_input_dialog {
+    padding: 1;
+    border: double $accent;
+    background: $surface;
+    margin-top: 1;
+}
+
+.hidden {
+    display: none;
+}
+
+#dialog {
+        width: 50%;
+        height: auto;
+        padding: 1;
+        border: double $accent;
+        background: $surface;
+        margin: 1 0;
+        align: center middle;
+    }
