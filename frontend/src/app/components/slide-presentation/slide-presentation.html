@@ -20,9 +20,8 @@
       <button 
         class="control-btn" 
         (click)="nextSlide()" 
-        [disabled]="!canGoToNext()"
-        title="Next slide (→ or ↓)">
-        →
+        title="{{ canGoToNext() ? 'Next slide (→ or ↓)' : 'Advance to next round (→ or ↓)' }}">
+        {{ canGoToNext() ? '→' : '⏭️' }}
       </button>
       
       <button 
@@ -78,7 +77,7 @@
   <div class="fullscreen-overlay" *ngIf="isFullscreen">
     <!-- Navigation Hint -->
     <div class="navigation-hint">
-      <p>Use arrow keys or space to navigate • Press F to toggle fullscreen • Press ESC to exit</p>
+      <p>Use arrow keys or space to navigate • Right arrow on last slide advances to next round • Press F to toggle fullscreen • Press ESC to exit</p>
     </div>
 
     <!-- Slide Counter -->
@@ -98,9 +97,8 @@
     <button 
       class="fullscreen-nav fullscreen-nav-right" 
       (click)="nextSlide()" 
-      [style.visibility]="canGoToNext() ? 'visible' : 'hidden'"
-      title="Next slide">
-      →
+      title="{{ canGoToNext() ? 'Next slide' : 'Advance to next round' }}">
+      {{ canGoToNext() ? '→' : '⏭️' }}
     </button>
 
     <!-- Exit Fullscreen Button -->

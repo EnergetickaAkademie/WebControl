@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, OnChanges, SimpleChanges, HostListener } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AuthService } from '../../services/auth.service';
@@ -19,6 +19,7 @@ export interface SlideInfo {
 export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges {
   @Input() currentRound: SlideInfo | null = null;
   @Input() currentRoundDetails: any = null;
+  @Output() advanceToNextRound = new EventEmitter<void>();
 
   // Slide management
   currentSlideIndex = 0;
@@ -172,6 +173,9 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
     if (this.canGoToNext()) {
       this.currentSlideIndex++;
       this.loadCurrentSlide();
+    } else {
+      // We're at the last slide, emit event to advance to next round
+      this.advanceToNextRound.emit();
     }
   }
 
@@ -232,7 +236,7 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
       case 'ArrowDown':
       case ' ': // Space
         event.preventDefault();
-        this.nextSlide();
+        this.nextSlide(); // This will now handle advancing to next round
         break;
       case 'Escape':
         event.preventDefault();

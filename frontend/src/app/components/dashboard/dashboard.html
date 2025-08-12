@@ -86,7 +86,8 @@
       <div class="slide-presentation-wrapper">
         <app-slide-presentation 
           [currentRound]="currentRound"
-          [currentRoundDetails]="currentRoundDetails">
+          [currentRoundDetails]="currentRoundDetails"
+          (advanceToNextRound)="nextRound()">
         </app-slide-presentation>
       </div>
     </div>
