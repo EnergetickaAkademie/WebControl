@@ -399,8 +399,72 @@
     flex-direction: column;
     align-items: stretch;
   }
-  
-  .boards-grid {
-    grid-template-columns: 1fr;
-  }
+}
+
+/* Weather Section Styles */
+.weather-section {
+  margin: 15px 0;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+}
+
+.weather-section h4 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.weather-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.weather-item {
+  background: #3498db;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Round Comment Section */
+.round-comment {
+  margin: 15px 0;
+  padding: 15px;
+  background: #fff3cd;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+}
+
+.round-comment h4 {
+  margin: 0 0 10px 0;
+  color: #856404;
+  font-size: 16px;
+}
+
+.round-comment p {
+  margin: 0;
+  color: #856404;
+  font-style: italic;
+}
+
+/* Enhanced Round Info */
+.round-info {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.round-info h3 {
+  margin: 0 0 15px 0;
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 8px;
 }

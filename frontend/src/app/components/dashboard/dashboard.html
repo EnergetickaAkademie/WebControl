@@ -116,6 +116,23 @@
       <div *ngIf="currentRound" class="round-info">
         <h3>Round {{ currentRound.round }} - {{ getRoundTypeName(currentRound.round_type) }}</h3>
         
+        <!-- Weather Information -->
+        <div *ngIf="currentRoundDetails?.weather && currentRoundDetails.weather.length > 0" class="weather-section">
+          <h4>🌤️ Weather Conditions</h4>
+          <div class="weather-list">
+            <span *ngFor="let weather of currentRoundDetails.weather; let last = last" 
+                  class="weather-item">
+              {{ weather.name }}<span *ngIf="!last">, </span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Round Comment -->
+        <div *ngIf="currentRoundDetails?.comment" class="round-comment">
+          <h4>📝 Round Description</h4>
+          <p>{{ currentRoundDetails.comment }}</p>
+        </div>
+        
         <!-- Game Data -->
         <div *ngIf="currentRound.game_data" class="game-data">
           <div class="data-section">
@@ -123,17 +140,17 @@
             <div class="data-grid">
               <div *ngFor="let item of objectKeys(currentRound.game_data.production_coefficients)" class="data-item">
                 <span class="data-label">{{ item }}:</span>
-                <span class="data-value">{{ currentRound.game_data.production_coefficients[item] }} MW</span>
+                <span class="data-value">{{ currentRound.game_data.production_coefficients[item] | number:'1.1-2' }}</span>
               </div>
             </div>
           </div>
           
           <div class="data-section">
-            <h4>🏢 Consumption Modifiers</h4>
+            <h4>🏢 Building Consumption (MW)</h4>
             <div class="data-grid">
               <div *ngFor="let item of objectKeys(currentRound.game_data.consumption_modifiers)" class="data-item">
                 <span class="data-label">{{ item }}:</span>
-                <span class="data-value">{{ currentRound.game_data.consumption_modifiers[item] }} MW</span>
+                <span class="data-value">{{ currentRound.game_data.consumption_modifiers[item] | number:'1.0-0' }} MW</span>
               </div>
             </div>
           </div>

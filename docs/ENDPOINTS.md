@@ -22,6 +22,173 @@ These endpoints return JSON and are consumed by the Angular application (`fronte
 | `GET` | `/coreapi/game/status` | Lightweight game status endpoint for unauthenticated requests. |
 | `GET` | `/coreapi/health` | Health check used by Docker and load balancers. |
 
+## JSON Response Formats
+
+### `/coreapi/pollforusers` Response Format
+
+The `pollforusers` endpoint returns detailed information about boards and the current game round:
+
+```json
+{
+  "boards": [
+    {
+      "board_id": "1",
+      "production": 1500,
+      "consumption": 1200,
+      "last_updated": 1692547200.123,
+      "connected_consumption": [1, 2, 3],
+      "connected_production": [4, 5],
+      "production_history": [1400, 1450, 1500],
+      "consumption_history": [1150, 1180, 1200],
+      "round_history": [1, 2, 3],
+      "current_round_index": 3,
+      "power_generation_by_type": {
+        "COAL": 800.0,
+        "NUCLEAR": 700.0
+      }
+    }
+  ],
+  "game_status": {
+    "current_round": 3,
+    "total_rounds": 15,
+    "round_type": 1,
+    "game_active": true
+  },
+  "lecturer_info": {
+    "user_id": "lecturer1",
+    "username": "Dr. Smith"
+  },
+  "round_details": {
+    "round_type": 1,
+    "round_type_name": "Day",
+    "comment": "Solar and wind are available",
+    "info_file": "/info/renewable.md",
+    "weather": [
+      {
+        "type": 1,
+        "name": "Sunny"
+      },
+      {
+        "type": 6,
+        "name": "Windy"
+      }
+    ],
+    "production_coefficients": {
+      "Source.PHOTOVOLTAIC": 1.0,
+      "Source.WIND": 1.0,
+      "Source.COAL": 1.0,
+      "Source.NUCLEAR": 1.0
+    },
+    "building_consumptions": {
+      "CITY_CENTER_A": 575,
+      "CITY_CENTER_B": 600,
+      "FACTORY": 400
+    }
+  }
+}
+```
+
+**Round Details Variations:**
+
+For **Slide rounds** (`round_type: 3`):
+```json
+"round_details": {
+  "round_type": 3,
+  "round_type_name": "Slide",
+  "comment": "Introduction to renewable energy",
+  "slide": "slides/intro.md"
+}
+```
+
+For **SlideRange rounds** (`round_type: 4`):
+```json
+"round_details": {
+  "round_type": 4,
+  "round_type_name": "Slide Range",
+  "comment": "Multi-slide presentation",
+  "slides": ["slides/intro1.md", "slides/intro2.md", "slides/intro3.md"]
+}
+```
+
+### Round Types
+- `1` = DAY
+- `2` = NIGHT  
+- `3` = SLIDE
+- `4` = SLIDE_RANGE
+
+### Weather Types
+- `1` = SUNNY
+- `2` = RAINY
+- `3` = CLOUDY
+- `4` = SNOWY
+- `5` = FOGGY
+- `6` = WINDY
+- `7` = CALM
+- `8` = BREEZY
+- `9` = PARTLY_CLOUDY
+
+### `/coreapi/get_statistics` Response Format
+
+Returns comprehensive statistics for all boards:
+
+```json
+{
+  "success": true,
+  "statistics": [
+    {
+      "board_id": "1",
+      "current_production": 1500,
+      "current_consumption": 1200,
+      "production_history": [1400, 1450, 1500],
+      "consumption_history": [1150, 1180, 1200],
+      "connected_production": [4, 5],
+      "connected_consumption": [1, 2, 3],
+      "last_updated": 1692547200.123
+    }
+  ],
+  "game_status": {
+    "current_round": 3,
+    "total_rounds": 15,
+    "game_active": true,
+    "scenario": "Script"
+  }
+}
+```
+
+### `/coreapi/next_round` Response Format
+
+Response when advancing to a gameplay round:
+
+```json
+{
+  "status": "success",
+  "round": 5,
+  "advanced_by": "Dr. Smith",
+  "round_type": 1,
+  "game_data": {
+    "production_coefficients": {
+      "Source.COAL": 1.0,
+      "Source.NUCLEAR": 1.0,
+      "Source.PHOTOVOLTAIC": 0.5
+    },
+    "consumption_modifiers": {
+      "CITY_CENTER_A": 575,
+      "FACTORY": 400
+    }
+  }
+}
+```
+
+Response when game is finished:
+
+```json
+{
+  "status": "game_finished",
+  "message": "All rounds completed",
+  "finished_by": "Dr. Smith"
+}
+```
+
 ## Binary Board Endpoints
 
 ESP32 boards communicate with the server through compact binary endpoints for efficiency.  Requests use the `Authorization: Bearer <token>` header.  Power values are transmitted in milliwatts using big-endian signed integers.

@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from '../../services';
+import { AuthService, GameStatusService } from '../../services';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { interval, Subscription } from 'rxjs';
@@ -42,6 +42,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Game state
   currentView: 'setup' | 'presentation' | 'game' = 'setup';
   currentRound: GameRound | null = null;
+  currentRoundDetails: any = null; // Store detailed round information
   pdfUrl: string | null = null;
   sanitizedPdfUrl: SafeResourceUrl | null = null;
   
@@ -50,12 +51,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   constructor(
     private authService: AuthService,
+    private gameStatusService: GameStatusService,
     private router: Router,
     private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit() {
     this.loadProfile();
+    this.checkReloadRecovery();
     this.startPolling();
   }
 
@@ -76,6 +79,40 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
+  }
+
+  checkReloadRecovery() {
+    // Only perform reload recovery for lecturers
+    const userInfo = this.authService.getUserInfo();
+    if (userInfo && userInfo.user_type === 'lecturer') {
+      this.gameStatusService.checkReloadRecovery().subscribe({
+        next: (recovery) => {
+          if (recovery.shouldRedirect && recovery.gameState) {
+            console.log('Reload recovery - setting view to:', recovery.view);
+            console.log('Game state:', recovery.gameState);
+            
+            // Restore game state
+            this.gameStatus = recovery.gameState.gameStatus;
+            this.currentRound = recovery.gameState.currentRound;
+            this.currentRoundDetails = recovery.gameState.roundDetails;
+            this.connectedBoards = recovery.gameState.boards || [];
+            
+            // Set the appropriate view
+            this.currentView = recovery.view;
+            
+            // If we're in a presentation or game state, load the PDF
+            if (recovery.view === 'presentation' || recovery.view === 'game') {
+              this.loadPDF();
+            }
+            
+            console.log('Reload recovery complete - current view:', this.currentView);
+          }
+        },
+        error: (error) => {
+          console.error('Failed to check reload recovery:', error);
+        }
+      });
+    }
   }
 
   loadScenarios() {
@@ -119,11 +156,41 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadGameStatus() {
+    // Use enhanced polling for lecturers to get round details
+    if (this.userInfo?.user_type === 'lecturer') {
+      this.gameStatusService.pollForUsers().subscribe({
+        next: (response: any) => {
+          this.gameStatus = response.game_status;
+          this.connectedBoards = response.boards || [];
+          this.currentRoundDetails = response.round_details;
+          
+          // Update current round with detailed information if available
+          if (response.round_details && this.gameStatus.game_active) {
+            this.currentRound = {
+              round: this.gameStatus.current_round,
+              round_type: response.round_details.round_type,
+              game_data: {
+                production_coefficients: response.round_details.production_coefficients || {},
+                consumption_modifiers: response.round_details.building_consumptions || {}
+              }
+            };
+          }
+        },
+        error: (error: any) => {
+          console.error('Failed to load enhanced game status', error);
+          // Fallback to basic statistics
+          this.loadBasicGameStatus();
+        }
+      });
+    } else {
+      this.loadBasicGameStatus();
+    }
+  }
+
+  loadBasicGameStatus() {
     this.authService.getGameStatistics().subscribe({
       next: (response: any) => {
         this.gameStatus = response.game_status;
-        console.log('response status:', response); // Debug log
-        // Extract connected boards from statistics
         this.connectedBoards = response.statistics || [];
       },
       error: (error: any) => {
