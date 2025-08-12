@@ -178,4 +178,9 @@ export class AuthService {
   updateBuildingTable(table: any): Observable<any> {
     return this.http.post(`${this.api}/building_table`, { table }, { headers: this.getHeaders() });
   }
+
+  // Get translations for the dashboard
+  getTranslations(): Observable<any> {
+    return this.http.get(`${this.api}/translations`, { headers: this.getHeaders() });
+  }
 }

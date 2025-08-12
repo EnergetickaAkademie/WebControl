@@ -23,25 +23,9 @@
       <div class="setup-section">
         <h2>Game Setup</h2>
         
-        <!-- Connected Boards -->
-        <div class="connected-boards-section">
-          <h3>📱 Connected Boards</h3>
-          <div class="boards-list">
-            <div *ngIf="connectedBoards.length === 0" class="no-boards">
-              <p>No boards connected yet. Waiting for ESP32 boards to connect...</p>
-            </div>
-            <div *ngFor="let board of connectedBoards" class="board-item">
-              <span class="board-id">Board {{ board.board_id }}</span>
-              <span class="board-status" [class.online]="board.last_updated">
-                {{ board.last_updated ? 'Online' : 'Offline' }}
-              </span>
-            </div>
-          </div>
-        </div>
-
         <!-- Scenario Selection -->
         <div class="scenario-section">
-          <h3>📋 Scenario Selection</h3>
+          <h3>� Scenario Selection</h3>
           <div class="scenario-controls">
             <select [(ngModel)]="selectedScenario" class="scenario-select">
               <option value="" disabled>Select a scenario...</option>
@@ -55,6 +39,51 @@
               [disabled]="!selectedScenario || isGameLoading">
               {{ isGameLoading ? 'Starting...' : 'Start Game' }}
             </button>
+          </div>
+        </div>
+
+        <!-- Connected Boards in New Layout -->
+        <div class="boards-container">
+          <div class="boards-left">
+            <div *ngFor="let board of getLeftBoards()" class="board-card">
+              <div class="board-header">
+                <h4>Tým #{{ board.board_id }}</h4>
+                <span class="board-status" [class.online]="board.last_updated" [class.offline]="!board.last_updated">
+                  {{ board.last_updated ? '●' : '●' }}
+                </span>
+              </div>
+              <div class="board-data">
+                <div class="power-line">
+                  <span class="power-label">Výroba:</span>
+                  <span class="power-value">{{ board.production || 0 | number:'1.0-0' }} MWh</span>
+                </div>
+                <div class="power-line">
+                  <span class="power-label">Spotřeba:</span>
+                  <span class="power-value">{{ board.consumption || 0 | number:'1.0-0' }} MWh</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="boards-right">
+            <div *ngFor="let board of getRightBoards()" class="board-card">
+              <div class="board-header">
+                <h4>Tým #{{ board.board_id }}</h4>
+                <span class="board-status" [class.online]="board.last_updated" [class.offline]="!board.last_updated">
+                  {{ board.last_updated ? '●' : '●' }}
+                </span>
+              </div>
+              <div class="board-data">
+                <div class="power-line">
+                  <span class="power-label">Výroba:</span>
+                  <span class="power-value">{{ board.production || 0 | number:'1.0-0' }} MWh</span>
+                </div>
+                <div class="power-line">
+                  <span class="power-label">Spotřeba:</span>
+                  <span class="power-value">{{ board.consumption || 0 | number:'1.0-0' }} MWh</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -95,7 +124,7 @@
     <!-- Game View - For Day/Night Rounds -->
     <div *ngIf="currentView === 'game'" class="game-view">
       <div class="game-header">
-        <h2>⚡ Game Board - {{ getRoundTypeName(currentRound?.round_type || 0) }} Round</h2>
+        <h2>⚡ Game Board</h2>
         <div class="game-controls">
           <button class="btn btn-next" (click)="nextRound()" [disabled]="isGameLoading">
             {{ isGameLoading ? 'Loading...' : 'Next Round' }}
@@ -106,83 +135,76 @@
         </div>
       </div>
 
-      <!-- Round Information -->
-      <div *ngIf="currentRound" class="round-info">
-        <h3>Round {{ currentRound.round }} - {{ getRoundTypeName(currentRound.round_type) }}</h3>
-        
-        <!-- Weather Information -->
-        <div *ngIf="currentRoundDetails?.weather && currentRoundDetails.weather.length > 0" class="weather-section">
-          <h4>🌤️ Weather Conditions</h4>
-          <div class="weather-list">
-            <span *ngFor="let weather of currentRoundDetails.weather; let last = last" 
-                  class="weather-item">
-              {{ weather.name }}<span *ngIf="!last">, </span>
-            </span>
-          </div>
-        </div>
-
-        <!-- Round Comment -->
-        <div *ngIf="currentRoundDetails?.comment" class="round-comment">
-          <h4>📝 Round Description</h4>
-          <p>{{ currentRoundDetails.comment }}</p>
-        </div>
-        
-        <!-- Game Data -->
-        <div *ngIf="currentRound.game_data" class="game-data">
-          <div class="data-section">
-            <h4>🔋 Production Coefficients</h4>
-            <div class="data-grid">
-              <div *ngFor="let item of objectKeys(currentRound.game_data.production_coefficients)" class="data-item">
-                <span class="data-label">{{ item }}:</span>
-                <span class="data-value">{{ currentRound.game_data.production_coefficients[item] | number:'1.1-2' }}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="data-section">
-            <h4>🏢 Building Consumption (MW)</h4>
-            <div class="data-grid">
-              <div *ngFor="let item of objectKeys(currentRound.game_data.consumption_modifiers)" class="data-item">
-                <span class="data-label">{{ item }}:</span>
-                <span class="data-value">{{ currentRound.game_data.consumption_modifiers[item] | number:'1.0-0' }} MW</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Connected Boards Real-time Data -->
-      <div class="boards-realtime">
-        <h3>📊 Board Data (Real-time)</h3>
-        <div class="boards-grid">
-          <div *ngFor="let board of connectedBoards" class="board-card">
+      <!-- New Game Layout: Left - Middle - Right -->
+      <div class="game-layout">
+        <!-- Left Side - Boards -->
+        <div class="boards-left">
+          <div *ngFor="let board of getLeftBoards()" class="board-card">
             <div class="board-header">
-              <h4>Board {{ board.board_id }}</h4>
-              <span class="board-status" [class.online]="board.last_updated">
-                {{ board.last_updated ? 'Online' : 'Offline' }}
+              <h4>Tým #{{ board.board_id }}</h4>
+              <span class="board-status" [class.online]="board.last_updated" [class.offline]="!board.last_updated">
+                {{ board.last_updated ? '●' : '●' }}
               </span>
             </div>
             <div class="board-data">
-              <div class="power-info">
-                <div class="power-item production">
-                  <span class="power-label">Production:</span>
-                  <span class="power-value">{{ board.current_production || 0 | number:'1.1-1' }} W</span>
-                </div>
-                <div class="power-item consumption">
-                  <span class="power-label">Consumption:</span>
-                  <span class="power-value">{{ board.current_consumption || 0 | number:'1.1-1' }} W</span>
-                </div>
+              <div class="power-line">
+                <span class="power-label">Výroba:</span>
+                <span class="power-value">{{ board.production || 0 | number:'1.0-0' }} MWh</span>
               </div>
-              <div class="connections">
-                <p><strong>Connected Production:</strong> {{ board.connected_production?.length || 0 }} units</p>
-                <p><strong>Connected Consumption:</strong> {{ board.connected_consumption?.length || 0 }} units</p>
+              <div class="power-line">
+                <span class="power-label">Spotřeba:</span>
+                <span class="power-value">{{ board.consumption || 0 | number:'1.0-0' }} MWh</span>
               </div>
             </div>
           </div>
         </div>
-        
-        <div *ngIf="connectedBoards.length === 0" class="no-boards">
-          <p>No boards connected or sending data.</p>
+
+        <!-- Middle - Weather and Special Effects -->
+        <div class="weather-info">
+          <div class="weather-box">
+            <!-- Round Type and Weather -->
+            <div class="round-weather">
+              <div class="round-type">
+                <span class="round-icon" [innerHTML]="getRoundIcon()"></span>
+                <span class="round-name">{{ getRoundName() }}</span>
+              </div>
+              
+              <div *ngIf="getWeatherInfo()" class="weather-conditions">
+                <div class="temperature">{{ getTemperature() }}</div>
+                <div class="weather-name">{{ getWeatherName() }}</div>
+              </div>
+            </div>
+
+            <!-- Special Effects -->
+            <div *ngIf="getSpecialEffects().length > 0" class="special-effects">
+              <div *ngFor="let effect of getSpecialEffects()" class="effect-item">
+                <span class="effect-icon" [innerHTML]="effect.icon"></span>
+                <span class="effect-text">{{ effect.text }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side - Boards -->
+        <div class="boards-right">
+          <div *ngFor="let board of getRightBoards()" class="board-card">
+            <div class="board-header">
+              <h4>Tým #{{ board.board_id }}</h4>
+              <span class="board-status" [class.online]="board.last_updated" [class.offline]="!board.last_updated">
+                {{ board.last_updated ? '●' : '●' }}
+              </span>
+            </div>
+            <div class="board-data">
+              <div class="power-line">
+                <span class="power-label">Výroba:</span>
+                <span class="power-value">{{ board.production || 0 | number:'1.0-0' }} MWh</span>
+              </div>
+              <div class="power-line">
+                <span class="power-label">Spotřeba:</span>
+                <span class="power-value">{{ board.consumption || 0 | number:'1.0-0' }} MWh</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

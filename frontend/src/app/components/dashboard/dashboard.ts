@@ -44,6 +44,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   currentRound: GameRound | null = null;
   currentRoundDetails: any = null; // Store detailed round information
   
+  // Translations
+  translations: any = {
+    weather: {},
+    round_types: {}
+  };
+  
   private gameStatusSubscription?: Subscription;
   private pollSubscription?: Subscription;
 
@@ -55,6 +61,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadProfile();
+    this.loadTranslations();
     this.checkReloadRecovery();
     this.startPolling();
   }
@@ -318,5 +325,91 @@ export class DashboardComponent implements OnInit, OnDestroy {
       default:
         return 'UNKNOWN';
     }
+  }
+
+  // Load translations from backend
+  loadTranslations() {
+    this.authService.getTranslations().subscribe({
+      next: (response: any) => {
+        this.translations = response;
+      },
+      error: (error: any) => {
+        console.error('Failed to load translations', error);
+        // Use default empty translations if loading fails
+        this.translations = { weather: {}, round_types: {} };
+      }
+    });
+  }
+
+  // Board distribution methods
+  getLeftBoards(): any[] {
+    const half = Math.ceil(this.connectedBoards.length / 2);
+    return this.connectedBoards.slice(0, half);
+  }
+
+  getRightBoards(): any[] {
+    const half = Math.ceil(this.connectedBoards.length / 2);
+    return this.connectedBoards.slice(half);
+  }
+
+  // Weather and round info methods
+  getRoundIcon(): string {
+    if (!this.currentRoundDetails?.round_type) return '';
+    
+    const roundType = this.currentRoundDetails.round_type;
+    if (roundType === 1) { // DAY
+      return this.translations.round_types?.DAY?.icon || '';
+    } else if (roundType === 2) { // NIGHT
+      return this.translations.round_types?.NIGHT?.icon || '';
+    }
+    return '';
+  }
+
+  getRoundName(): string {
+    if (!this.currentRoundDetails?.round_type) return '';
+    
+    const roundType = this.currentRoundDetails.round_type;
+    if (roundType === 1) { // DAY
+      return this.translations.round_types?.DAY?.name || 'Den';
+    } else if (roundType === 2) { // NIGHT
+      return this.translations.round_types?.NIGHT?.name || 'Noc';
+    }
+    return '';
+  }
+
+  getWeatherInfo(): any {
+    if (!this.currentRoundDetails?.weather || this.currentRoundDetails.weather.length === 0) {
+      return null;
+    }
+    
+    // Get the first weather condition
+    const weather = this.currentRoundDetails.weather[0];
+    return this.translations.weather?.[weather.name] || null;
+  }
+
+  getTemperature(): string {
+    const weatherInfo = this.getWeatherInfo();
+    return weatherInfo?.temperature || '';
+  }
+
+  getWeatherName(): string {
+    const weatherInfo = this.getWeatherInfo();
+    return weatherInfo?.name || '';
+  }
+
+  getSpecialEffects(): any[] {
+    if (!this.currentRoundDetails?.weather) return [];
+    
+    let effects: any[] = [];
+    
+    // Collect effects from all weather conditions
+    this.currentRoundDetails.weather.forEach((weather: any) => {
+      const weatherTranslation = this.translations.weather?.[weather.name];
+      if (weatherTranslation?.effects) {
+        effects = effects.concat(weatherTranslation.effects);
+      }
+    });
+    
+    return effects;
   }
 }
