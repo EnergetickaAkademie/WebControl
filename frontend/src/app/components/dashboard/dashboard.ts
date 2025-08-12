@@ -4,7 +4,7 @@ import { AuthService, GameStatusService } from '../../services';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { interval, Subscription } from 'rxjs';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { SlidePresentationComponent } from '../slide-presentation/slide-presentation';
 
 // Enum matching the Python RoundType enum
 enum RoundType {
@@ -26,7 +26,7 @@ interface GameRound {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SlidePresentationComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -43,8 +43,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   currentView: 'setup' | 'presentation' | 'game' = 'setup';
   currentRound: GameRound | null = null;
   currentRoundDetails: any = null; // Store detailed round information
-  pdfUrl: string | null = null;
-  sanitizedPdfUrl: SafeResourceUrl | null = null;
   
   private gameStatusSubscription?: Subscription;
   private pollSubscription?: Subscription;
@@ -52,8 +50,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private gameStatusService: GameStatusService,
-    private router: Router,
-    private sanitizer: DomSanitizer
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -99,11 +96,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
             
             // Set the appropriate view
             this.currentView = recovery.view;
-            
-            // If we're in a presentation or game state, load the PDF
-            if (recovery.view === 'presentation' || recovery.view === 'game') {
-              this.loadPDF();
-            }
             
             console.log('Reload recovery complete - current view:', this.currentView);
           }
@@ -216,7 +208,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.authService.startGameWithScenario(this.selectedScenario).subscribe({
       next: (response: any) => {
         console.log('Game started:', response);
-        this.loadPDF();
         this.loadConnectedBoards();
         // Immediately call next round to get the first round information
         // Don't set isGameLoading = false here, let nextRound handle it
@@ -258,27 +249,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadPDF() {
-    console.log('Loading PDF...');
-    this.authService.getPDF().subscribe({
-      next: (response: any) => {
-        console.log('PDF response:', response);
-        if (response.success && response.url) {
-          // Make the URL absolute for the iframe
-          this.pdfUrl = `http://localhost${response.url}`;
-          // Sanitize the URL for Angular security
-          this.sanitizedPdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfUrl);
-          console.log('PDF URL set to:', this.pdfUrl);
-        } else {
-          console.error('Invalid PDF response:', response);
-        }
-      },
-      error: (error: any) => {
-        console.error('Failed to load PDF:', error);
-      }
-    });
-  }
-
   nextRound() {
     this.isGameLoading = true;
     console.log('Calling next round...');
@@ -315,8 +285,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         console.log('Game ended:', response);
         this.currentView = 'setup';
         this.currentRound = null;
-        this.pdfUrl = null;
-        this.sanitizedPdfUrl = null;
         this.isGameLoading = false;
       },
       error: (error: any) => {

@@ -144,8 +144,9 @@ export class AuthService {
     return this.http.post(`${this.api}/end_game`, {}, { headers: this.getHeaders() });
   }
 
-  getPDF(): Observable<any> {
-    return this.http.get(`${this.api}/get_pdf`, { headers: this.getHeaders() });
+  // Get slide image URL by filename
+  getSlideFileUrl(filename: string): string {
+    return `${this.api}/slide_file/${filename}`;
   }
 
   // Get user profile

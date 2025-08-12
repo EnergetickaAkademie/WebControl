@@ -203,6 +203,14 @@
   gap: 10px;
 }
 
+.slide-presentation-wrapper {
+  flex: 1;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
 .pdf-container {
   flex: 1;
   background: white;

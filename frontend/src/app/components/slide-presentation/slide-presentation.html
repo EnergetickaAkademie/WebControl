@@ -1,0 +1,131 @@
+<div class="slide-presentation-container" [class.fullscreen]="isFullscreen">
+  <!-- Header (hidden in fullscreen) -->
+  <div class="presentation-header" *ngIf="!isFullscreen">
+    <div class="slide-info">
+      <h3>{{ getSlideTitle() }}</h3>
+      <span class="slide-counter" *ngIf="totalSlides > 1">
+        {{ getCurrentSlideNumber() }} / {{ getTotalSlides() }}
+      </span>
+    </div>
+    
+    <div class="presentation-controls">
+      <button 
+        class="control-btn" 
+        (click)="previousSlide()" 
+        [disabled]="!canGoToPrevious()"
+        title="Previous slide (← or ↑)">
+        ←
+      </button>
+      
+      <button 
+        class="control-btn" 
+        (click)="nextSlide()" 
+        [disabled]="!canGoToNext()"
+        title="Next slide (→ or ↓)">
+        →
+      </button>
+      
+      <button 
+        class="control-btn fullscreen-btn" 
+        (click)="toggleFullscreen()"
+        title="Toggle fullscreen (F)">
+        ⛶
+      </button>
+    </div>
+  </div>
+
+  <!-- Slide Navigation Bar (for slide ranges, hidden in fullscreen) -->
+  <div class="slide-navigation" *ngIf="totalSlides > 1 && !isFullscreen">
+    <div class="slide-thumbnails">
+      <button 
+        *ngFor="let slide of slides; let i = index"
+        class="slide-thumb"
+        [class.active]="i === currentSlideIndex"
+        (click)="goToSlide(i)"
+        [title]="'Go to slide ' + (i + 1)">
+        {{ i + 1 }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Slide Display -->
+  <div class="slide-display">
+    <!-- Loading State -->
+    <div class="slide-loading" *ngIf="isImageLoading">
+      <div class="loading-spinner"></div>
+      <p>Loading slide...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="slide-error" *ngIf="imageError && !isImageLoading">
+      <div class="error-icon">⚠️</div>
+      <h3>Slide Not Found</h3>
+      <p>Could not load slide image. Please check if the slide files exist.</p>
+    </div>
+
+    <!-- Slide Image -->
+    <div class="slide-content" *ngIf="currentImageUrl && !isImageLoading && !imageError">
+      <img 
+        [src]="currentImageUrl" 
+        [alt]="getSlideTitle()"
+        class="slide-image"
+        (load)="isImageLoading = false"
+        (error)="imageError = true; isImageLoading = false">
+    </div>
+  </div>
+
+  <!-- Fullscreen Navigation Overlay -->
+  <div class="fullscreen-overlay" *ngIf="isFullscreen">
+    <!-- Navigation Hint -->
+    <div class="navigation-hint">
+      <p>Use arrow keys or space to navigate • Press F to toggle fullscreen • Press ESC to exit</p>
+    </div>
+
+    <!-- Slide Counter -->
+    <div class="fullscreen-counter" *ngIf="totalSlides > 1">
+      {{ getCurrentSlideNumber() }} / {{ getTotalSlides() }}
+    </div>
+
+    <!-- Navigation Arrows -->
+    <button 
+      class="fullscreen-nav fullscreen-nav-left" 
+      (click)="previousSlide()" 
+      [style.visibility]="canGoToPrevious() ? 'visible' : 'hidden'"
+      title="Previous slide">
+      ←
+    </button>
+    
+    <button 
+      class="fullscreen-nav fullscreen-nav-right" 
+      (click)="nextSlide()" 
+      [style.visibility]="canGoToNext() ? 'visible' : 'hidden'"
+      title="Next slide">
+      →
+    </button>
+
+    <!-- Exit Fullscreen Button -->
+    <button 
+      class="fullscreen-exit" 
+      (click)="exitFullscreen()"
+      title="Exit fullscreen">
+      ✕
+    </button>
+  </div>
+
+  <!-- Round Details (hidden in fullscreen) -->
+  <div class="round-details" *ngIf="currentRoundDetails && !isFullscreen">
+    <div class="detail-section" *ngIf="currentRoundDetails.comment">
+      <h4>📝 Description</h4>
+      <p>{{ currentRoundDetails.comment }}</p>
+    </div>
+    
+    <div class="detail-section" *ngIf="currentRoundDetails.weather && currentRoundDetails.weather.length > 0">
+      <h4>🌤️ Weather</h4>
+      <div class="weather-tags">
+        <span *ngFor="let weather of currentRoundDetails.weather" class="weather-tag">
+          {{ weather.name }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
