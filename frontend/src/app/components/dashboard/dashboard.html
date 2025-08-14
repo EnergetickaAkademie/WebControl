@@ -161,27 +161,30 @@
 
         <!-- Middle - Weather and Special Effects -->
         <div class="weather-info">
+          <!-- Weather Box (Top) -->
           <div class="weather-box">
-            <!-- Round Type and Weather -->
             <div class="round-weather">
               <div class="round-type">
-                <span class="round-icon" [innerHTML]="getRoundIcon()"></span>
-                <span class="round-name">{{ getRoundName() }}</span>
+                <span class="round-icon" [innerHTML]="roundIcon()"></span>
+                <span class="round-name">{{ roundName }}</span>
               </div>
               
-              <div *ngIf="getWeatherInfo()" class="weather-conditions">
-                <div class="temperature">{{ getTemperature() }}</div>
-                <div class="weather-name">{{ getWeatherName() }}</div>
+              <div *ngIf="weatherInfo" class="weather-conditions">
+                <div class="temperature">{{ temperature }}</div>
+                <div class="weather-name">{{ weatherName }}</div>
               </div>
             </div>
+          </div>
 
-            <!-- Special Effects -->
-            <div *ngIf="getSpecialEffects().length > 0" class="special-effects">
-              <div *ngFor="let effect of getSpecialEffects()" class="effect-item">
-                <span class="effect-icon" [innerHTML]="effect.icon"></span>
+          <!-- Special Effects Box (Bottom) -->
+          <div *ngIf="specialEffects.length > 0" class="special-effects-box">
+            <h4>Speciální efekty:</h4>
+            <ul class="effects-list">
+              <li *ngFor="let effect of specialEffects" class="effect-item">
+                <span class="effect-icon">🔧</span>
                 <span class="effect-text">{{ effect.text }}</span>
-              </div>
-            </div>
+              </li>
+            </ul>
           </div>
         </div>
 

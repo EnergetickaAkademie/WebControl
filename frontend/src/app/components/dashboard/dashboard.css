@@ -282,8 +282,10 @@
 /* Weather Info Box in Middle */
 .weather-info {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 20px;
 }
 
 .weather-box {
@@ -293,6 +295,11 @@
   padding: 25px;
   min-width: 300px;
   text-align: center;
+  position: relative; /* allow absolutely positioned big icon */
+  min-height: 150px; /* give the box a sensible height so the icon can fill it */
+  display: flex;               /* center content vertically */
+  flex-direction: column;
+  justify-content: center;
 }
 
 .round-weather {
@@ -307,8 +314,47 @@
   margin-bottom: 15px;
 }
 
+/* Default small icon size (outside weather box) */
 .round-icon {
   display: inline-block;
+  width: 32px;
+  height: 32px;
+}
+
+.round-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Make the middle icon inside the weather box fill the box height */
+.weather-box .round-icon {
+  position: absolute;
+  top: 25px;   /* match box padding for visual centering */
+  bottom: 25px;
+  left: 25px;
+  height: calc(100% - 50px); /* full height minus padding */
+  width: auto;
+  display: block;
+}
+
+.weather-box .round-icon svg {
+  height: 100%;
+  width: auto;
+}
+
+/* Push text content to the right so it doesn't overlap the big icon */
+.weather-box .round-type,
+.weather-box .weather-conditions {
+  margin-left: 160px; /* adjust if you want the text closer/further from the icon */
+  text-align: left;
+}
+
+/* Make the inner content take full height and center vertically */
+.weather-box .round-weather {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;  /* centers round-type + weather-conditions vertically */
+  min-height: calc(100% - 50px);
 }
 
 .round-name {
@@ -336,22 +382,46 @@
 }
 
 /* Special Effects */
-.special-effects {
-  border-top: 1px solid #e0e0e0;
-  padding-top: 15px;
+.special-effects-box {
+  background: white;
+  border: 2px solid #000;
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 300px;
+  text-align: left;
+}
+
+.special-effects-box h4 {
+  margin: 0 0 15px 0;
+  color: #000;
+  text-align: center;
+}
+
+.effects-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .effect-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 12px;
+  margin-bottom: 10px;
   color: #161618;
+  padding: 8px;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+}
+
+.effect-item:last-child {
+  margin-bottom: 0;
 }
 
 .effect-icon {
   display: inline-block;
   flex-shrink: 0;
+  font-size: 16px;
 }
 
 .effect-text {
