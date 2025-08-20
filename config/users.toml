@@ -1,0 +1,13 @@
+[lecturers]
+lecturer1 = { password = "lecturer123", name = "lecturer1", group = "group1" }
+lecturer2 = { password = "lecturer456", name = "lecturer2", group = "group1" }
+
+[boards]
+board1 = { password = "board123", name = "board1", group = "group1" }
+board2 = { password = "board123", name = "board2", group = "group1" }
+board3 = { password = "board123", name = "board3", group = "group1" }
+board4 = { password = "board123", name = "board4", group = "group1" }
+board5 = { password = "board123", name = "board5", group = "group1" }
+
+[groups]
+group1 = { name = "Primary Game Group", max_boards = 10 }

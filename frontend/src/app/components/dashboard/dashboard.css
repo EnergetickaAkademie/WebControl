@@ -1,9 +1,35 @@
+/* DIN Pro Font Faces */
+@font-face {
+  font-family: 'DINPro-Black';
+  src: url('/fonts/DINPro-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'DINPro-Light';
+  src: url('/fonts/DINPro-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'DINPro-Regular';
+  src: url('/fonts/DINPro-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
 .dashboard-container {
   margin: 0;
-  padding: 20px;
-  font-family: Arial, sans-serif;
+  padding: 0; /* Remove all padding */
+  font-family: 'DINPro-Regular', Arial, sans-serif;
   background-color: #E8ECFF;
   min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Center vertically */
 }
 
 .dashboard-header {
@@ -12,7 +38,7 @@
   align-items: center;
   padding: 20px 0;
   border-bottom: 2px solid #e0e0e0;
-  margin-bottom: 30px;
+  margin: 0 20px 30px 20px; /* Add horizontal margin since container has no padding */
   background-color: white;
   padding: 20px;
   border-radius: 8px;
@@ -58,6 +84,7 @@
   display: flex;
   flex-direction: column;
   gap: 30px;
+  padding: 20px; /* Add padding for setup view */
 }
 
 .setup-section h2 {
@@ -147,12 +174,37 @@
   margin: 20px 0;
 }
 
+/* Setup View - Horizontal Layout for Main Page */
+.boards-container.setup-horizontal {
+  flex-direction: row;
+  flex-wrap: nowrap; /* Prevent wrapping to keep all on one line */
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.boards-container.setup-horizontal .boards-left,
+.boards-container.setup-horizontal .boards-right {
+  flex-direction: row;
+  gap: 25px; /* Increased gap between boards */
+  height: auto;
+  flex: none; /* Remove flex to prevent stretching */
+  justify-content: center;
+}
+
+.boards-container.setup-horizontal .board-card {
+  width: 280px; /* Increased width from 200px to 280px */
+  height: 200px; /* Slightly increased height */
+  min-height: 200px;
+  flex-shrink: 0;
+}
+
 .boards-left,
 .boards-right {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px; /* Reduced from 15px to make vertical spaces smaller */
+  height: 100%; /* Take full height */
+  justify-content: space-evenly; /* Distribute teams evenly */
 }
 
 /* Board Cards */
@@ -162,32 +214,51 @@
   padding: 15px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   border: none;
+  height: calc(25vh - 30px); /* Reduced from 33vh to 25vh */
+  min-height: 120px; /* Reduced minimum height */
+  display: flex;
+  flex-direction: column;
 }
 
 .board-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 4vh;
 }
 
 .board-header h4 {
   color: #000;
   margin: 0;
-  font-size: 16px;
+  font-size: 32px; /* Increased from 20px to fill box better */
+  font-family: 'DINPro-Light', Arial, sans-serif;
+  font-weight: 300;
 }
 
-.board-status {
-  font-size: 20px;
-  font-weight: bold;
+.board-indicators {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.board-status.online {
-  color: #2ed573; /* Green */
+.grid-status {
+  display: flex;
+  align-items: center;
 }
 
-.board-status.offline {
-  color: #ff4757; /* Red */
+/* Placeholder team styling */
+.board-card.placeholder {
+  opacity: 0.6;
+  background-color: #f5f5f5;
+}
+
+.board-card.placeholder .board-header h4 {
+  color: #888;
+}
+
+.board-card.placeholder .power-label,
+.board-card.placeholder .power-value {
+  color: #aaa;
 }
 
 .board-data {
@@ -204,12 +275,16 @@
 
 .power-label {
   color: #000;
-  font-weight: bold;
+  font-family: 'DINPro-Regular', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 28px; /* Increased from 18px to fill box better */
 }
 
 .power-value {
   color: #000;
-  font-weight: bold;
+  font-family: 'DINPro-Black', Arial, sans-serif;
+  font-weight: 900;
+  font-size: 32px; /* Increased from 20px to fill box better */
 }
 
 /* Presentation View */
@@ -250,6 +325,9 @@
   flex-direction: column;
   gap: 20px;
   position: relative; /* For floating button positioning */
+  height: calc(100vh - 120px); /* Account for container padding */
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 /* Floating Next Button */
@@ -293,29 +371,42 @@
 /* Main Game Layout: Left - Middle - Right */
 .game-layout {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: 1fr 1.5fr 1fr; /* Left column, middle (1.5x width), right column */
   gap: 20px;
-  align-items: start;
+  align-items: start; /* Align to top */
+  height: 100%; /* Take full available height */
+  flex: 1; /* Take remaining space in game-view */
 }
 
-/* Weather Info Box in Middle */
+/* Weather Info Box - Middle Column, Top Aligned */
 .weather-info {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: flex-start; /* Align to top */
   align-items: center;
   gap: 20px;
+  margin-top: 0; /* Remove any top margin to align with team boxes */
+}
+
+.boards-left,
+.boards-right {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  height: 100%; /* Take full height */
 }
 
 .weather-box {
+  top: 4vh;
   background: white;
   border: 2px solid #000;
   border-radius: 12px;
   padding: 25px;
-  min-width: 300px;
+  width: 100%; /* Take full width of middle column */
+  max-width: none; /* Remove max width restriction */
   text-align: center;
   position: relative; /* allow absolutely positioned big icon */
-  min-height: 150px; /* give the box a sensible height so the icon can fill it */
+  min-height: 500px; /* Increased by 2/3: from 300px to 500px */
   display: flex;               /* center content vertically */
   flex-direction: column;
   justify-content: center;
@@ -348,14 +439,14 @@
 /* Make the middle icon inside the weather box fill the box height */
 .weather-box .round-icon {
   position: absolute;
-  top: 20px;   /* slightly less top padding */
-  bottom: 20px; /* slightly less bottom padding */
-  left: 20px;  /* slightly less left padding */
-  height: calc(100% - 40px); /* adjust for new padding */
-  width: 140px; /* Increased width to prevent right-side cutoff */
-  max-width: 140px;
-  display: block;
-  overflow: visible; /* Allow slight overflow if needed */
+  top: 50%;   /* Position at 50% from top for vertical centering */
+  right: 0;
+  transform: translateY(-50%); /* Center vertically only */
+  height: auto; /* Let height be determined by image */
+  width: auto;  /* Let width be determined by image */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .weather-box .round-icon svg {
@@ -366,19 +457,24 @@
   max-width: 100%;
 }
 
-/* Push text content to the right so it doesn't overlap the big icon */
+/* Position text content centered, overlaying the icon if needed */
 .weather-box .round-type,
 .weather-box .weather-conditions {
-  margin-left: 170px; /* increased to accommodate wider icon */
-  text-align: left;
+  position: relative;
+  z-index: 2; /* Place text above the icon */
+  text-align: center;
+  margin: 0; /* Remove left margin to center the text */
 }
 
 /* Make the inner content take full height and center vertically */
 .weather-box .round-weather {
   display: flex;
   flex-direction: column;
-  justify-content: center;  /* centers round-type + weather-conditions vertically */
-  min-height: calc(100% - 50px);
+  justify-content: space-between;  /* Distribute text at top and bottom */
+  align-items: center;
+  height: 100%;
+  position: relative;
+  z-index: 2; /* Ensure text is above the background icon */
 }
 
 .round-name {
