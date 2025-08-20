@@ -50,6 +50,13 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
       const currentSlideData = this.getCurrentSlideDataSignature();
       if (currentSlideData !== this.previousSlideData) {
         this.previousSlideData = currentSlideData;
+        
+        // Exit fullscreen if moving away from slide rounds
+        if (this.isFullscreen && this.currentRound && 
+            this.currentRound.round_type !== 3 && this.currentRound.round_type !== 4) {
+          this.exitFullscreen();
+        }
+        
         this.loadSlides();
       }
     }
@@ -121,6 +128,14 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     this.loadCurrentSlide();
+    
+    // Auto-fullscreen for slide rounds
+    if (this.currentRound.round_type === 3 || this.currentRound.round_type === 4) {
+      // Use setTimeout to ensure DOM is ready
+      setTimeout(() => {
+        this.enterFullscreen();
+      }, 100);
+    }
   }
 
   loadCurrentSlide() {
@@ -224,8 +239,7 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
   // Keyboard navigation
   @HostListener('document:keydown', ['$event'])
   handleKeyDown(event: KeyboardEvent) {
-    if (!this.isFullscreen) return;
-
+    // Handle navigation keys regardless of fullscreen state
     switch (event.key) {
       case 'ArrowLeft':
       case 'ArrowUp':
@@ -239,8 +253,11 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
         this.nextSlide(); // This will now handle advancing to next round
         break;
       case 'Escape':
-        event.preventDefault();
-        this.exitFullscreen();
+        // Only handle escape in fullscreen
+        if (this.isFullscreen) {
+          event.preventDefault();
+          this.exitFullscreen();
+        }
         break;
       case 'f':
       case 'F':

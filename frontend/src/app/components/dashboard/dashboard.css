@@ -1,6 +1,5 @@
 .dashboard-container {
-  max-width: 1200px;
-  margin: 0 auto;
+  margin: 0;
   padding: 20px;
   font-family: Arial, sans-serif;
   background-color: #E8ECFF;
@@ -215,9 +214,10 @@
 
 /* Presentation View */
 .presentation-view {
-  height: calc(100vh - 150px);
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative; /* For floating button positioning */
 }
 
 .presentation-header {
@@ -249,6 +249,25 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  position: relative; /* For floating button positioning */
+}
+
+/* Floating Next Button */
+.floating-next-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 1000;
+  padding: 15px 25px;
+  font-size: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.floating-next-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
 }
 
 .game-header {
@@ -329,23 +348,28 @@
 /* Make the middle icon inside the weather box fill the box height */
 .weather-box .round-icon {
   position: absolute;
-  top: 25px;   /* match box padding for visual centering */
-  bottom: 25px;
-  left: 25px;
-  height: calc(100% - 50px); /* full height minus padding */
-  width: auto;
+  top: 20px;   /* slightly less top padding */
+  bottom: 20px; /* slightly less bottom padding */
+  left: 20px;  /* slightly less left padding */
+  height: calc(100% - 40px); /* adjust for new padding */
+  width: 140px; /* Increased width to prevent right-side cutoff */
+  max-width: 140px;
   display: block;
+  overflow: visible; /* Allow slight overflow if needed */
 }
 
 .weather-box .round-icon svg {
   height: 100%;
-  width: auto;
+  width: 100%;
+  object-fit: contain; /* Ensure SVG scales properly within bounds */
+  max-height: 100%;
+  max-width: 100%;
 }
 
 /* Push text content to the right so it doesn't overlap the big icon */
 .weather-box .round-type,
 .weather-box .weather-conditions {
-  margin-left: 160px; /* adjust if you want the text closer/further from the icon */
+  margin-left: 170px; /* increased to accommodate wider icon */
   text-align: left;
 }
 

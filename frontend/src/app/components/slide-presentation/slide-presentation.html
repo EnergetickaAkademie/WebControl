@@ -1,6 +1,6 @@
 <div class="slide-presentation-container" [class.fullscreen]="isFullscreen">
-  <!-- Header (hidden in fullscreen) -->
-  <div class="presentation-header" *ngIf="!isFullscreen">
+  <!-- Header (hidden in fullscreen and when not needed) -->
+  <div class="presentation-header" *ngIf="!isFullscreen && false">
     <div class="slide-info">
       <h3>{{ getSlideTitle() }}</h3>
       <span class="slide-counter" *ngIf="totalSlides > 1">
@@ -34,7 +34,7 @@
   </div>
 
   <!-- Slide Navigation Bar (for slide ranges, hidden in fullscreen) -->
-  <div class="slide-navigation" *ngIf="totalSlides > 1 && !isFullscreen">
+  <div class="slide-navigation" *ngIf="totalSlides > 1 && !isFullscreen && false">
     <div class="slide-thumbnails">
       <button 
         *ngFor="let slide of slides; let i = index"
@@ -125,5 +125,30 @@
         </span>
       </div>
     </div>
+  </div>
+
+  <!-- Floating Slide Controls -->
+  <div class="floating-slide-controls" *ngIf="!isFullscreen">
+    <button 
+      class="floating-control-btn" 
+      (click)="previousSlide()" 
+      [disabled]="!canGoToPrevious()"
+      title="Previous slide (← or ↑)">
+      ←
+    </button>
+    
+    <button 
+      class="floating-control-btn" 
+      (click)="nextSlide()" 
+      title="{{ canGoToNext() ? 'Next slide (→ or ↓)' : 'Advance to next round (→ or ↓)' }}">
+      {{ canGoToNext() ? '→' : '⏭️' }}
+    </button>
+    
+    <button 
+      class="floating-control-btn fullscreen-btn" 
+      (click)="toggleFullscreen()"
+      title="Toggle fullscreen (F)">
+      ⛶
+    </button>
   </div>
 </div>

@@ -1,6 +1,6 @@
 <div class="dashboard-container">
   <!-- Header -->
-  <div class="dashboard-header">
+  <div *ngIf="currentView !== 'game' && currentView !== 'presentation'" class="dashboard-header">
     <h1>Energy Game - Lecturer Dashboard</h1>
     <div class="header-controls">
       <span *ngIf="userInfo" class="user-info">
@@ -99,18 +99,6 @@
 
     <!-- Presentation View - For Slides -->
     <div *ngIf="currentView === 'presentation'" class="presentation-view">
-      <div class="presentation-header">
-        <h2>📖 Presentation Mode</h2>
-        <div class="presentation-controls">
-          <button class="btn btn-next" (click)="nextRound()" [disabled]="isGameLoading">
-            {{ isGameLoading ? 'Loading...' : 'Next Round' }}
-          </button>
-          <button class="btn btn-end" (click)="endGame()" [disabled]="isGameLoading">
-            End Game
-          </button>
-        </div>
-      </div>
-
       <!-- Slide Presentation Component -->
       <div class="slide-presentation-wrapper">
         <app-slide-presentation 
@@ -123,18 +111,6 @@
 
     <!-- Game View - For Day/Night Rounds -->
     <div *ngIf="currentView === 'game'" class="game-view">
-      <div class="game-header">
-        <h2>⚡ Game Board</h2>
-        <div class="game-controls">
-          <button class="btn btn-next" (click)="nextRound()" [disabled]="isGameLoading">
-            {{ isGameLoading ? 'Loading...' : 'Next Round' }}
-          </button>
-          <button class="btn btn-end" (click)="endGame()" [disabled]="isGameLoading">
-            End Game
-          </button>
-        </div>
-      </div>
-
       <!-- New Game Layout: Left - Middle - Right -->
       <div class="game-layout">
         <!-- Left Side - Boards -->
@@ -165,7 +141,7 @@
           <div class="weather-box">
             <div class="round-weather">
               <div class="round-type">
-                <span class="round-icon" [innerHTML]="roundIcon"></span>
+                <div class="round-icon" [innerHTML]="roundIcon"></div>
                 <span class="round-name">{{ roundName }}</span>
               </div>
               
@@ -210,6 +186,11 @@
           </div>
         </div>
       </div>
+      
+      <!-- Floating Next Round Button -->
+      <button class="btn btn-next floating-next-btn" (click)="nextRound()" [disabled]="isGameLoading">
+        {{ isGameLoading ? 'Loading...' : 'Next Round' }}
+      </button>
     </div>
   </div>
 </div>

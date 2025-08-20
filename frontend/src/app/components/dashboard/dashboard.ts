@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService, GameStatusService } from '../../services';
 import { CommonModule } from '@angular/common';
@@ -443,5 +443,45 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
     
     return effects;
+  }
+
+  // Keyboard event handlers
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    // Handle keyboard events in game and presentation views
+    if (this.currentView === 'game' || this.currentView === 'presentation') {
+      switch (event.key.toLowerCase()) {
+        case 'q':
+          event.preventDefault();
+          this.confirmEndGame();
+          break;
+        case 'l':
+          event.preventDefault();
+          this.confirmLogout();
+          break;
+        case 'arrowright':
+          // Only handle right arrow in game view, not in presentation view
+          // Presentation view should handle its own slide navigation
+          if (this.currentView === 'game') {
+            event.preventDefault();
+            if (!this.isGameLoading) {
+              this.nextRound();
+            }
+          }
+          break;
+      }
+    }
+  }
+
+  confirmEndGame() {
+    if (confirm('Are you sure you want to end the game? This action cannot be undone.')) {
+      this.endGame();
+    }
+  }
+
+  confirmLogout() {
+    if (confirm('Are you sure you want to logout?')) {
+      this.logout();
+    }
   }
 }
