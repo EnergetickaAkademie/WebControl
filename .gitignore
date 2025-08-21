@@ -203,3 +203,5 @@ coverage/
 # Temporary files
 *.tmp
 *.temp
+
+!frontend/public/

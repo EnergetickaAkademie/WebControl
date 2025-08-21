@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 330.56 330.56">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #ef8600;
+      }
+
+      .cls-1, .cls-2 {
+        stroke: #582c25;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2px;
+      }
+
+      .cls-2 {
+        fill: url(#Nepojmenovaný_přechod_14);
+      }
+    </style>
+    <linearGradient id="Nepojmenovaný_přechod_14" data-name="Nepojmenovaný přechod 14" x1="41.4" y1="165.28" x2="294.51" y2="165.28" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ef8600"/>
+      <stop offset="1" stop-color="#ffb65a"/>
+    </linearGradient>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <g>
+      <g>
+        <g id="_Radiální_opakování_" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="115.64 232.86 179.18 251.01 127.48 327.44 115.64 232.86"/>
+        </g>
+        <g id="_Radiální_opakování_-2" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="93.56 208.72 145.32 249.8 68.3 300.63 93.56 208.72"/>
+        </g>
+        <g id="_Radiální_opakování_-3" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="82.39 177.96 114.49 235.73 23.89 253.21 82.39 177.96"/>
+        </g>
+        <g id="_Radiální_opakování_-4" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="83.85 145.28 91.4 210.93 1 192.41 83.85 145.28"/>
+        </g>
+        <g id="_Radiální_opakování_-5" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="97.7 115.64 79.55 179.18 3.12 127.48 97.7 115.64"/>
+        </g>
+        <g id="_Radiální_opakování_-6" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="121.84 93.56 80.76 145.32 29.93 68.3 121.84 93.56"/>
+        </g>
+        <g id="_Radiální_opakování_-7" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="152.6 82.39 94.83 114.49 77.35 23.89 152.6 82.39"/>
+        </g>
+        <g id="_Radiální_opakování_-8" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="185.28 83.85 119.63 91.4 138.15 1 185.28 83.85"/>
+        </g>
+        <g id="_Radiální_opakování_-9" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="214.92 97.7 151.38 79.55 203.09 3.12 214.92 97.7"/>
+        </g>
+        <g id="_Radiální_opakování_-10" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="237.01 121.84 185.25 80.76 262.26 29.93 237.01 121.84"/>
+        </g>
+        <g id="_Radiální_opakování_-11" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="248.17 152.6 216.07 94.83 306.68 77.35 248.17 152.6"/>
+        </g>
+        <g id="_Radiální_opakování_-12" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="246.71 185.28 239.16 119.63 329.56 138.15 246.71 185.28"/>
+        </g>
+        <g id="_Radiální_opakování_-13" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="232.86 214.92 251.01 151.38 327.44 203.09 232.86 214.92"/>
+        </g>
+        <g id="_Radiální_opakování_-14" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="208.72 237.01 249.8 185.25 300.63 262.26 208.72 237.01"/>
+        </g>
+        <g id="_Radiální_opakování_-15" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="177.97 248.17 235.73 216.07 253.21 306.68 177.97 248.17"/>
+        </g>
+        <g id="_Radiální_opakování_-16" data-name="&amp;lt;Radiální opakování&amp;gt;">
+          <polygon class="cls-1" points="145.28 246.71 210.93 239.16 192.41 329.56 145.28 246.71"/>
+        </g>
+      </g>
+      <circle class="cls-2" cx="167.95" cy="165.28" r="126.56"/>
+    </g>
+  </g>
+</svg>

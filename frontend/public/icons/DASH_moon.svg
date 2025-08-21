@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 248.29 260.4">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#Nepojmenovaný_přechod_14);
+      }
+
+      .cls-1, .cls-2, .cls-3 {
+        stroke: #582c25;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.6px;
+      }
+
+      .cls-2 {
+        fill: url(#Nepojmenovaný_přechod_14-2);
+      }
+
+      .cls-3 {
+        fill: url(#Nepojmenovaný_přechod_14-3);
+      }
+    </style>
+    <linearGradient id="Nepojmenovaný_přechod_14" data-name="Nepojmenovaný přechod 14" x1="-3.4" y1="144.16" x2="185.6" y2="144.16" gradientTransform="translate(-41.35 45.22) rotate(-22.5)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ef8600"/>
+      <stop offset="1" stop-color="#ffb65a"/>
+    </linearGradient>
+    <linearGradient id="Nepojmenovaný_přechod_14-2" data-name="Nepojmenovaný přechod 14" x1="165.63" y1="130.54" x2="222.35" y2="130.54" gradientTransform="matrix(1,0,0,1,0,0)" xlink:href="#Nepojmenovaný_přechod_14"/>
+    <linearGradient id="Nepojmenovaný_přechod_14-3" data-name="Nepojmenovaný přechod 14" x1="211.63" y1="83.97" x2="247.49" y2="83.97" gradientTransform="matrix(1,0,0,1,0,0)" xlink:href="#Nepojmenovaný_přechod_14"/>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <g>
+      <path class="cls-1" d="M224.51,215.55c1.6-.66,3.17-1.36,4.73-2.09-12.93,15.41-29.66,28.02-49.53,36.25-66,27.34-141.68-4.01-169.02-70.01C-16.66,113.7,14.69,38.02,80.69,10.68,100.56,2.45,121.31-.46,141.35,1.29c-1.61.58-3.22,1.2-4.82,1.87-58.65,24.29-86.5,91.54-62.21,150.18,24.29,58.65,91.54,86.5,150.18,62.21Z"/>
+      <polygon class="cls-2" points="193.99 102.18 201.65 122.88 222.35 130.54 201.65 138.2 193.99 158.9 186.33 138.2 165.63 130.54 186.33 122.88 193.99 102.18"/>
+      <polygon class="cls-3" points="229.56 66.04 234.4 79.13 247.49 83.97 234.4 88.81 229.56 101.9 224.72 88.81 211.63 83.97 224.72 79.13 229.56 66.04"/>
+    </g>
+  </g>
+</svg>
