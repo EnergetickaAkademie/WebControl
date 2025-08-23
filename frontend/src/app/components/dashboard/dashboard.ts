@@ -459,6 +459,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   get roundName(): string {
     if (!this.currentRoundDetails?.round_type) return '';
     
+    // If we have display data from the current round, use it
+    if ((this.currentRound as any)?.display_data?.name) {
+      return (this.currentRound as any).display_data.name;
+    }
+    
+    // Fallback to translations
     const roundType = this.currentRoundDetails.round_type;
     if (roundType === 1) { // DAY
       return this.translations.round_types?.DAY?.name || 'Den';
@@ -469,6 +475,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get weatherInfo(): any {
+    // First check if we have display data from current round
+    if ((this.currentRound as any)?.display_data) {
+      console.log('Using display data from current round:', (this.currentRound as any).display_data);
+      return (this.currentRound as any).display_data;
+    }
+    
+    // Fallback to the old weather system
     if (!this.currentRoundDetails?.weather || this.currentRoundDetails.weather.length === 0) {
       console.log('No weather data available in currentRoundDetails');
       return null;
@@ -477,7 +490,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Get the first weather condition
     const weather = this.currentRoundDetails.weather[0];
     console.log('Weather condition:', weather);
-    const weatherTranslation = this.translations.weather?.[weather.name] || null;
+    const weatherTranslation = this.translations.weather?.[weather.name.toUpperCase()] || null;
     console.log('Weather translation:', weatherTranslation);
     return weatherTranslation;
   }
@@ -493,13 +506,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get specialEffects(): any[] {
+    // First check if we have display data from current round with effects
+    const displayData = (this.currentRound as any)?.display_data;
+    if (displayData?.effects && displayData.effects.length > 0) {
+      return displayData.effects;
+    }
+    
+    // Fallback to old weather system
     if (!this.currentRoundDetails?.weather) return [];
     
     let effects: any[] = [];
     
     // Collect effects from all weather conditions
     this.currentRoundDetails.weather.forEach((weather: any) => {
-      const weatherTranslation = this.translations.weather?.[weather.name];
+      const weatherTranslation = this.translations.weather?.[weather.name.toUpperCase()];
       if (weatherTranslation?.effects) {
         effects = effects.concat(weatherTranslation.effects);
       }
