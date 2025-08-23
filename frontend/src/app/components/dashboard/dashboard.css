@@ -577,11 +577,11 @@
 .effect-item {
   display: flex;
   align-items: center;
-  gap: 48px;
-  margin-bottom: 40px;
+  gap: 30px;
+  margin-bottom: 20px;
   color: #161618;
-  padding: 32px;
-  border-radius: 24px;
+  padding: 16px;
+  border-radius: 12px;
   background-color: transparent;
 }
 
@@ -592,8 +592,8 @@
 .effect-icon {
   display: inline-block;
   flex-shrink: 0;
-  width: 64px;
-  height: 64px;
+  width: 160px;
+  height: 160px;
 }
 
 .effect-icon svg,
@@ -603,7 +603,7 @@
 }
 
 .effect-text {
-  font-size: 56px;
+  font-size: 28px;
   text-align: left;
   font-family: 'DINPro-Regular', Arial, sans-serif;
   font-weight: 400;
