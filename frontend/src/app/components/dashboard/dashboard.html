@@ -158,16 +158,26 @@
         <!-- Middle - Weather and Special Effects -->
         <div class="weather-info">
           <!-- Weather Box (Top) -->
-          <div class="weather-box">
-            <div class="round-weather">
-              <div class="round-type">
-                <div class="round-icon" [innerHTML]="roundIcon"></div>
-                <span class="round-name">{{ roundName }}</span>
+          <div class="weather-box" [style.background-image]="weatherBoxBackground">
+            <div class="weather-box-content">
+              <!-- Left Column - Weather Icon -->
+              <div class="weather-icon-column">
+                <div class="weather-main-icon" [innerHTML]="weatherMainIcon"></div>
               </div>
               
-              <div *ngIf="weatherInfo" class="weather-conditions">
-                <div class="temperature">{{ temperature }}</div>
-                <div class="weather-name">{{ weatherName }}</div>
+              <!-- Right Column - Weather Info -->
+              <div class="weather-info-column">
+                <!-- Temperature Row -->
+                <div class="weather-temperature">{{ weatherTemperature }}</div>
+                
+                <!-- Weather Type Row -->
+                <div class="weather-type">{{ weatherTypeName }}</div>
+                
+                <!-- Wind Row (Optional) -->
+                <div class="weather-wind" *ngIf="windInfo">
+                  <div class="wind-icon" [innerHTML]="windIcon"></div>
+                  <div class="wind-speed">{{ windSpeed }}</div>
+                </div>
               </div>
             </div>
           </div>

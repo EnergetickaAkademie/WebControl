@@ -262,7 +262,7 @@
   padding: 15px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   border: none;
-  height: calc(25vh - 30px); /* Reduced from 33vh to 25vh */
+  /*height: calc(25vh - 30px); /* Reduced from 33vh to 25vh */
   min-height: 120px; /* Reduced minimum height */
   display: flex;
   flex-direction: column;
@@ -446,107 +446,110 @@
 
 .weather-box {
   top: 4vh;
-  background: white;
-  border: 2px solid #000;
+  border: 3px solid #000; /* Increased border thickness */
   border-radius: 12px;
-  padding: 25px;
-  width: 100%; /* Take full width of middle column */
-  max-width: none; /* Remove max width restriction */
-  text-align: center;
-  position: relative; /* allow absolutely positioned big icon */
-  min-height: 500px; /* Increased by 2/3: from 300px to 500px */
-  display: flex;               /* center content vertically */
-  flex-direction: column;
-  justify-content: center;
-}
-
-.round-weather {
-  margin-bottom: 20px;
-}
-
-.round-type {
+  width: 41vw; /* 41% of screen width */
+  position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 15px;
+  margin: 0 auto; /* Center horizontally */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: white; /* White background as fallback */
 }
 
-/* Default small icon size (outside weather box) */
-.round-icon {
-  display: inline-block;
-  width: 32px;
-  height: 32px;
-}
-
-.round-icon svg {
-  width: 80%;
-  height: 80%;
-}
-
-/* Make the middle icon inside the weather box fill the box height */
-.weather-box .round-icon {
-  position: absolute;
-  top: 50%;   /* Position at 50% from top for vertical centering */
-  right: 0;
-  transform: translateY(-50%); /* Center vertically only */
-  height: auto; /* Let height be determined by image */
-  width: auto;  /* Let width be determined by image */
+/* New Weather Box Layout - Two Columns */
+.weather-box-content {
   display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.weather-box .round-icon svg {
-  height: 100%;
   width: 100%;
-  object-fit: contain; /* Ensure SVG scales properly within bounds */
-  max-height: 100%;
-  max-width: 100%;
-}
-
-/* Position text content centered, overlaying the icon if needed */
-.weather-box .round-type,
-.weather-box .weather-conditions {
-  position: relative;
-  z-index: 2; /* Place text above the icon */
-  text-align: center;
-  margin: 0; /* Remove left margin to center the text */
-}
-
-/* Make the inner content take full height and center vertically */
-.weather-box .round-weather {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;  /* Distribute text at top and bottom */
-  align-items: center;
   height: 100%;
-  position: relative;
-  z-index: 2; /* Ensure text is above the background icon */
+  margin-right: 5%; /* Right margin 5% */
+  margin-top: 5%; /* Top margin 5% */
+  margin-bottom: 5%; /* Bottom margin 5% */
+  margin-left: 5%;
 }
 
-.round-name {
-  font-size: 24px;
-  font-weight: bold;
-  color: #000;
+/* Left Column - Weather Icon */
+.weather-icon-column {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
 
-.weather-conditions {
+.weather-main-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.weather-main-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Right Column - Weather Info (3 rows) */
+.weather-info-column {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  /* Center all text vertically but align left horizontally */
+  justify-content: center;
+  align-items: flex-start; /* Left align text */
+  gap: 8px; /* Small vertical spacing between rows */
+  padding: 20px;
+}
+
+/* Temperature Row */
+.weather-temperature {
+  font-size: 64px; /* Enlarged ~1.33x for prominence */
+  font-weight: 900; /* Bolder */
+  font-family: 'DINPro-Black', Arial, sans-serif; /* Use black weight font */
+  color: #000;
+  text-align: left; /* Left aligned */
+  line-height: 1;
+  margin: 0;
+}
+
+/* Weather Type Row */
+.weather-type {
+  font-size: 36px; /* Increased (≈1.5x) */
+  font-weight: 700; /* Bolder */
+  font-family: 'DINPro-Bold', Arial, sans-serif; /* Use bold weight font */
+  color: #000;
+  text-align: left; /* Left aligned */
+  line-height: 1.05;
+  margin: 0;
+}
+
+/* Wind Row (Optional) */
+.weather-wind {
+  display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 15px;
+  font-size: 30px; /* Smaller than weather type (36px) but larger than before */
+  color: #000;
+  line-height: 1;
 }
 
-.temperature {
-  font-size: 32px;
+.wind-icon {
+  width: 48px; /* Increased from 32px */
+  height: 48px; /* Increased from 32px */
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wind-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.wind-speed {
   font-weight: bold;
-  color: #000;
-}
-
-.weather-name {
-  font-size: 18px;
-  color: #000;
+  font-family: 'DINPro-Bold', Arial, sans-serif;
 }
 
 /* Special Effects */
