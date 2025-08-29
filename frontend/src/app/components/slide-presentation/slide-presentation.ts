@@ -19,7 +19,9 @@ export interface SlideInfo {
 export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges {
   @Input() currentRound: SlideInfo | null = null;
   @Input() currentRoundDetails: any = null;
+  @Input() externalFullscreen: boolean = false; // Accept external fullscreen state
   @Output() advanceToNextRound = new EventEmitter<void>();
+  @Output() toggleFullscreenRequest = new EventEmitter<void>(); // Emit fullscreen toggle requests
 
   // Slide management
   currentSlideIndex = 0;
@@ -27,8 +29,13 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
   slides: string[] = [];
   currentImageUrl: SafeResourceUrl | null = null;
   
-  // UI state
-  isFullscreen = false;
+  // UI state - use external fullscreen if provided
+  get isFullscreen(): boolean {
+    return this.externalFullscreen;
+  }
+  
+  private _internalFullscreen = false;
+  
   isImageLoading = true;
   imageError = false;
 
@@ -51,11 +58,8 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
       if (currentSlideData !== this.previousSlideData) {
         this.previousSlideData = currentSlideData;
         
-        // Exit fullscreen if moving away from slide rounds
-        if (this.isFullscreen && this.currentRound && 
-            this.currentRound.round_type !== 3 && this.currentRound.round_type !== 4) {
-          this.exitFullscreen();
-        }
+        // Don't automatically exit fullscreen - let user control it
+        // The user can manually exit with ESC or F key
         
         this.loadSlides();
       }
@@ -75,7 +79,8 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
   }
 
   ngOnDestroy() {
-    if (this.isFullscreen) {
+    // Only exit fullscreen if using internal fullscreen management
+    if (this.externalFullscreen === undefined && this._internalFullscreen) {
       this.exitFullscreen();
     }
   }
@@ -129,13 +134,8 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
 
     this.loadCurrentSlide();
     
-    // Auto-fullscreen for slide rounds
-    if (this.currentRound.round_type === 3 || this.currentRound.round_type === 4) {
-      // Use setTimeout to ensure DOM is ready
-      setTimeout(() => {
-        this.enterFullscreen();
-      }, 100);
-    }
+    // Don't auto-enter fullscreen here anymore - dashboard handles it
+    // The dashboard will manage fullscreen state across all round types
   }
 
   loadCurrentSlide() {
@@ -201,39 +201,92 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
     }
   }
 
-  // Fullscreen methods
+  // Fullscreen methods - delegate to parent if external fullscreen is used
   toggleFullscreen() {
-    if (this.isFullscreen) {
-      this.exitFullscreen();
+    if (this.externalFullscreen !== undefined) {
+      // Emit request to parent component
+      this.toggleFullscreenRequest.emit();
     } else {
-      this.enterFullscreen();
+      // Handle internally
+      if (this._internalFullscreen) {
+        this.exitFullscreen();
+      } else {
+        this.enterFullscreen();
+      }
     }
   }
 
   enterFullscreen() {
-    const element = document.documentElement;
-    
-    if (element.requestFullscreen) {
-      element.requestFullscreen();
-    } else if ((element as any).webkitRequestFullscreen) {
-      (element as any).webkitRequestFullscreen();
-    } else if ((element as any).msRequestFullscreen) {
-      (element as any).msRequestFullscreen();
+    if (this.externalFullscreen !== undefined) {
+      // Delegate to parent
+      this.toggleFullscreenRequest.emit();
+      return;
     }
     
-    this.isFullscreen = true;
+    // Check if we're already in fullscreen
+    const isActuallyFullscreen = !!(document.fullscreenElement || 
+                                   (document as any).webkitFullscreenElement || 
+                                   (document as any).msFullscreenElement);
+    
+    if (isActuallyFullscreen) {
+      this._internalFullscreen = true;
+      return;
+    }
+    
+    const element = document.documentElement;
+    
+    try {
+      if (element.requestFullscreen) {
+        element.requestFullscreen().then(() => {
+          this._internalFullscreen = true;
+        }).catch((error) => {
+          console.warn('Failed to enter fullscreen:', error);
+        });
+      } else if ((element as any).webkitRequestFullscreen) {
+        (element as any).webkitRequestFullscreen();
+        this._internalFullscreen = true;
+      } else if ((element as any).msRequestFullscreen) {
+        (element as any).msRequestFullscreen();
+        this._internalFullscreen = true;
+      }
+    } catch (error) {
+      console.warn('Error entering fullscreen:', error);
+    }
   }
 
   exitFullscreen() {
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if ((document as any).webkitExitFullscreen) {
-      (document as any).webkitExitFullscreen();
-    } else if ((document as any).msExitFullscreen) {
-      (document as any).msExitFullscreen();
+    if (this.externalFullscreen !== undefined) {
+      // Delegate to parent
+      this.toggleFullscreenRequest.emit();
+      return;
     }
     
-    this.isFullscreen = false;
+    // Check if we're actually in fullscreen before trying to exit
+    const isActuallyFullscreen = !!(document.fullscreenElement || 
+                                   (document as any).webkitFullscreenElement || 
+                                   (document as any).msFullscreenElement);
+    
+    if (!isActuallyFullscreen) {
+      // Update our state to match reality
+      this._internalFullscreen = false;
+      return;
+    }
+    
+    try {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch((error) => {
+          console.warn('Failed to exit fullscreen:', error);
+          this._internalFullscreen = false;
+        });
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).msExitFullscreen) {
+        (document as any).msExitFullscreen();
+      }
+    } catch (error) {
+      console.warn('Error exiting fullscreen:', error);
+      this._internalFullscreen = false;
+    }
   }
 
   // Keyboard navigation
@@ -267,14 +320,17 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
     }
   }
 
-  // Listen for fullscreen changes
+  // Listen for fullscreen changes (only when using internal fullscreen)
   @HostListener('document:fullscreenchange', [])
   @HostListener('document:webkitfullscreenchange', [])
   @HostListener('document:msfullscreenchange', [])
   onFullscreenChange() {
-    this.isFullscreen = !!(document.fullscreenElement || 
-                          (document as any).webkitFullscreenElement || 
-                          (document as any).msFullscreenElement);
+    if (this.externalFullscreen === undefined) {
+      // Only update internal state when not using external fullscreen
+      this._internalFullscreen = !!(document.fullscreenElement || 
+                            (document as any).webkitFullscreenElement || 
+                            (document as any).msFullscreenElement);
+    }
   }
 
   // Helper methods for template

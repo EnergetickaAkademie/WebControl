@@ -44,6 +44,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   currentRound: GameRound | null = null;
   currentRoundDetails: any = null; // Store detailed round information
   
+  // Fullscreen state management
+  isFullscreen = false;
+  
   // Translations
   translations: any = {
     weather: {},
@@ -243,6 +246,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
           console.log('Slides round, switching to presentation view');
           this.currentView = 'presentation';
+          // Auto-enter fullscreen for slide rounds
+          if (!this.isFullscreen) {
+            setTimeout(() => this.enterFullscreen(), 100);
+          }
         } else if (response.round_type === RoundType.DAY || response.round_type === RoundType.NIGHT) {
           console.log('Game round, switching to game view');
           this.currentView = 'game';
@@ -272,6 +279,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
           console.log('Slides round, switching to presentation view');
           this.currentView = 'presentation';
+          // Auto-enter fullscreen for slide rounds
+          if (!this.isFullscreen) {
+            setTimeout(() => this.enterFullscreen(), 100);
+          }
         } else if (response.round_type === RoundType.DAY || response.round_type === RoundType.NIGHT) {
           console.log('Game round, switching to game view');
           this.currentView = 'game';
@@ -635,6 +646,86 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return '5 m/s';
   }
 
+  // Fullscreen management methods
+  toggleFullscreen() {
+    if (this.isFullscreen) {
+      this.exitFullscreen();
+    } else {
+      this.enterFullscreen();
+    }
+  }
+
+  enterFullscreen() {
+    // Check if we're already in fullscreen
+    const isActuallyFullscreen = !!(document.fullscreenElement || 
+                                   (document as any).webkitFullscreenElement || 
+                                   (document as any).msFullscreenElement);
+    
+    if (isActuallyFullscreen) {
+      this.isFullscreen = true;
+      return;
+    }
+    
+    const element = document.documentElement;
+    
+    try {
+      if (element.requestFullscreen) {
+        element.requestFullscreen().then(() => {
+          this.isFullscreen = true;
+        }).catch((error) => {
+          console.warn('Failed to enter fullscreen:', error);
+        });
+      } else if ((element as any).webkitRequestFullscreen) {
+        (element as any).webkitRequestFullscreen();
+        this.isFullscreen = true;
+      } else if ((element as any).msRequestFullscreen) {
+        (element as any).msRequestFullscreen();
+        this.isFullscreen = true;
+      }
+    } catch (error) {
+      console.warn('Error entering fullscreen:', error);
+    }
+  }
+
+  exitFullscreen() {
+    // Check if we're actually in fullscreen before trying to exit
+    const isActuallyFullscreen = !!(document.fullscreenElement || 
+                                   (document as any).webkitFullscreenElement || 
+                                   (document as any).msFullscreenElement);
+    
+    if (!isActuallyFullscreen) {
+      // Update our state to match reality
+      this.isFullscreen = false;
+      return;
+    }
+    
+    try {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch((error) => {
+          console.warn('Failed to exit fullscreen:', error);
+          this.isFullscreen = false;
+        });
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).msExitFullscreen) {
+        (document as any).msExitFullscreen();
+      }
+    } catch (error) {
+      console.warn('Error exiting fullscreen:', error);
+      this.isFullscreen = false;
+    }
+  }
+
+  // Listen for fullscreen changes
+  @HostListener('document:fullscreenchange', [])
+  @HostListener('document:webkitfullscreenchange', [])
+  @HostListener('document:msfullscreenchange', [])
+  onFullscreenChange() {
+    this.isFullscreen = !!(document.fullscreenElement || 
+                          (document as any).webkitFullscreenElement || 
+                          (document as any).msFullscreenElement);
+  }
+
   // Keyboard event handlers
   @HostListener('document:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
@@ -648,6 +739,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
         case 'l':
           event.preventDefault();
           this.confirmLogout();
+          break;
+        case 'f':
+          event.preventDefault();
+          this.toggleFullscreen();
+          break;
+        case 'escape':
+          if (this.isFullscreen) {
+            event.preventDefault();
+            this.exitFullscreen();
+          }
           break;
         case 'arrowright':
           // Only handle right arrow in game view, not in presentation view
