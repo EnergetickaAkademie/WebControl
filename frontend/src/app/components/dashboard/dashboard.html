@@ -75,7 +75,7 @@
           <div class="boards-left">
             <div *ngFor="let board of getLeftBoards(); let i = index" class="board-card" [class.placeholder]="board.is_placeholder">
               <div class="board-header">
-                <h4>Tým {{ getTeamNumber(board) }}</h4>
+                <h4>{{ getTeamDisplayName(board) }}</h4>
                 <div class="board-indicators">
                   <span class="grid-status" [innerHTML]="getGridStatusIcon(board)"></span>
                 </div>
@@ -96,7 +96,7 @@
           <div class="boards-right">
             <div *ngFor="let board of getRightBoards(); let i = index" class="board-card" [class.placeholder]="board.is_placeholder">
               <div class="board-header">
-                <h4>Team {{ getTeamNumber(board) }}</h4>
+                <h4>{{ getTeamDisplayName(board) }}</h4>
                 <div class="board-indicators">
                   <span class="grid-status" [innerHTML]="getGridStatusIcon(board)"></span>
                 </div>
@@ -147,7 +147,7 @@
         <div class="boards-left">
           <div *ngFor="let board of getLeftBoards()" class="board-card" [class.placeholder]="board.is_placeholder">
             <div class="board-header">
-              <h4>Team {{ getTeamNumber(board) }}</h4>
+              <h4>{{ getTeamDisplayName(board) }}</h4>
               <div class="board-indicators">
                 <span class="grid-status" [innerHTML]="getGridStatusIcon(board)"></span>
               </div>
@@ -211,7 +211,7 @@
         <div class="boards-right">
           <div *ngFor="let board of getRightBoards()" class="board-card" [class.placeholder]="board.is_placeholder">
             <div class="board-header">
-              <h4>Team {{ getTeamNumber(board) }}</h4>
+              <h4>{{ getTeamDisplayName(board) }}</h4>
               <div class="board-indicators">
                 <span class="grid-status" [innerHTML]="getGridStatusIcon(board)"></span>
               </div>

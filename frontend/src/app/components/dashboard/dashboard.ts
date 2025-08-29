@@ -324,7 +324,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return obj ? Object.keys(obj) : [];
   }
 
-  // Helper method to get team number from board_id
+  // Helper method to get team display name
+  getTeamDisplayName(board: any): string {
+    // Use display_name from backend if available, otherwise fall back to generated name
+    if (board?.display_name) {
+      return board.display_name;
+    }
+    // Fallback for backwards compatibility
+    if (!board?.board_id) return 'Team 0';
+    const match = board.board_id.toString().match(/\d+/);
+    const teamNumber = match ? parseInt(match[0], 10) : 0;
+    return `Team ${teamNumber}`;
+  }
+
+  // Helper method to get team number from board_id (kept for backwards compatibility)
   getTeamNumber(board: any): number {
     if (!board?.board_id) return 0;
     const match = board.board_id.toString().match(/\d+/);
