@@ -1,0 +1,14 @@
+/* App-wide container for centered content */
+.app-container {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #E8ECFF; /* Match dashboard background */
+}
+
+.content-wrapper {
+  max-width: 1920px;
+  margin: 0 auto; /* Center horizontally */
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+}

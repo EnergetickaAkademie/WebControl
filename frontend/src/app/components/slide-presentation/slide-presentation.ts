@@ -20,6 +20,7 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
   @Input() currentRound: SlideInfo | null = null;
   @Input() currentRoundDetails: any = null;
   @Input() externalFullscreen: boolean = false; // Accept external fullscreen state
+  @Input() gameStatus: any = null; // Accept game status to check if at end of scenario
   @Output() advanceToNextRound = new EventEmitter<void>();
   @Output() toggleFullscreenRequest = new EventEmitter<void>(); // Emit fullscreen toggle requests
 
@@ -38,6 +39,7 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
   
   isImageLoading = true;
   imageError = false;
+  showEndNotification = false;
 
   // Track previous slide data to avoid unnecessary reloads
   private previousSlideData: string | null = null;
@@ -101,7 +103,7 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
         this.totalSlides = 1;
         this.currentSlideIndex = 0; // Always show the single slide
       } else {
-        console.warn('No slide filename provided for SLIDE round type');
+        console.warn('Nebyl poskytnut název souboru snímku pro typ kola SLIDE');
         return;
       }
     } else if (this.currentRound.round_type === 4) { // SLIDE_RANGE
@@ -112,7 +114,7 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
           if (typeof slide === 'string') {
             this.slides.push(this.authService.getSlideFileUrl(slide));
           } else {
-            console.warn('Unexpected slide data type:', typeof slide, slide);
+            console.warn('Neočekávaný typ dat snímku:', typeof slide, slide);
           }
         }
         this.totalSlides = this.slides.length;
@@ -124,11 +126,11 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
           this.currentSlideIndex = 0;
         }
       } else {
-        console.warn('No slides array provided for SLIDE_RANGE round type');
+        console.warn('Nebyl poskytnut seznam snímků pro typ kola SLIDE_RANGE');
         return;
       }
     } else {
-      console.warn('Unknown round type for slides:', this.currentRound.round_type);
+      console.warn('Neznámý typ kola pro snímky:', this.currentRound.round_type);
       return;
     }
 
@@ -155,7 +157,7 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
       .catch(() => {
         this.imageError = true;
         this.isImageLoading = false;
-        console.error('Failed to load slide image:', imageUrl);
+        console.error('Nepodařilo se načíst obrázek snímku:', imageUrl);
       });
   }
 
@@ -189,8 +191,8 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
       this.currentSlideIndex++;
       this.loadCurrentSlide();
     } else {
-      // We're at the last slide, emit event to advance to next round
-      this.advanceToNextRound.emit();
+      // We're at the last slide, show end-of-scenario notification
+      this.showEndOfScenarioNotification();
     }
   }
 
@@ -199,6 +201,42 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
       this.currentSlideIndex = index;
       this.loadCurrentSlide();
     }
+  }
+
+  // Show end-of-scenario notification
+  showEndOfScenarioNotification() {
+    // Check if we're actually at the end of the scenario
+    console.log('Kontrola konce scénáře:', {
+      currentRound: this.gameStatus?.current_round,
+      totalRounds: this.gameStatus?.total_rounds,
+      isAtEnd: this.gameStatus?.current_round >= this.gameStatus?.total_rounds
+    });
+    
+    if (this.gameStatus && this.gameStatus.current_round < this.gameStatus.total_rounds) {
+      // Not at the end of scenario, just advance to next round normally
+      console.log('Nejsme na konci scénáře, pokračujeme na další kolo');
+      this.advanceToNextRound.emit();
+      return;
+    }
+    
+    // We're at the end of the scenario, show notification
+    console.log('Jsme na konci scénáře, zobrazujeme oznámení');
+    this.showEndNotification = true;
+  }
+
+  // Handle end notification actions
+  endScenario() {
+    this.showEndNotification = false;
+    this.advanceToNextRound.emit();
+  }
+
+  goBackFromEnd() {
+    this.showEndNotification = false;
+    this.previousSlide();
+  }
+
+  closeEndNotification() {
+    this.showEndNotification = false;
   }
 
   // Fullscreen methods - delegate to parent if external fullscreen is used
@@ -240,7 +278,7 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
         element.requestFullscreen().then(() => {
           this._internalFullscreen = true;
         }).catch((error) => {
-          console.warn('Failed to enter fullscreen:', error);
+          console.warn('Nepodařilo se přejít do celé obrazovky:', error);
         });
       } else if ((element as any).webkitRequestFullscreen) {
         (element as any).webkitRequestFullscreen();
@@ -292,6 +330,28 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
   // Keyboard navigation
   @HostListener('document:keydown', ['$event'])
   handleKeyDown(event: KeyboardEvent) {
+    // Handle end notification state
+    if (this.showEndNotification) {
+      switch (event.key) {
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          event.preventDefault();
+          this.goBackFromEnd();
+          break;
+        case 'ArrowRight':
+        case 'ArrowDown':
+        case ' ': // Space
+          event.preventDefault();
+          this.endScenario();
+          break;
+        case 'Escape':
+          event.preventDefault();
+          this.closeEndNotification();
+          break;
+      }
+      return;
+    }
+
     // Handle navigation keys regardless of fullscreen state
     switch (event.key) {
       case 'ArrowLeft':
@@ -343,7 +403,7 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
   }
 
   getSlideTitle(): string {
-    if (!this.currentRound || !this.currentRoundDetails) return 'Presentation';
+    if (!this.currentRound || !this.currentRoundDetails) return 'Prezentace';
     
     if (this.currentRound.round_type === 3) { // SLIDE
       // For single slides, extract slide number from filename
@@ -352,9 +412,9 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
         const match = slideFilename.match(/(\d+)/);
         if (match) {
           const slideNumber = parseInt(match[1]);
-          return `Slide ${slideNumber}`;
+          return `Snímek ${slideNumber}`;
         }
-        return 'Slide';
+        return 'Snímek';
       }
     } else if (this.currentRound.round_type === 4) { // SLIDE_RANGE
       // For slide ranges, extract slide number from current slide filename
@@ -366,13 +426,13 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
           const match = currentSlide.match(/(\d+)/);
           if (match) {
             const slideNumber = parseInt(match[1]);
-            return `Slide ${slideNumber}`;
+            return `Snímek ${slideNumber}`;
           }
         }
-        return `Slide ${this.currentSlideIndex + 1}`;
+        return `Snímek ${this.currentSlideIndex + 1}`;
       }
     }
     
-    return 'Presentation';
+    return 'Prezentace';
   }
 }

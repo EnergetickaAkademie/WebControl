@@ -1,130 +1,23 @@
 <div class="dashboard-container" [class.fullscreen]="isFullscreen">
   <!-- Header -->
-  <div *ngIf="currentView !== 'game' && currentView !== 'presentation' && !isFullscreen" class="dashboard-header">
-    <h1>Energy Game - Lecturer Dashboard</h1>
+  <div *ngIf="currentView !== 'presentation' && !isFullscreen" class="dashboard-header">
+    <h1>Energetická hra - Dashboard lektora</h1>
     <div class="header-controls">
       <span *ngIf="userInfo" class="user-info">
-        Welcome, {{ userInfo.username }}! ({{ userInfo.user_type }})
+        Vítejte, {{ userInfo.username }}! ({{ userInfo.user_type }})
       </span>
-      <button class="logout-btn" (click)="logout()">Logout</button>
+      <button class="logout-btn" (click)="logout()">Odhlásit se</button>
     </div>
   </div>
 
   <!-- Loading State -->
   <div *ngIf="isLoading" class="loading">
-    <p>Loading dashboard...</p>
+    <p>Načítání dashboard...</p>
   </div>
 
   <!-- Main Content -->
   <div *ngIf="!isLoading && userInfo" class="dashboard-content">
     
-    <!-- Setup View - Before Game Starts -->
-    <div *ngIf="currentView === 'setup'" class="setup-view">
-      <div class="setup-section">
-        <h2>Game Setup</h2>
-        
-        <!-- Scenario Selection -->
-        <div class="scenario-section">
-          <h3>Scenario Selection</h3>
-          <div class="scenario-controls">
-            <select [(ngModel)]="selectedScenario" class="scenario-select">
-              <option value="" disabled>Select a scenario...</option>
-              <option *ngFor="let scenario of scenarios" [value]="scenario.id">
-                {{ scenario.name }}
-              </option>
-            </select>
-            <button 
-              class="btn btn-start" 
-              (click)="startGame()" 
-              [disabled]="!selectedScenario || isGameLoading">
-              {{ isGameLoading ? 'Starting...' : 'Start Game' }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Keyboard Shortcuts Information -->
-        <div class="keyboard-shortcuts-section">
-          <h3>⌨️ Keyboard Shortcuts</h3>
-          <div class="shortcuts-grid">
-            <div class="shortcut-item">
-              <span class="shortcut-key">Q</span>
-              <span class="shortcut-description">End Game (with confirmation)</span>
-            </div>
-            <div class="shortcut-item">
-              <span class="shortcut-key">L</span>
-              <span class="shortcut-description">Logout (with confirmation)</span>
-            </div>
-            <div class="shortcut-item">
-              <span class="shortcut-key">→</span>
-              <span class="shortcut-description">Next Round (during game)</span>
-            </div>
-            <div class="shortcut-item">
-              <span class="shortcut-key">F</span>
-              <span class="shortcut-description">Toggle Fullscreen</span>
-            </div>
-            <div class="shortcut-item">
-              <span class="shortcut-key">ESC</span>
-              <span class="shortcut-description">Exit Fullscreen</span>
-            </div>
-          </div>
-          <p class="shortcuts-note">* Shortcuts are active during game and presentation views</p>
-        </div>
-
-        <!-- Connected Boards in New Layout -->
-        <div class="boards-container setup-horizontal">
-          <div class="boards-left">
-            <div *ngFor="let board of getLeftBoards(); let i = index" class="board-card" [class.placeholder]="isBoardPlaceholder(board)">
-              <div class="board-header">
-                <h4>{{ getTeamDisplayName(board) }}</h4>
-                <div class="board-indicators">
-                  <span class="grid-status" [innerHTML]="getGridStatusIcon(board)"></span>
-                </div>
-              </div>
-              <div class="board-data">
-                <div class="power-line">
-                  <span class="power-label">Výroba:</span>
-                  <span class="power-value">{{ board.production || 0 | number:'1.0-0' }} MW</span>
-                </div>
-                <div class="power-line">
-                  <span class="power-label">Spotřeba:</span>
-                  <span class="power-value">{{ board.consumption || 0 | number:'1.0-0' }} MW</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="boards-right">
-            <div *ngFor="let board of getRightBoards(); let i = index" class="board-card" [class.placeholder]="isBoardPlaceholder(board)">
-              <div class="board-header">
-                <h4>{{ getTeamDisplayName(board) }}</h4>
-                <div class="board-indicators">
-                  <span class="grid-status" [innerHTML]="getGridStatusIcon(board)"></span>
-                </div>
-              </div>
-              <div class="board-data">
-                <div class="power-line">
-                  <span class="power-label">Výroba:</span>
-                  <span class="power-value">{{ board.production || 0 | number:'1.0-0' }} MW</span>
-                </div>
-                <div class="power-line">
-                  <span class="power-label">Spotřeba:</span>
-                  <span class="power-value">{{ board.consumption || 0 | number:'1.0-0' }} MW</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Game Status -->
-        <div *ngIf="gameStatus" class="game-status">
-          <h3>🎮 Game Status</h3>
-          <p><strong>Status:</strong> {{ gameStatus.game_active ? 'Active' : 'Inactive' }}</p>
-          <p><strong>Current Round:</strong> {{ gameStatus.current_round }} / {{ gameStatus.total_rounds }}</p>
-          <p><strong>Connected Boards:</strong> {{ connectedBoards.length }}</p>
-        </div>
-      </div>
-    </div>
-
     <!-- Presentation View - For Slides -->
     <div *ngIf="currentView === 'presentation'" class="presentation-view">
       <!-- Slide Presentation Component -->
@@ -133,6 +26,7 @@
           [currentRound]="currentRound"
           [currentRoundDetails]="currentRoundDetails"
           [externalFullscreen]="isFullscreen"
+          [gameStatus]="gameStatus"
           (advanceToNextRound)="nextRound()"
           (toggleFullscreenRequest)="toggleFullscreen()">
         </app-slide-presentation>
@@ -237,7 +131,7 @@
     <button 
       class="floating-fullscreen-btn" 
       (click)="toggleFullscreen()"
-      [title]="isFullscreen ? 'Exit Fullscreen (F or ESC)' : 'Enter Fullscreen (F)'">
+      [title]="isFullscreen ? 'Ukončit celou obrazovku (F nebo ESC)' : 'Celá obrazovka (F)'">
       {{ isFullscreen ? '🗗' : '⛶' }}
     </button>
   </div>

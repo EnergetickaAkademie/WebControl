@@ -488,3 +488,102 @@
 .floating-control-btn.fullscreen-btn:hover {
   background: #c0392b;
 }
+
+/* End of Scenario Notification Overlay */
+.end-notification-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+}
+
+.end-notification-content {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  animation: slideInScale 0.3s ease-out;
+}
+
+@keyframes slideInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.end-notification-header h2 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.end-notification-body {
+  margin-bottom: 30px;
+}
+
+.end-notification-body p {
+  margin: 0 0 10px 0;
+  color: #34495e;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.end-notification-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.end-notification-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 140px;
+}
+
+.end-notification-btn.back-btn {
+  background: #95a5a6;
+  color: white;
+}
+
+.end-notification-btn.back-btn:hover {
+  background: #7f8c8d;
+  transform: translateY(-1px);
+}
+
+.end-notification-btn.end-btn {
+  background: #e74c3c;
+  color: white;
+}
+
+.end-notification-btn.end-btn:hover {
+  background: #c0392b;
+  transform: translateY(-1px);
+}
+
+.end-notification-hint {
+  color: #7f8c8d;
+  font-size: 12px;
+  font-style: italic;
+}

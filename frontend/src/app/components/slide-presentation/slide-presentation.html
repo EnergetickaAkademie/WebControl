@@ -13,21 +13,21 @@
         class="control-btn" 
         (click)="previousSlide()" 
         [disabled]="!canGoToPrevious()"
-        title="Previous slide (← or ↑)">
+        title="Předchozí snímek (← nebo ↑)">
         ←
       </button>
       
       <button 
         class="control-btn" 
         (click)="nextSlide()" 
-        title="{{ canGoToNext() ? 'Next slide (→ or ↓)' : 'Advance to next round (→ or ↓)' }}">
+        title="{{ canGoToNext() ? 'Další snímek (→ nebo ↓)' : 'Pokračovat na další kolo (→ nebo ↓)' }}">
         {{ canGoToNext() ? '→' : '⏭️' }}
       </button>
       
       <button 
         class="control-btn fullscreen-btn" 
         (click)="toggleFullscreen()"
-        title="Toggle fullscreen (F)">
+        title="Přepnout celou obrazovku (F)">
         ⛶
       </button>
     </div>
@@ -41,7 +41,7 @@
         class="slide-thumb"
         [class.active]="i === currentSlideIndex"
         (click)="goToSlide(i)"
-        [title]="'Go to slide ' + (i + 1)">
+        [title]="'Přejít na snímek ' + (i + 1)">
         {{ i + 1 }}
       </button>
     </div>
@@ -52,14 +52,14 @@
     <!-- Loading State -->
     <div class="slide-loading" *ngIf="isImageLoading">
       <div class="loading-spinner"></div>
-      <p>Loading slide...</p>
+      <p>Načítání snímku...</p>
     </div>
 
     <!-- Error State -->
     <div class="slide-error" *ngIf="imageError && !isImageLoading">
       <div class="error-icon">⚠️</div>
-      <h3>Slide Not Found</h3>
-      <p>Could not load slide image. Please check if the slide files exist.</p>
+      <h3>Snímek nenalezen</h3>
+      <p>Nepodařilo se načíst obrázek snímku. Zkontrolujte prosím, zda soubory snímků existují.</p>
     </div>
 
     <!-- Slide Image -->
@@ -77,7 +77,7 @@
   <div class="fullscreen-overlay" *ngIf="isFullscreen">
     <!-- Navigation Hint -->
     <div class="navigation-hint">
-      <p>Use arrow keys or space to navigate • Right arrow on last slide advances to next round • Press F to toggle fullscreen • Press ESC to exit</p>
+      <p>Používejte šipky nebo mezerník pro navigaci • Pravá šipka na posledním snímku pokračuje na další kolo • Stiskněte F pro celou obrazovku • Stiskněte ESC pro ukončení</p>
     </div>
 
     <!-- Slide Counter -->
@@ -90,14 +90,14 @@
       class="fullscreen-nav fullscreen-nav-left" 
       (click)="previousSlide()" 
       [style.visibility]="canGoToPrevious() ? 'visible' : 'hidden'"
-      title="Previous slide">
+      title="Předchozí snímek">
       ←
     </button>
     
     <button 
       class="fullscreen-nav fullscreen-nav-right" 
       (click)="nextSlide()" 
-      title="{{ canGoToNext() ? 'Next slide' : 'Advance to next round' }}">
+      title="{{ canGoToNext() ? 'Další snímek' : 'Pokračovat na další kolo' }}">
       {{ canGoToNext() ? '→' : '⏭️' }}
     </button>
 
@@ -105,7 +105,7 @@
     <button 
       class="fullscreen-exit" 
       (click)="exitFullscreen()"
-      title="Exit fullscreen">
+      title="Ukončit celou obrazovku">
       ✕
     </button>
   </div>
@@ -113,12 +113,12 @@
   <!-- Round Details (hidden in fullscreen) -->
   <div class="round-details" *ngIf="currentRoundDetails && !isFullscreen">
     <div class="detail-section" *ngIf="currentRoundDetails.comment">
-      <h4>📝 Description</h4>
+      <h4>📝 Popis</h4>
       <p>{{ currentRoundDetails.comment }}</p>
     </div>
     
     <div class="detail-section" *ngIf="currentRoundDetails.weather && currentRoundDetails.weather.length > 0">
-      <h4>🌤️ Weather</h4>
+      <h4>🌤️ Počasí</h4>
       <div class="weather-tags">
         <span *ngFor="let weather of currentRoundDetails.weather" class="weather-tag">
           {{ weather.name }}
@@ -133,22 +133,56 @@
       class="floating-control-btn" 
       (click)="previousSlide()" 
       [disabled]="!canGoToPrevious()"
-      title="Previous slide (← or ↑)">
+      title="Předchozí snímek (← nebo ↑)">
       ←
     </button>
     
     <button 
       class="floating-control-btn" 
       (click)="nextSlide()" 
-      title="{{ canGoToNext() ? 'Next slide (→ or ↓)' : 'Advance to next round (→ or ↓)' }}">
+      title="{{ canGoToNext() ? 'Další snímek (→ nebo ↓)' : 'Pokračovat na další kolo (→ nebo ↓)' }}">
       {{ canGoToNext() ? '→' : '⏭️' }}
     </button>
     
     <button 
       class="floating-control-btn fullscreen-btn" 
       (click)="toggleFullscreen()"
-      title="Toggle fullscreen (F)">
+      title="Přepnout celou obrazovku (F)">
       ⛶
     </button>
+  </div>
+
+  <!-- End of Scenario Notification Overlay -->
+  <div class="end-notification-overlay" *ngIf="showEndNotification">
+    <div class="end-notification-content">
+      <div class="end-notification-header">
+        <h2>🏁 Konec scénáře</h2>
+      </div>
+      
+      <div class="end-notification-body">
+        <p>Dosáhli jste konce scénáře.</p>
+        <p>Všechna kola byla dokončena. Co chcete dělat?</p>
+      </div>
+      
+      <div class="end-notification-actions">
+        <button 
+          class="end-notification-btn back-btn" 
+          (click)="goBackFromEnd()"
+          title="Vrátit se na předchozí snímek (← nebo ↑)">
+          ← Zpět
+        </button>
+        
+        <button 
+          class="end-notification-btn end-btn" 
+          (click)="endScenario()"
+          title="Dokončit scénář (→ nebo ↓)">
+          Dokončit scénář →
+        </button>
+      </div>
+      
+      <div class="end-notification-hint">
+        <small>Použijte šipky pro navigaci • Stiskněte ESC pro zrušení</small>
+      </div>
+    </div>
   </div>
 </div>

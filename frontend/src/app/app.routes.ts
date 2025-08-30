@@ -1,10 +1,12 @@
 import { Routes } from '@angular/router';
 import { LoginComponent, DashboardComponent } from './components';
+import { ScenarioSelectionComponent } from './components/scenario-selection/scenario-selection';
 import { AuthGuard } from './guards';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+  { path: '', redirectTo: '/setup', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
+  { path: 'setup', component: ScenarioSelectionComponent, canActivate: [AuthGuard] },
   { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
-  { path: '**', redirectTo: '/dashboard' }
+  { path: '**', redirectTo: '/setup' }
 ];

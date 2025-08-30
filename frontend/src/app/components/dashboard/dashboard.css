@@ -24,7 +24,7 @@
   margin: 0;
   padding: 0; /* Remove all padding */
   font-family: 'DINPro-Regular', Arial, sans-serif;
-  background-color: #E8ECFF;
+  background-color: transparent; /* Let app container handle background */
   min-height: 100vh;
   box-sizing: border-box;
   display: flex;
@@ -232,11 +232,11 @@
 
 .boards-container.setup-horizontal .boards-left,
 .boards-container.setup-horizontal .boards-right {
-  flex-direction: row;
-  gap: 25px; /* Increased gap between boards */
+  flex-direction: column; /* Changed back to column for setup view */
+  gap: 15px; /* Consistent gap */
   height: auto;
   flex: none; /* Remove flex to prevent stretching */
-  justify-content: center;
+  justify-content: flex-start; /* Align to top */
 }
 
 .boards-container.setup-horizontal .board-card {
@@ -249,9 +249,10 @@
 .boards-right {
   display: flex;
   flex-direction: column;
-  gap: 10px; /* Reduced from 15px to make vertical spaces smaller */
+  gap: 15px;
   height: 100%; /* Take full height */
-  justify-content: space-evenly; /* Distribute teams evenly */
+  justify-content: flex-start; /* Align to top */
+  padding-top: 80px; /* Add top padding to push boards down */
 }
 
 /* Board Cards */
@@ -441,6 +442,7 @@
   flex-direction: column;
   gap: 15px;
   height: 100%; /* Take full height */
+  justify-content: flex-start; /* Align to top */; 
 }
 
 .weather-box {
@@ -615,6 +617,28 @@
 }
 
 /* Responsive */
+@media (max-width: 1600px) {
+  /* Stack boards vertically on screens narrower than 1600px */
+  .boards-container.setup-horizontal {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .boards-container.setup-horizontal .boards-left,
+  .boards-container.setup-horizontal .boards-right {
+    flex-direction: row;
+    gap: 20px;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .boards-container.setup-horizontal .board-card {
+    width: 260px; /* Slightly smaller for better fit */
+    min-height: 180px;
+  }
+}
+
 @media (max-width: 1024px) {
   .game-layout {
     grid-template-columns: 1fr;

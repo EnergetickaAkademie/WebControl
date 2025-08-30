@@ -33,14 +33,12 @@ interface GameRound {
 export class DashboardComponent implements OnInit, OnDestroy {
   userInfo: any = null;
   gameStatus: any = null;
-  scenarios: any[] = [];
   connectedBoards: any[] = [];
-  selectedScenario: string | null = '';
   isLoading = true;
   isGameLoading = false;
   
   // Game state
-  currentView: 'setup' | 'presentation' | 'game' = 'setup';
+  currentView: 'presentation' | 'game' = 'game';
   currentRound: GameRound | null = null;
   currentRoundDetails: any = null; // Store detailed round information
   
@@ -68,6 +66,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadTranslations();
     this.checkReloadRecovery();
     this.startPolling();
+    
+    // Auto-enter fullscreen when dashboard loads
+    setTimeout(() => {
+      if (!this.isFullscreen) {
+        this.enterFullscreen();
+      }
+    }, 500);
   }
 
   ngOnDestroy() {
@@ -77,10 +82,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loadProfile() {
     this.authService.profile().subscribe({
       next: (response: any) => {
-        this.userInfo = response.user;
+  // Backend returns { user: {...} }
+  this.userInfo = response.user || response.user_info || null;
         this.isLoading = false;
-        // Load scenarios after profile is loaded
-        this.loadScenarios();
       },
       error: (error: any) => {
         console.error('Failed to load profile', error);
@@ -105,34 +109,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
             this.currentRoundDetails = recovery.gameState.roundDetails;
             this.connectedBoards = recovery.gameState.boards || [];
             
-            // Set the appropriate view
-            this.currentView = recovery.view;
+            // Set the appropriate view - only handle presentation and game views
+            if (recovery.view === 'setup') {
+              // If recovery view is setup, redirect to setup page
+              this.router.navigate(['/setup']);
+              return;
+            } else {
+              this.currentView = recovery.view;
+            }
+            
+            // Auto-enter fullscreen after recovery since we're in dashboard
+            setTimeout(() => {
+              if (!this.isFullscreen) {
+                this.enterFullscreen();
+              }
+            }, 100);
             
             console.log('Reload recovery complete - current view:', this.currentView);
           }
         },
         error: (error) => {
           console.error('Failed to check reload recovery:', error);
-        }
-      });
-    }
-  }
-
-  loadScenarios() {
-    if (this.userInfo?.user_type === 'lecturer') {
-      this.authService.getScenarios().subscribe({
-        next: (response: any) => {
-          console.log('Scenarios response:', response); // Debug log
-          this.scenarios = response.scenarios?.map((scenario: string) => ({
-            id: scenario,
-            name: scenario.charAt(0).toUpperCase() + scenario.slice(1)
-          })) || [];
-          // Don't auto-select any scenario - let lecturer choose
-          this.selectedScenario = '';
-          console.log('Processed scenarios:', this.scenarios); // Debug log
-        },
-        error: (error: any) => {
-          console.error('Failed to load scenarios', error);
         }
       });
     }
@@ -167,6 +164,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.connectedBoards = response.boards || [];
           this.currentRoundDetails = response.round_details;
           
+          // If no game is active, redirect to setup page
+          if (!this.gameStatus?.game_active) {
+            this.router.navigate(['/setup']);
+            return;
+          }
+          
           // Update current round with detailed information if available
           if (response.round_details && this.gameStatus.game_active) {
             this.currentRound = {
@@ -177,6 +180,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 consumption_modifiers: response.round_details.building_consumptions || {}
               }
             };
+
+            // Dynamically switch view based on round type during polling
+            const rt = response.round_details.round_type;
+            if (rt === RoundType.SLIDE || rt === RoundType.SLIDE_RANGE) {
+              if (this.currentView !== 'presentation') {
+                console.log('Polling detected slide round -> switching to presentation view');
+                this.currentView = 'presentation';
+                // Ensure fullscreen is maintained (dashboard should always be fullscreen)
+                if (!this.isFullscreen) {
+                  setTimeout(() => this.enterFullscreen(), 0);
+                }
+              }
+            } else if (rt === RoundType.DAY || rt === RoundType.NIGHT) {
+              if (this.currentView !== 'game') {
+                console.log('Polling detected day/night round -> switching to game view');
+                this.currentView = 'game';
+                // Ensure fullscreen is maintained (dashboard should always be fullscreen)
+                if (!this.isFullscreen) {
+                  setTimeout(() => this.enterFullscreen(), 0);
+                }
+              }
+            }
+          }
+          // Extra safety: if game active but we somehow lack round details, keep user in game view
+          if (!this.currentRoundDetails && this.gameStatus?.game_active && this.currentView === 'presentation') {
+            console.warn('Missing round details while in presentation view, reverting to game view');
+            this.currentView = 'game';
           }
         },
         error: (error: any) => {
@@ -208,29 +238,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadGameStatus();
   }
 
-  startGame() {
-    if (!this.selectedScenario || this.selectedScenario === '') {
-      console.error('No scenario selected');
-      return;
-    }
-    
-    this.isGameLoading = true;
-    console.log('Starting game with scenario:', this.selectedScenario);
-    this.authService.startGameWithScenario(this.selectedScenario).subscribe({
-      next: (response: any) => {
-        console.log('Game started:', response);
-        this.loadConnectedBoards();
-        // Immediately call next round to get the first round information
-        // Don't set isGameLoading = false here, let nextRound handle it
-        this.callNextRoundFromStart();
-      },
-      error: (error: any) => {
-        console.error('Failed to start game:', error);
-        this.isGameLoading = false;
-      }
-    });
-  }
-
   callNextRoundFromStart() {
     // Special version of nextRound called from startGame - don't reset loading state
     console.log('Calling next round from start...');
@@ -240,19 +247,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.currentRound = response;
         
         if (response.status === 'game_finished') {
-          console.log('Game finished, switching to setup view');
-          this.currentView = 'setup';
-          this.currentRound = null;
+          console.log('Game finished, redirecting to setup page');
+          this.router.navigate(['/setup']);
+          return;
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
           console.log('Slides round, switching to presentation view');
           this.currentView = 'presentation';
-          // Auto-enter fullscreen for slide rounds
+          // Ensure fullscreen is maintained (dashboard should always be fullscreen)
           if (!this.isFullscreen) {
             setTimeout(() => this.enterFullscreen(), 100);
           }
         } else if (response.round_type === RoundType.DAY || response.round_type === RoundType.NIGHT) {
           console.log('Game round, switching to game view');
           this.currentView = 'game';
+          // Ensure fullscreen is maintained (dashboard should always be fullscreen)
+          if (!this.isFullscreen) {
+            setTimeout(() => this.enterFullscreen(), 100);
+          }
         }
         
         this.isGameLoading = false;
@@ -273,19 +284,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.currentRound = response;
         
         if (response.status === 'game_finished') {
-          console.log('Game finished, switching to setup view');
-          this.currentView = 'setup';
-          this.currentRound = null;
+          console.log('Game finished, redirecting to setup page');
+          this.router.navigate(['/setup']);
+          return;
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
           console.log('Slides round, switching to presentation view');
           this.currentView = 'presentation';
-          // Auto-enter fullscreen for slide rounds
+          // Ensure fullscreen is maintained (dashboard should always be fullscreen)
           if (!this.isFullscreen) {
             setTimeout(() => this.enterFullscreen(), 100);
           }
         } else if (response.round_type === RoundType.DAY || response.round_type === RoundType.NIGHT) {
           console.log('Game round, switching to game view');
           this.currentView = 'game';
+          // Ensure fullscreen is maintained (dashboard should always be fullscreen)
+          if (!this.isFullscreen) {
+            setTimeout(() => this.enterFullscreen(), 100);
+          }
         }
         
         this.isGameLoading = false;
@@ -302,9 +317,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.authService.endGame().subscribe({
       next: (response: any) => {
         console.log('Game ended:', response);
-        this.currentView = 'setup';
-        this.currentRound = null;
-        this.isGameLoading = false;
+        this.router.navigate(['/setup']);
       },
       error: (error: any) => {
         console.error('Failed to end game:', error);
@@ -390,7 +403,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return getNumericId(a) - getNumericId(b);
     });
     
-    // Pad to even number of teams if needed (minimum 6 teams)
+    // Pad to minimum number of teams if needed (5 teams)
     const paddedBoards = this.padToEvenTeams(sortedBoards);
     
     // Fill left column first: take first 3 teams (Team 1, Team 2, Team 3)
@@ -409,18 +422,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return getNumericId(a) - getNumericId(b);
     });
     
-    // Pad to even number of teams if needed (minimum 6 teams)
+    // Pad to minimum number of teams if needed (5 teams)
     const paddedBoards = this.padToEvenTeams(sortedBoards);
     
-    // Right column gets the remaining teams (Team 4, Team 5, Team 6...)
+    // Right column gets the remaining teams (Team 4, Team 5)
     const maxLeftColumn = 3;
     return paddedBoards.slice(maxLeftColumn);
   }
 
-  // Helper method to pad teams to even number (minimum 6)
+  // Helper method to pad teams to minimum number (5 teams)
   private padToEvenTeams(boards: any[]): any[] {
-    const minTeams = 6;
-    const targetCount = Math.max(minTeams, boards.length % 2 === 0 ? boards.length : boards.length + 1);
+    const minTeams = 5;
+    const targetCount = Math.max(minTeams, boards.length);
     
     const paddedBoards = [...boards];
     
@@ -538,7 +551,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // First check if we have display data from current round with effects
     const displayData = (this.currentRound as any)?.display_data;
     if (displayData?.effects && displayData.effects.length > 0) {
-      return displayData.effects;
+      return this.removeDuplicateEffects(displayData.effects);
     }
     
     // Fallback to old weather system
@@ -554,7 +567,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
     });
     
-    return effects;
+    return this.removeDuplicateEffects(effects);
+  }
+
+  // Helper method to remove duplicate effects based on text content
+  private removeDuplicateEffects(effects: any[]): any[] {
+    if (!effects || effects.length === 0) return [];
+    
+    const seen = new Set<string>();
+    return effects.filter(effect => {
+      const key = effect.text || effect.name || JSON.stringify(effect);
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
   }
 
     // New Weather Box Getters
@@ -739,9 +767,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
   @HostListener('document:webkitfullscreenchange', [])
   @HostListener('document:msfullscreenchange', [])
   onFullscreenChange() {
+    const wasFullscreen = this.isFullscreen;
     this.isFullscreen = !!(document.fullscreenElement || 
                           (document as any).webkitFullscreenElement || 
                           (document as any).msFullscreenElement);
+    
+    // If user exited fullscreen (e.g., via browser controls), re-enter automatically
+    // Dashboard should always stay in fullscreen mode
+    if (wasFullscreen && !this.isFullscreen) {
+      console.log('Fullscreen was exited, re-entering automatically...');
+      setTimeout(() => {
+        if (!this.isFullscreen) {
+          this.enterFullscreen();
+        }
+      }, 100);
+    }
   }
 
   // Keyboard event handlers
@@ -763,9 +803,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.toggleFullscreen();
           break;
         case 'escape':
-          if (this.isFullscreen) {
-            event.preventDefault();
-            this.exitFullscreen();
+          // Dashboard should always stay in fullscreen - re-enter if user tries to exit
+          event.preventDefault();
+          if (!this.isFullscreen) {
+            this.enterFullscreen();
           }
           break;
         case 'arrowright':

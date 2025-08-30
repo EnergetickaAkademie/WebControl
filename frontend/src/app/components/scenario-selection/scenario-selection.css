@@ -1,0 +1,352 @@
+/* DIN Pro Font Faces */
+@font-face {
+  font-family: 'DINPro-Black';
+  src: url('/fonts/DINPro-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'DINPro-Light';
+  src: url('/fonts/DINPro-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'DINPro-Regular';
+  src: url('/fonts/DINPro-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+.scenario-page-container {
+  margin: 0;
+  padding: 0;
+  font-family: 'DINPro-Regular', Arial, sans-serif;
+  background-color: transparent;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 2px solid #e0e0e0;
+  margin: 0 20px 30px 20px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.page-header h1 {
+  color: #2c3e50;
+  margin: 0;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-info {
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.logout-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: #c0392b;
+}
+
+.loading {
+  text-align: center;
+  padding: 50px;
+  color: #000;
+}
+
+.page-content {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  padding: 20px;
+  flex: 1;
+}
+
+.scenario-controls-section,
+.keyboard-shortcuts-section,
+.boards-section,
+.game-status {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.scenario-controls-section h2,
+.keyboard-shortcuts-section h2,
+.boards-section h2,
+.game-status h2 {
+  color: #000;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scenario-controls {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.scenario-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 200px;
+}
+
+/* Keyboard Shortcuts Section */
+.shortcuts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.shortcut-key {
+  background: #495057;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-family: 'DINPro-Black', monospace, Arial, sans-serif;
+  font-weight: 900;
+  font-size: 14px;
+  min-width: 30px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.shortcut-description {
+  font-family: 'DINPro-Regular', Arial, sans-serif;
+  font-weight: 400;
+  color: #495057;
+  font-size: 14px;
+}
+
+.shortcuts-note {
+  font-size: 12px;
+  color: #6c757d;
+  font-style: italic;
+  margin: 0;
+  text-align: center;
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-start {
+  background: #27ae60;
+  color: white;
+}
+
+.btn-start:hover:not(:disabled) {
+  background: #219a52;
+}
+
+/* Board Layout */
+.boards-container {
+  display: flex;
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.boards-container.setup-horizontal {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.boards-container.setup-horizontal .boards-left,
+.boards-container.setup-horizontal .boards-right {
+  flex-direction: row;
+  gap: 25px;
+  height: auto;
+  flex: none;
+  justify-content: center;
+}
+
+.boards-container.setup-horizontal .board-card {
+  width: 280px;
+  min-height: 200px;
+  flex-shrink: 0;
+}
+
+.boards-left,
+.boards-right {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  height: 100%;
+  justify-content: flex-start;
+  padding-top: 80px;
+}
+
+/* Board Cards */
+.board-card {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: none;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+}
+
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4vh;
+}
+
+.board-header h4 {
+  color: #000;
+  margin: 0;
+  font-size: 32px;
+  font-family: 'DINPro-Light', Arial, sans-serif;
+  font-weight: 300;
+}
+
+.board-indicators {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.grid-status {
+  display: flex;
+  align-items: center;
+}
+
+.board-card.placeholder {
+  opacity: 0.6;
+  background-color: #f5f5f5;
+}
+
+.board-card.placeholder .board-header h4 {
+  color: #888;
+}
+
+.board-card.placeholder .power-label,
+.board-card.placeholder .power-value {
+  color: #aaa;
+}
+
+.board-data {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.power-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.power-label {
+  color: #000;
+  font-family: 'DINPro-Regular', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 28px;
+}
+
+.power-value {
+  color: #000;
+  font-family: 'DINPro-Black', Arial, sans-serif;
+  font-weight: 900;
+  font-size: 32px;
+}
+
+.game-status p {
+  color: #000;
+  margin: 5px 0;
+}
+
+/* Responsive */
+@media (max-width: 1600px) {
+  .boards-container.setup-horizontal {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .boards-container.setup-horizontal .boards-left,
+  .boards-container.setup-horizontal .boards-right {
+    flex-direction: row;
+    gap: 20px;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .boards-container.setup-horizontal .board-card {
+    width: 260px;
+    min-height: 180px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-content {
+    padding: 10px;
+  }
+  
+  .boards-container {
+    flex-direction: column;
+  }
+  
+  .board-card {
+    min-height: 150px;
+  }
+}
