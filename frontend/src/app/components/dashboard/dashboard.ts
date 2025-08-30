@@ -324,6 +324,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return obj ? Object.keys(obj) : [];
   }
 
+  // Helper method to determine if a board should be shown as placeholder
+  isBoardPlaceholder(board: any): boolean {
+    return !board || board.is_placeholder || board.connected === false;
+  }
+
   // Helper method to get team display name
   getTeamDisplayName(board: any): string {
     // Use display_name from backend if available, otherwise fall back to generated name
@@ -435,7 +440,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Grid balance status indicator for teams
   getGridStatusIcon(board: any): SafeHtml {
-    if (!board || board.is_placeholder) {
+    if (!board || board.is_placeholder || board.connected === false) {
       return this.s.bypassSecurityTrustHtml('<img src="/icons/DASH_status_grey.svg" alt="Inactive" style="width: 32px; height: 32px;">');
     }
     

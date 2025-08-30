@@ -241,7 +241,6 @@
 
 .boards-container.setup-horizontal .board-card {
   width: 280px; /* Increased width from 200px to 280px */
-  height: 200px; /* Slightly increased height */
   min-height: 200px;
   flex-shrink: 0;
 }
