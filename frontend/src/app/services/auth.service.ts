@@ -132,6 +132,10 @@ export class AuthService {
     return this.http.get(`${this.api}/get_statistics`, { headers: this.getHeaders() });
   }
 
+  getComprehensiveGameStatistics(): Observable<any> {
+    return this.http.get(`${this.api}/game_statistics`, { headers: this.getHeaders() });
+  }
+
   pollForUsers(): Observable<any> {
     return this.http.get(`${this.api}/pollforusers`, { headers: this.getHeaders() });
   }

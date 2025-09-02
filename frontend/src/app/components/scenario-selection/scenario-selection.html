@@ -124,6 +124,17 @@
       <p><strong>Stav:</strong> {{ gameStatus.game_active ? 'Aktivní' : 'Neaktivní' }}</p>
       <p><strong>Aktuální kolo:</strong> {{ gameStatus.current_round }} / {{ gameStatus.total_rounds }}</p>
       <p><strong>Připojená zařízení:</strong> {{ connectedBoards.length }}</p>
+      
+      <!-- Show Statistics Button - appears when game has ended -->
+      <div *ngIf="isGameFinished()" class="game-finished-actions">
+        <p class="game-finished-message">🏆 Hra byla dokončena! Zobrazit výsledky a statistiky týmů.</p>
+        <button 
+          class="btn btn-statistics" 
+          (click)="showGameStatistics()"
+          [disabled]="isLoadingStatistics">
+          {{ isLoadingStatistics ? 'Načítání...' : '📊 Zobrazit statistiky' }}
+        </button>
+      </div>
     </div>
 
   </div>

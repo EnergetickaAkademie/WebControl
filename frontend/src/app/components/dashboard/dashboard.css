@@ -723,3 +723,103 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0,0,0,0.4);
 }
+
+/* Statistics View Styles */
+.statistics-view {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.simple-statistics-container {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 1rem;
+  padding: 3rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  max-width: 800px;
+  margin: 2rem;
+}
+
+.simple-statistics-container h1 {
+  color: #2c3e50;
+  font-size: 3rem;
+  margin: 0 0 1rem 0;
+  font-family: 'DINPro-Black', Arial, sans-serif;
+}
+
+.simple-statistics-container h2 {
+  color: #34495e;
+  font-size: 2rem;
+  margin: 0 0 2rem 0;
+  font-family: 'DINPro-Regular', Arial, sans-serif;
+}
+
+.no-statistics {
+  padding: 2rem 0;
+}
+
+.no-statistics p {
+  font-size: 1.2rem;
+  color: #6c757d;
+  margin: 1rem 0;
+  font-family: 'DINPro-Regular', Arial, sans-serif;
+}
+
+.btn {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  font-family: 'DINPro-Regular', Arial, sans-serif;
+}
+
+.btn-continue {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  margin-top: 1rem;
+}
+
+.btn-continue:hover {
+  background: linear-gradient(135deg, #218838 0%, #1c7a6b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.game-statistics-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+/* When in fullscreen mode, ensure statistics take full space */
+.dashboard-container.fullscreen .statistics-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+}
+
+.dashboard-container.fullscreen .game-statistics-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}

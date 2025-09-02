@@ -1,0 +1,28 @@
+<div class="statistics-container">
+  <div class="loading" *ngIf="loading">
+    <p>Načítám statistiky...</p>
+  </div>
+
+  <div class="error" *ngIf="error">
+    <p>{{ error }}</p>
+    <button (click)="loadStatistics()" class="retry-button">Znovu načíst</button>
+  </div>
+
+  <div class="content" *ngIf="!loading && !error && gameStatistics">
+    <!-- Combined Team Performance Chart -->
+    <div class="main-chart-section">
+      <h2>Finální skóre týmů podle faktorů</h2>
+      <div class="chart-container">
+        <canvas id="combinedTeamChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back Button -->
+  <div class="navigation-section">
+    <div class="action-buttons">
+      <button (click)="goBackToSetup()" class="back-button">Zpět na přípravu</button>
+      <button (click)="loadStatistics()" class="reload-button">Znovu načíst</button>
+    </div>
+  </div>
+</div>

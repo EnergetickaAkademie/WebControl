@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService, GameStatusService } from '../../services';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -58,6 +58,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private gameStatusService: GameStatusService,
     private router: Router,
+    private route: ActivatedRoute,
     private s: DomSanitizer
   ) {}
 
@@ -65,6 +66,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadProfile();
     this.loadTranslations();
     this.checkReloadRecovery();
+    
+    // Start polling for game status
     this.startPolling();
     
     // Auto-enter fullscreen when dashboard loads
@@ -136,6 +139,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   startPolling() {
+    // Initialize polling for game status updates
+    // Stop any existing polling first
+    this.stopAllPolling();
+    
     // Poll for game status and connected boards
     this.loadGameStatus();
     this.pollSubscription = interval(500).subscribe(() => {
@@ -247,7 +254,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.currentRound = response;
         
         if (response.status === 'game_finished') {
-          console.log('Game finished, redirecting to setup page');
+          console.log('Game finished, redirecting to setup');
+          // Navigate back to setup when game is finished
           this.router.navigate(['/setup']);
           return;
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
@@ -284,7 +292,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.currentRound = response;
         
         if (response.status === 'game_finished') {
-          console.log('Game finished, redirecting to setup page');
+          console.log('Game finished, redirecting to setup');
+          // Navigate back to setup when game is finished
           this.router.navigate(['/setup']);
           return;
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
@@ -787,8 +796,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Keyboard event handlers
   @HostListener('document:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
-    // Handle keyboard events in game and presentation views
+    // Handle different keyboard events based on current view
     if (this.currentView === 'game' || this.currentView === 'presentation') {
+      // Game and presentation view controls
       switch (event.key.toLowerCase()) {
         case 'q':
           event.preventDefault();
@@ -834,4 +844,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.logout();
     }
   }
+
+  onContinueFromStatistics() {
+    // Navigate to setup page when user clicks continue from statistics
+    this.router.navigate(['/setup']);
+  }
+
 }

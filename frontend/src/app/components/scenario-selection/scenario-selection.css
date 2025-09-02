@@ -350,3 +350,36 @@
     min-height: 150px;
   }
 }
+
+/* Game Finished Styles */
+.game-finished-actions {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #27ae60;
+}
+
+.game-finished-message {
+  margin: 0 0 10px 0;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.btn-statistics {
+  background: #3498db;
+  color: white;
+  font-size: 16px;
+  padding: 12px 24px;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-statistics:hover:not(:disabled) {
+  background: #2980b9;
+}
+
+.btn-statistics:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+}

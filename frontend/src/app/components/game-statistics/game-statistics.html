@@ -1,0 +1,289 @@
+<div class="game-statistics-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <h2>Načítání statistik hry...</h2>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-container">
+    <h2>❌ Chyba při načítání statistik</h2>
+    <p>{{ error }}</p>
+    <button (click)="loadGameStatistics()" class="retry-button">Zkusit znovu</button>
+  </div>
+
+  <!-- Statistics Content -->
+  <div *ngIf="!isLoading && !error && gameStatistics" class="statistics-content">
+    <!-- Game Header -->
+    <div class="game-header">
+      <h1>🏆 Hra dokončena!</h1>
+      
+      <!-- Navigation Controls -->
+      <div class="navigation-controls">
+        <button class="nav-button" (click)="goBackToDashboard()" title="Zpět na dashboard (→)">
+          ← Zpět na dashboard
+        </button>
+        <button class="nav-button" (click)="onContinue()" title="Pokračovat do nastavení">
+          Pokračovat do nastavení →
+        </button>
+      </div>
+      
+      <div class="game-summary">
+        <h2>Statistiky hry</h2>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="label">Scénář:</span>
+            <span class="value">{{ gameStatistics.game_summary?.scenario_name || 'N/A' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Celkem kol:</span>
+            <span class="value">{{ gameStatistics.game_summary?.total_rounds || 'N/A' }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Doba hry:</span>
+            <span class="value">{{ gameStatistics.game_summary?.game_duration_minutes || 'N/A' }} minut</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Počet týmů:</span>
+            <span class="value">{{ gameStatistics.boards?.length || 0 }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Charts -->
+    <div class="charts-section">
+      <h3>📊 Grafy výkonnosti</h3>
+      
+      <div class="charts-grid">
+        <!-- Team Performance Radar Chart -->
+        <div class="chart-container">
+          <h4>Porovnání výkonu týmů</h4>
+          <canvas baseChart
+                  [data]="radarChartData"
+                  [labels]="radarChartLabels"
+                  [options]="radarChartOptions"
+                  [type]="radarChartType">
+          </canvas>
+        </div>
+
+        <!-- Energy Balance Bar Chart -->
+        <div class="chart-container">
+          <h4>Energetická bilance týmů</h4>
+          <canvas baseChart
+                  [data]="barChartData"
+                  [labels]="barChartLabels"
+                  [options]="barChartOptions"
+                  [type]="barChartType">
+          </canvas>
+        </div>
+
+        <!-- Performance Metrics Comparison -->
+        <div class="chart-container">
+          <h4>Srovnání metrik výkonu</h4>
+          <canvas baseChart
+                  [data]="lineChartData"
+                  [labels]="lineChartLabels"
+                  [options]="lineChartOptions"
+                  [type]="lineChartType">
+          </canvas>
+        </div>
+
+        <!-- Overall Score Distribution -->
+        <div class="chart-container">
+          <h4>Celkové skóre týmů</h4>
+          <canvas baseChart
+                  [data]="doughnutChartData"
+                  [labels]="doughnutChartLabels"
+                  [options]="doughnutChartOptions"
+                  [type]="doughnutChartType">
+          </canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Results -->
+    <div class="teams-results">
+      <h3>🎯 Výsledky týmů</h3>
+      
+      <div class="teams-grid">
+        <div *ngFor="let teamData of getTeamsArray(); trackBy: trackByTeam" 
+             class="team-card" 
+             [class.inactive]="teamData.board.total_energy_produced === 0">
+          
+          <!-- Team Header -->
+          <div class="team-header">
+            <h4>{{ teamData.board.display_name }}</h4>
+            <div class="team-id">{{ teamData.board.board_id }}</div>
+            <div *ngIf="teamData.board.total_energy_produced === 0" class="inactive-badge">
+              Neaktivní
+            </div>
+          </div>
+
+          <!-- Performance Metrics -->
+          <div class="performance-metrics">
+            <div class="metric">
+              <span class="metric-label">🌱 Ekologie</span>
+              <div class="metric-bar">
+                <div class="metric-fill ecology" 
+                     [style.width.%]="teamData.performance.ecology"></div>
+                <span class="metric-value">{{ teamData.performance.ecology.toFixed(1) }}%</span>
+              </div>
+            </div>
+
+            <div class="metric">
+              <span class="metric-label">⚡ Energetický mix</span>
+              <div class="metric-bar">
+                <div class="metric-fill elmix" 
+                     [style.width.%]="teamData.performance.elmix"></div>
+                <span class="metric-value">{{ teamData.performance.elmix.toFixed(1) }}%</span>
+              </div>
+            </div>
+
+            <div class="metric">
+              <span class="metric-label">💰 Finance</span>
+              <div class="metric-bar">
+                <div class="metric-fill finances" 
+                     [style.width.%]="teamData.performance.finances"></div>
+                <span class="metric-value">{{ teamData.performance.finances.toFixed(1) }}%</span>
+              </div>
+            </div>
+
+            <div class="metric">
+              <span class="metric-label">👥 Popularita</span>
+              <div class="metric-bar">
+                <div class="metric-fill popularity" 
+                     [style.width.%]="teamData.performance.popularity"></div>
+                <span class="metric-value">{{ teamData.performance.popularity.toFixed(1) }}%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Energy Summary -->
+          <div class="energy-summary">
+            <div class="energy-item">
+              <span class="energy-label">Celková produkce:</span>
+              <span class="energy-value">{{ teamData.board.total_energy_produced.toFixed(0) }} MW</span>
+            </div>
+            <div class="energy-item">
+              <span class="energy-label">Celková spotřeba:</span>
+              <span class="energy-value">{{ teamData.board.total_energy_consumed.toFixed(0) }} MW</span>
+            </div>
+            <div class="energy-item" [class.negative]="teamData.board.energy_balance < 0">
+              <span class="energy-label">Energetická bilance:</span>
+              <span class="energy-value">{{ teamData.board.energy_balance.toFixed(0) }} MW</span>
+            </div>
+          </div>
+
+          <!-- Production by Type (if available) -->
+          <div *ngIf="teamData.board.average_production_by_type && getProductionTypesArray(teamData.board.average_production_by_type).length > 0" 
+               class="production-by-type">
+            <h5>Průměrná produkce podle typu:</h5>
+            <div class="production-types">
+              <div *ngFor="let prodType of getProductionTypesArray(teamData.board.average_production_by_type)" 
+                   class="production-type-item">
+                <span class="type-name">{{ prodType.name }}:</span>
+                <span class="type-value">{{ prodType.value.toFixed(1) }} MW</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rankings -->
+    <div class="rankings-section">
+      <h3>🏆 Žebříčky</h3>
+      
+      <div class="rankings-grid">
+        <!-- Ecology Ranking -->
+        <div class="ranking-category">
+          <h4>🌱 Nejlepší ekologie</h4>
+          <div class="ranking-list">
+            <div *ngFor="let team of getTeamsSortedBy('ecology'); let i = index" 
+                 class="ranking-item" 
+                 [class.first]="i === 0" 
+                 [class.second]="i === 1" 
+                 [class.third]="i === 2">
+              <span class="rank">{{ i + 1 }}.</span>
+              <span class="team-name">{{ team.board.display_name }}</span>
+              <span class="score">{{ team.performance.ecology.toFixed(1) }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ElMix Ranking -->
+        <div class="ranking-category">
+          <h4>⚡ Nejlepší energetický mix</h4>
+          <div class="ranking-list">
+            <div *ngFor="let team of getTeamsSortedBy('elmix'); let i = index" 
+                 class="ranking-item" 
+                 [class.first]="i === 0" 
+                 [class.second]="i === 1" 
+                 [class.third]="i === 2">
+              <span class="rank">{{ i + 1 }}.</span>
+              <span class="team-name">{{ team.board.display_name }}</span>
+              <span class="score">{{ team.performance.elmix.toFixed(1) }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Finances Ranking -->
+        <div class="ranking-category">
+          <h4>💰 Nejlepší finance</h4>
+          <div class="ranking-list">
+            <div *ngFor="let team of getTeamsSortedBy('finances'); let i = index" 
+                 class="ranking-item" 
+                 [class.first]="i === 0" 
+                 [class.second]="i === 1" 
+                 [class.third]="i === 2">
+              <span class="rank">{{ i + 1 }}.</span>
+              <span class="team-name">{{ team.board.display_name }}</span>
+              <span class="score">{{ team.performance.finances.toFixed(1) }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Popularity Ranking -->
+        <div class="ranking-category">
+          <h4>👥 Nejlepší popularita</h4>
+          <div class="ranking-list">
+            <div *ngFor="let team of getTeamsSortedBy('popularity'); let i = index" 
+                 class="ranking-item" 
+                 [class.first]="i === 0" 
+                 [class.second]="i === 1" 
+                 [class.third]="i === 2">
+              <span class="rank">{{ i + 1 }}.</span>
+              <span class="team-name">{{ team.board.display_name }}</span>
+              <span class="score">{{ team.performance.popularity.toFixed(1) }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Continue Button -->
+    <div class="continue-section">
+      <div class="navigation-help">
+        <p>💡 Použijte klávesy ← → nebo tlačítka pro navigaci</p>
+      </div>
+      <div class="action-buttons">
+        <button (click)="goBackToDashboard()" class="nav-button secondary">
+          ← Zpět na dashboard
+        </button>
+        <button (click)="onContinue()" class="continue-button primary">
+          Pokračovat do nastavení →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Data State -->
+  <div *ngIf="!isLoading && !error && !gameStatistics" class="no-data-container">
+    <h2>📊 Žádná data</h2>
+    <p>Nejsou k dispozici žádné statistiky hry.</p>
+    <button (click)="onContinue()" class="continue-button">
+      Zpět do nastavení
+    </button>
+  </div>
+</div>

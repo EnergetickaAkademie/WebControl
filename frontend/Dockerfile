@@ -1,7 +1,7 @@
 FROM node:20-alpine AS build
 WORKDIR /src
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 COPY . .
 RUN npm run build -- --configuration production
 

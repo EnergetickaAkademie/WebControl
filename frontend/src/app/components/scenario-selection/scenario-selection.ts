@@ -20,6 +20,7 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
   gameStatus: any = null;
   userInfo: any = null;
   isLoading = true;
+  isLoadingStatistics = false;
 
   private pollSubscription?: Subscription;
 
@@ -272,5 +273,26 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
 
   trackScenario(index: number, item: any) {
     return item?.id || index;
+  }
+
+  isGameFinished(): boolean {
+    // Game is finished when it's not active and we have round information suggesting completion
+    return this.gameStatus && 
+           !this.gameStatus.game_active && 
+           this.gameStatus.current_round > 0 && 
+           this.gameStatus.current_round >= this.gameStatus.total_rounds;
+  }
+
+  showGameStatistics() {
+    if (!this.isGameFinished()) {
+      alert('Statistiky jsou dostupné pouze po dokončení hry.');
+      return;
+    }
+
+    this.isLoadingStatistics = true;
+    
+    // Navigate directly to the statistics page
+    // The statistics component will load the data itself
+    this.router.navigate(['/statistics']);
   }
 }
