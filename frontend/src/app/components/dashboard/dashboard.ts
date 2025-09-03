@@ -45,6 +45,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Fullscreen state management
   isFullscreen = false;
   
+  // Loading states to prevent flickering
+  private isLoadingRound = false;
+  private roundTransitionTimeout: any = null;
+  
   // Translations
   translations: any = {
     weather: {},
@@ -80,6 +84,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.stopAllPolling();
+    
+    // Clear any pending timeout
+    if (this.roundTransitionTimeout) {
+      clearTimeout(this.roundTransitionTimeout);
+      this.roundTransitionTimeout = null;
+    }
   }
 
   loadProfile() {
@@ -247,6 +257,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   callNextRoundFromStart() {
     // Special version of nextRound called from startGame - don't reset loading state
+    this.isLoadingRound = true;
+    
+    // Clear any existing timeout
+    if (this.roundTransitionTimeout) {
+      clearTimeout(this.roundTransitionTimeout);
+    }
+    
     console.log('Calling next round from start...');
     this.authService.nextRound().subscribe({
       next: (response: any) => {
@@ -274,10 +291,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
           }
         }
         
+        // Add a small delay to ensure display data is stable before showing effects
+        this.roundTransitionTimeout = setTimeout(() => {
+          this.isLoadingRound = false;
+        }, 300);
+        
         this.isGameLoading = false;
       },
       error: (error: any) => {
         console.error('Failed to advance round:', error);
+        this.isLoadingRound = false;
         this.isGameLoading = false;
       }
     });
@@ -285,6 +308,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   nextRound() {
     this.isGameLoading = true;
+    this.isLoadingRound = true;
+    
+    // Clear any existing timeout
+    if (this.roundTransitionTimeout) {
+      clearTimeout(this.roundTransitionTimeout);
+    }
+    
     console.log('Calling next round...');
     this.authService.nextRound().subscribe({
       next: (response: any) => {
@@ -312,10 +342,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
           }
         }
         
+        // Add a small delay to ensure display data is stable before showing effects
+        this.roundTransitionTimeout = setTimeout(() => {
+          this.isLoadingRound = false;
+        }, 300);
+        
         this.isGameLoading = false;
       },
       error: (error: any) => {
         console.error('Failed to advance round:', error);
+        this.isLoadingRound = false;
         this.isGameLoading = false;
       }
     });
@@ -545,23 +581,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get weatherInfo(): any {
+    // Ensure we have stable data before returning weather info
+    if (!this.translations || !this.translations.weather) {
+      return null;
+    }
+
     // First check if we have display data from current round
     if ((this.currentRound as any)?.display_data) {
-      console.log('Using display data from current round:', (this.currentRound as any).display_data);
       return (this.currentRound as any).display_data;
     }
     
-    // Fallback to the old weather system
-    if (!this.currentRoundDetails?.weather || this.currentRoundDetails.weather.length === 0) {
-      console.log('No weather data available in currentRoundDetails');
+    // Fallback to the old weather system only if we have stable weather data
+    if (!this.currentRoundDetails?.weather || 
+        this.currentRoundDetails.weather.length === 0 ||
+        !this.currentRoundDetails.weather[0]?.name) {
       return null;
     }
     
     // Get the first weather condition
     const weather = this.currentRoundDetails.weather[0];
-    console.log('Weather condition:', weather);
     const weatherTranslation = this.translations.weather?.[weather.name.toUpperCase()] || null;
-    console.log('Weather translation:', weatherTranslation);
     return weatherTranslation;
   }
 
@@ -576,23 +615,38 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get specialEffects(): any[] {
+    // Don't show effects during round transitions to prevent flickering
+    if (this.isLoadingRound || this.isGameLoading) {
+      return [];
+    }
+
+    // Ensure we have stable data before showing effects
+    if (!this.currentRound || !this.translations || !this.translations.weather) {
+      return [];
+    }
+
     // Always prefer display data from current round (even if effects array is empty)
     const displayData = (this.currentRound as any)?.display_data;
-    if (displayData) {
+    if (displayData !== undefined) {
       // Return the filtered effects from backend (already priority-filtered)
       return displayData.effects || [];
     }
     
     // Only fallback to old weather system if no display_data exists at all
-    if (!this.currentRoundDetails?.weather) return [];
+    // and we have stable weather data
+    if (!this.currentRoundDetails?.weather || this.currentRoundDetails.weather.length === 0) {
+      return [];
+    }
     
     let effects: any[] = [];
     
     // Collect effects from all weather conditions (now each weather condition is pre-filtered)
     this.currentRoundDetails.weather.forEach((weather: any) => {
-      const weatherTranslation = this.translations.weather?.[weather.name.toUpperCase()];
-      if (weatherTranslation?.effects) {
-        effects = effects.concat(weatherTranslation.effects);
+      if (weather && weather.name) {
+        const weatherTranslation = this.translations.weather?.[weather.name.toUpperCase()];
+        if (weatherTranslation?.effects) {
+          effects = effects.concat(weatherTranslation.effects);
+        }
       }
     });
     
