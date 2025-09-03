@@ -576,18 +576,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   get specialEffects(): any[] {
-    // First check if we have display data from current round with effects
+    // Always prefer display data from current round (even if effects array is empty)
     const displayData = (this.currentRound as any)?.display_data;
-    if (displayData?.effects && displayData.effects.length > 0) {
-      return this.removeDuplicateEffects(displayData.effects);
+    if (displayData) {
+      // Return the filtered effects from backend (already priority-filtered)
+      return displayData.effects || [];
     }
     
-    // Fallback to old weather system
+    // Only fallback to old weather system if no display_data exists at all
     if (!this.currentRoundDetails?.weather) return [];
     
     let effects: any[] = [];
     
-    // Collect effects from all weather conditions
+    // Collect effects from all weather conditions (now each weather condition is pre-filtered)
     this.currentRoundDetails.weather.forEach((weather: any) => {
       const weatherTranslation = this.translations.weather?.[weather.name.toUpperCase()];
       if (weatherTranslation?.effects) {
@@ -595,7 +596,39 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
     });
     
-    return this.removeDuplicateEffects(effects);
+    // Apply priority filtering on frontend as backup (in case backend filtering failed)
+    return this.filterEffectsByPriority(effects);
+  }
+
+  // Helper method to filter effects by priority (frontend backup)
+  private filterEffectsByPriority(effects: any[]): any[] {
+    if (!effects || effects.length === 0) return [];
+    
+    // Group effects by type (power plant type)
+    const effectsByType = new Map<number, any[]>();
+    const otherEffects: any[] = [];
+    
+    effects.forEach(effect => {
+      if (effect.type !== undefined && effect.priority !== undefined) {
+        if (!effectsByType.has(effect.type)) {
+          effectsByType.set(effect.type, []);
+        }
+        effectsByType.get(effect.type)!.push(effect);
+      } else {
+        otherEffects.push(effect);
+      }
+    });
+    
+    // Keep only highest priority effect for each type
+    const filteredEffects: any[] = [...otherEffects];
+    effectsByType.forEach((typeEffects) => {
+      // Sort by priority (higher number = higher priority)
+      typeEffects.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+      // Take the first (highest priority) effect
+      filteredEffects.push(typeEffects[0]);
+    });
+    
+    return filteredEffects;
   }
 
   // Helper method to remove duplicate effects based on text content
