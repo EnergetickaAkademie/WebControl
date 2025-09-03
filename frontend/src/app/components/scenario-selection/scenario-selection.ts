@@ -254,20 +254,40 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
 
   private padToMinimumTeams(boards: any[]): any[] {
     const minTeams = 5;
-    const targetCount = Math.max(minTeams, boards.length);
-    
+    // Extract existing team numbers (digits in board_id)
+    const existingNumbers = new Set<number>();
+    boards.forEach(b => {
+      const match = b.board_id?.toString().match(/\d+/);
+      if (match) {
+        const n = parseInt(match[0], 10);
+        if (!isNaN(n)) existingNumbers.add(n);
+      }
+    });
+
     const paddedBoards = [...boards];
-    
-    for (let i = boards.length + 1; i <= targetCount; i++) {
-      paddedBoards.push({
-        board_id: `board${i}`,
-        last_updated: null,
-        production: 0,
-        consumption: 0,
-        is_placeholder: true
-      });
+
+    // Add placeholders only for missing team numbers up to minTeams
+    for (let team = 1; team <= minTeams; team++) {
+      if (!existingNumbers.has(team)) {
+        paddedBoards.push({
+          board_id: `board${team}`,
+          last_updated: null,
+          production: 0,
+            consumption: 0,
+          is_placeholder: true
+        });
+      }
     }
-    
+
+    // Sort resulting list by numeric team id
+    paddedBoards.sort((a, b) => {
+      const getNumericId = (board: any) => {
+        const match = board.board_id?.toString().match(/\d+/);
+        return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER; // place non-numeric at end
+      };
+      return getNumericId(a) - getNumericId(b);
+    });
+
     return paddedBoards;
   }
 
