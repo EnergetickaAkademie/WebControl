@@ -184,7 +184,7 @@ export class StatisticsComponent implements OnInit, OnDestroy {
     switch (event.key.toLowerCase()) {
       case 'q':
       case 'escape':
-        this.goBackToSetup();
+        this.goBackToRoot();
         break;
       case 'r':
         this.loadStatistics();
@@ -192,8 +192,8 @@ export class StatisticsComponent implements OnInit, OnDestroy {
     }
   }
 
-  goBackToSetup() {
-    this.router.navigate(['/setup']);
+  goBackToRoot() {
+    this.router.navigate(['/']);
   }
 
   getTeamNames(): string[] {

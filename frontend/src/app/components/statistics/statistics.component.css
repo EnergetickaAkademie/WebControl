@@ -47,6 +47,7 @@
   display: flex;
   flex-direction: column;
   margin-bottom: 20px;
+  max-height: 75vh;
 }
 
 .main-chart-section h2 {
@@ -71,54 +72,14 @@
   height: 100% !important;
 }
 
-.navigation-section {
-  text-align: center;
-  padding: 15px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-  margin-top: auto;
-}
-
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-}
-
-.back-button, .reload-button {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  padding: 12px 24px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-}
-
-.back-button:hover, .reload-button:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
-}
-
-.back-button {
-  background: linear-gradient(45deg, #4CAF50, #45a049);
-  border-color: #4CAF50;
-}
-
-.reload-button {
-  background: linear-gradient(45deg, #2196F3, #1976D2);
-  border-color: #2196F3;
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
   .statistics-container {
     padding: 10px;
+  }
+  
+  .main-chart-section {
+    max-height: 60vh;
   }
   
   .main-chart-section h2 {
@@ -127,17 +88,5 @@
   
   .chart-container {
     padding: 15px;
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-  }
-  
-  .back-button, .reload-button {
-    width: 200px;
-    padding: 10px 20px;
-    font-size: 0.9rem;
   }
 }

@@ -314,6 +314,7 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
         break;
       case 'ArrowRight':
       case 'ArrowDown':
+      case 'PageDown':
       case ' ': // Space
         event.preventDefault();
   this.nextSlide();

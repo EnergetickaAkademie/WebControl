@@ -119,6 +119,7 @@ export class SlideViewerComponent implements OnInit, OnDestroy {
         this.previousSlide();
         break;
       case 'ArrowRight':
+      case 'PageDown':
         this.nextSlide();
         break;
     }

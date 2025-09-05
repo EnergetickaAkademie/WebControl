@@ -291,13 +291,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
         };
         
         if (response.status === 'game_finished') {
-          console.log('Game finished – staying on presentation for confirmation');
+          console.log('Game finished – automatically redirecting to statistics');
           this.gameFinished = true;
-          // Keep current view as presentation to allow confirmation & navigation to statistics
-          if (this.currentView !== 'presentation') {
-            this.currentView = 'presentation';
-          }
-          // Stop here (no automatic redirect)
+          // Automatically redirect to statistics page
+          setTimeout(() => {
+            this.router.navigate(['/statistics']);
+          }, 1000); // Small delay to let the user see the final state
           return;
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
           console.log('Slides round, switching to presentation view');
@@ -359,11 +358,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
         };
         
         if (response.status === 'game_finished') {
-          console.log('Game finished – staying on presentation for confirmation');
+          console.log('Game finished – automatically redirecting to statistics');
           this.gameFinished = true;
-          if (this.currentView !== 'presentation') {
-            this.currentView = 'presentation';
-          }
+          // Automatically redirect to statistics page
+          setTimeout(() => {
+            this.router.navigate(['/statistics']);
+          }, 1000); // Small delay to let the user see the final state
           return;
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
           console.log('Slides round, switching to presentation view');
@@ -433,10 +433,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return board.display_name;
     }
     // Fallback for backwards compatibility
-    if (!board?.board_id) return 'Team 0';
+    if (!board?.board_id) return 'Tým 0';
     const match = board.board_id.toString().match(/\d+/);
     const teamNumber = match ? parseInt(match[0], 10) : 0;
-    return `Team ${teamNumber}`;
+    return `Tým ${teamNumber}`;
   }
 
   // Helper method to get team number from board_id (kept for backwards compatibility)
@@ -965,7 +965,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           }
           break;
         case 'arrowright':
-          // Only handle right arrow in game view, not in presentation view
+        case 'pagedown':
+          // Only handle right arrow/page down in game view, not in presentation view
           // Presentation view should handle its own slide navigation
           if (this.currentView === 'game') {
             event.preventDefault();
