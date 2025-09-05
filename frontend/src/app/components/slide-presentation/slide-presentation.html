@@ -152,37 +152,5 @@
     </button>
   </div>
 
-  <!-- End of Scenario Notification Overlay -->
-  <div class="end-notification-overlay" *ngIf="showEndNotification">
-    <div class="end-notification-content">
-      <div class="end-notification-header">
-        <h2>🏁 Konec scénáře</h2>
-      </div>
-      
-      <div class="end-notification-body">
-        <p>Dosáhli jste konce scénáře.</p>
-        <p>Všechna kola byla dokončena. Co chcete dělat?</p>
-      </div>
-      
-      <div class="end-notification-actions">
-        <button 
-          class="end-notification-btn back-btn" 
-          (click)="goBackFromEnd()"
-          title="Vrátit se na předchozí snímek (← nebo ↑)">
-          ← Zpět
-        </button>
-        
-        <button 
-          class="end-notification-btn end-btn" 
-          (click)="endScenario()"
-          title="Dokončit scénář (→ nebo ↓)">
-          Dokončit scénář →
-        </button>
-      </div>
-      
-      <div class="end-notification-hint">
-        <small>Použijte šipky pro navigaci • Stiskněte ESC pro zrušení</small>
-      </div>
-    </div>
-  </div>
+  <!-- End notification overlay removed; handled by parent dashboard component -->
 </div>

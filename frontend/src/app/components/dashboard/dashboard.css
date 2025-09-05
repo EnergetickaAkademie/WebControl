@@ -1,3 +1,91 @@
+/* End-of-scenario overlay */
+.end-of-scenario-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+  backdrop-filter: blur(4px);
+}
+
+.end-of-scenario-overlay .end-dialog {
+  background: #ffffff;
+  padding: 32px 40px;
+  border-radius: 16px;
+  max-width: 520px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  animation: fadeInScale 0.3s ease;
+  font-family: 'DINPro-Regular', Arial, sans-serif;
+}
+
+.end-of-scenario-overlay h2 {
+  margin: 0 0 12px;
+  font-size: 28px;
+  color: #2c3e50;
+  font-family: 'DINPro-Black', Arial, sans-serif;
+}
+
+.end-of-scenario-overlay p {
+  font-size: 16px;
+  line-height: 1.4;
+  margin: 0 0 24px;
+  color: #34495e;
+}
+
+.end-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.end-btn {
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: 1px solid #3498db;
+  background: #ffffff;
+  color: #3498db;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background .2s, color .2s, transform .15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'DINPro-Regular', Arial, sans-serif;
+}
+
+.end-btn.primary {
+  background: #3498db;
+  color: #ffffff;
+}
+
+.end-btn:hover {
+  background: #3498db;
+  color: #ffffff;
+}
+
+.end-btn.primary:hover {
+  background: #2d79ad;
+}
+
+.end-btn:active {
+  transform: translateY(1px);
+}
+
+.end-of-scenario-overlay small {
+  display: block;
+  color: #7f8c8d;
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(.95); }
+  to { opacity: 1; transform: scale(1); }
+}
 /* DIN Pro Font Faces */
 @font-face {
   font-family: 'DINPro-Black';

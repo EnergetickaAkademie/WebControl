@@ -41,6 +41,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   currentView: 'presentation' | 'game' = 'game';
   currentRound: GameRound | null = null;
   currentRoundDetails: any = null; // Store detailed round information
+  // Track finished state to avoid premature redirect from final slide range
+  gameFinished: boolean = false;
   
   // Fullscreen state management
   isFullscreen = false;
@@ -111,7 +113,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const userInfo = this.authService.getUserInfo();
     if (userInfo && userInfo.user_type === 'lecturer') {
       this.gameStatusService.checkReloadRecovery().subscribe({
-        next: (recovery) => {
+  next: (recovery: any) => {
           if (recovery.shouldRedirect && recovery.gameState) {
             console.log('Reload recovery - setting view to:', recovery.view);
             console.log('Game state:', recovery.gameState);
@@ -141,7 +143,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             console.log('Reload recovery complete - current view:', this.currentView);
           }
         },
-        error: (error) => {
+  error: (error: any) => {
           console.error('Failed to check reload recovery:', error);
         }
       });
@@ -181,10 +183,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.connectedBoards = response.boards || [];
           this.currentRoundDetails = response.round_details;
           
-          // If no game is active, redirect to setup page
+          // If game inactive: only redirect when there is clearly no finished round context
           if (!this.gameStatus?.game_active) {
-            this.router.navigate(['/setup']);
-            return;
+            // Mark finished but keep presentation (allow final slide range / confirmation overlay)
+            this.gameFinished = true;
+            // If there are no round details at all (e.g. user refreshed after game ended), then redirect
+            if (!this.currentRoundDetails || Object.keys(this.currentRoundDetails).length === 0) {
+              this.router.navigate(['/setup']);
+            }
+            // Do not return early; we still want to preserve last known round details for overlay
           }
           
           // Update current round with detailed information if available
@@ -270,10 +277,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
         console.log('Advanced to next round:', response);
         this.currentRound = response;
         
+        // Set round details from the response - important for slide data
+        this.currentRoundDetails = {
+          round_type: response.round_type,
+          slide: response.slide, // for single slides
+          slides: response.slides, // for slide ranges
+          slide_range: response.slide_range, // for slide range metadata
+          comment: response.comment,
+          weather: response.weather,
+          production_coefficients: response.game_data?.production_coefficients,
+          consumption_modifiers: response.game_data?.consumption_modifiers,
+          display_data: response.display_data
+        };
+        
         if (response.status === 'game_finished') {
-          console.log('Game finished, redirecting to setup');
-          // Navigate back to setup when game is finished
-          this.router.navigate(['/setup']);
+          console.log('Game finished – staying on presentation for confirmation');
+          this.gameFinished = true;
+          // Keep current view as presentation to allow confirmation & navigation to statistics
+          if (this.currentView !== 'presentation') {
+            this.currentView = 'presentation';
+          }
+          // Stop here (no automatic redirect)
           return;
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
           console.log('Slides round, switching to presentation view');
@@ -321,10 +345,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
         console.log('Advanced to next round:', response);
         this.currentRound = response;
         
+        // Set round details from the response - important for slide data
+        this.currentRoundDetails = {
+          round_type: response.round_type,
+          slide: response.slide, // for single slides
+          slides: response.slides, // for slide ranges
+          slide_range: response.slide_range, // for slide range metadata
+          comment: response.comment,
+          weather: response.weather,
+          production_coefficients: response.game_data?.production_coefficients,
+          consumption_modifiers: response.game_data?.consumption_modifiers,
+          display_data: response.display_data
+        };
+        
         if (response.status === 'game_finished') {
-          console.log('Game finished, redirecting to setup');
-          // Navigate back to setup when game is finished
-          this.router.navigate(['/setup']);
+          console.log('Game finished – staying on presentation for confirmation');
+          this.gameFinished = true;
+          if (this.currentView !== 'presentation') {
+            this.currentView = 'presentation';
+          }
           return;
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
           console.log('Slides round, switching to presentation view');
@@ -954,6 +993,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
   onContinueFromStatistics() {
     // Navigate to setup page when user clicks continue from statistics
     this.router.navigate(['/setup']);
+  }
+
+  navigateToStatistics() {
+    this.router.navigate(['/statistics']);
+  }
+
+  // Handler for statistics request coming from slide presentation component
+  onViewStatisticsRequest() {
+    this.navigateToStatistics();
+  }
+
+  // Called when slide presentation reports scenario finished
+  scenarioFinishedHandler() {
+    this.gameFinished = true;
+    // Ensure we're in presentation view to show overlay
+    if (this.currentView !== 'presentation') {
+      this.currentView = 'presentation';
+    }
   }
 
 }

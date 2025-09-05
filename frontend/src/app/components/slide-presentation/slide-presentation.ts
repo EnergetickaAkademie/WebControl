@@ -23,6 +23,7 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
   @Input() gameStatus: any = null; // Accept game status to check if at end of scenario
   @Output() advanceToNextRound = new EventEmitter<void>();
   @Output() toggleFullscreenRequest = new EventEmitter<void>(); // Emit fullscreen toggle requests
+  @Output() scenarioFinished = new EventEmitter<void>(); // Inform parent that scenario ended
 
   // Slide management
   currentSlideIndex = 0;
@@ -39,7 +40,7 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
   
   isImageLoading = true;
   imageError = false;
-  showEndNotification = false;
+  // Removed internal end notification overlay; parent handles final dialog
 
   // Track previous slide data to avoid unnecessary reloads
   private previousSlideData: string | null = null;
@@ -191,8 +192,8 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
       this.currentSlideIndex++;
       this.loadCurrentSlide();
     } else {
-      // We're at the last slide, show end-of-scenario notification
-      this.showEndOfScenarioNotification();
+      // At last slide – decide whether to advance or finish
+      this.handleEndOfSlides();
     }
   }
 
@@ -203,40 +204,14 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
     }
   }
 
-  // Show end-of-scenario notification
-  showEndOfScenarioNotification() {
-    // Check if we're actually at the end of the scenario
-    console.log('Kontrola konce scénáře:', {
-      currentRound: this.gameStatus?.current_round,
-      totalRounds: this.gameStatus?.total_rounds,
-      isAtEnd: this.gameStatus?.current_round >= this.gameStatus?.total_rounds
-    });
-    
+  private handleEndOfSlides() {
+    // If not last round of scenario ask parent to advance
     if (this.gameStatus && this.gameStatus.current_round < this.gameStatus.total_rounds) {
-      // Not at the end of scenario, just advance to next round normally
-      console.log('Nejsme na konci scénáře, pokračujeme na další kolo');
       this.advanceToNextRound.emit();
-      return;
+    } else {
+      // Scenario finished – notify parent to show final dialog (statistics link)
+      this.scenarioFinished.emit();
     }
-    
-    // We're at the end of the scenario, show notification
-    console.log('Jsme na konci scénáře, zobrazujeme oznámení');
-    this.showEndNotification = true;
-  }
-
-  // Handle end notification actions
-  endScenario() {
-    this.showEndNotification = false;
-    this.advanceToNextRound.emit();
-  }
-
-  goBackFromEnd() {
-    this.showEndNotification = false;
-    this.previousSlide();
-  }
-
-  closeEndNotification() {
-    this.showEndNotification = false;
   }
 
   // Fullscreen methods - delegate to parent if external fullscreen is used
@@ -330,28 +305,6 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
   // Keyboard navigation
   @HostListener('document:keydown', ['$event'])
   handleKeyDown(event: KeyboardEvent) {
-    // Handle end notification state
-    if (this.showEndNotification) {
-      switch (event.key) {
-        case 'ArrowLeft':
-        case 'ArrowUp':
-          event.preventDefault();
-          this.goBackFromEnd();
-          break;
-        case 'ArrowRight':
-        case 'ArrowDown':
-        case ' ': // Space
-          event.preventDefault();
-          this.endScenario();
-          break;
-        case 'Escape':
-          event.preventDefault();
-          this.closeEndNotification();
-          break;
-      }
-      return;
-    }
-
     // Handle navigation keys regardless of fullscreen state
     switch (event.key) {
       case 'ArrowLeft':
@@ -363,7 +316,7 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
       case 'ArrowDown':
       case ' ': // Space
         event.preventDefault();
-        this.nextSlide(); // This will now handle advancing to next round
+  this.nextSlide();
         break;
       case 'Escape':
         // Only handle escape in fullscreen

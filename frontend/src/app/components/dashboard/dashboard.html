@@ -28,8 +28,22 @@
           [externalFullscreen]="isFullscreen"
           [gameStatus]="gameStatus"
           (advanceToNextRound)="nextRound()"
-          (toggleFullscreenRequest)="toggleFullscreen()">
+          (toggleFullscreenRequest)="toggleFullscreen()"
+          (scenarioFinished)="scenarioFinishedHandler()">
         </app-slide-presentation>
+
+        <!-- End-of-Scenario Confirmation Overlay -->
+        <div class="end-of-scenario-overlay" *ngIf="gameFinished && (!gameStatus?.game_active)">
+          <div class="end-dialog">
+            <h2>Scénář dokončen</h2>
+            <p>Všechny kola byla odehrána. Chcete zobrazit statistiky nebo se vrátit na výběr scénáře?</p>
+            <div class="end-actions">
+              <button class="end-btn primary" (click)="navigateToStatistics()">📊 Zobrazit statistiky</button>
+              <button class="end-btn" (click)="onContinueFromStatistics()">↩️ Návrat na scénáře</button>
+            </div>
+            <small>Statistiky jsou dostupné také později na stránce výběru scénáře.</small>
+          </div>
+        </div>
       </div>
     </div>
 
