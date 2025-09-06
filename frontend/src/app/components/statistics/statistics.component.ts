@@ -126,7 +126,7 @@ export class StatisticsComponent implements OnInit, OnDestroy {
     const factors = [
       { key: 'ecology', label: 'Ekologie', color: '#2ca02c' },
       { key: 'finances', label: 'Finance', color: '#ff7f0e' },
-      { key: 'elmix', label: 'Energetický mix', color: '#d62728' },
+      { key: 'elmix', label: 'Stabilita', color: '#d62728' },
       { key: 'popularity', label: 'Popularita', color: '#1f77b4' }
     ];
 
