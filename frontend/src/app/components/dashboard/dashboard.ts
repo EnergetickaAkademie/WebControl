@@ -43,6 +43,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   currentRoundDetails: any = null; // Store detailed round information
   // Track finished state to avoid premature redirect from final slide range
   gameFinished: boolean = false;
+  // Removed auto-redirect; overlay stays until user chooses.
   
   // Fullscreen state management
   isFullscreen = false;
@@ -185,8 +186,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           
           // If game inactive: only redirect when there is clearly no finished round context
           if (!this.gameStatus?.game_active) {
-            // Mark finished but keep presentation (allow final slide range / confirmation overlay)
-            this.gameFinished = true;
+            // Don't automatically show finished dialog - wait for user to try advancing
             // If there are no round details at all (e.g. user refreshed after game ended), then redirect
             if (!this.currentRoundDetails || Object.keys(this.currentRoundDetails).length === 0) {
               this.router.navigate(['/setup']);
@@ -291,12 +291,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         };
         
         if (response.status === 'game_finished') {
-          console.log('Game finished – automatically redirecting to statistics');
-          this.gameFinished = true;
-          // Automatically redirect to statistics page
-          setTimeout(() => {
-            this.router.navigate(['/statistics']);
-          }, 1000); // Small delay to let the user see the final state
+          // Don't automatically show dialog - wait for user to try advancing
+          console.log('Game finished, but waiting for user to try advancing');
           return;
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
           console.log('Slides round, switching to presentation view');
@@ -322,7 +318,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.isGameLoading = false;
       },
       error: (error: any) => {
-        console.error('Failed to advance round:', error);
+        console.error('Failed to advance round from start:', error);
+        // Check if error indicates game/scenario has finished
+        if (error.status === 400 && error.error && 
+            (error.error.message || '').toLowerCase().includes('finished')) {
+          console.log('Game finished detected from callNextRoundFromStart error - showing dialog');
+          this.handleScenarioFinished();
+        }
         this.isLoadingRound = false;
         this.isGameLoading = false;
       }
@@ -358,12 +360,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         };
         
         if (response.status === 'game_finished') {
-          console.log('Game finished – automatically redirecting to statistics');
-          this.gameFinished = true;
-          // Automatically redirect to statistics page
-          setTimeout(() => {
-            this.router.navigate(['/statistics']);
-          }, 1000); // Small delay to let the user see the final state
+          // Don't automatically show dialog - wait for user to try advancing
+          console.log('Game finished, but waiting for user to try advancing');
           return;
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
           console.log('Slides round, switching to presentation view');
@@ -390,6 +388,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       error: (error: any) => {
         console.error('Failed to advance round:', error);
+        // Check if error indicates game/scenario has finished
+        if (error.status === 400 && error.error && 
+            (error.error.message || '').toLowerCase().includes('finished')) {
+          console.log('Game finished detected from nextRound error - showing dialog');
+          this.handleScenarioFinished();
+        }
         this.isLoadingRound = false;
         this.isGameLoading = false;
       }
@@ -1007,11 +1011,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Called when slide presentation reports scenario finished
   scenarioFinishedHandler() {
+    console.log('scenarioFinishedHandler called - setting gameFinished to true');
     this.gameFinished = true;
-    // Ensure we're in presentation view to show overlay
-    if (this.currentView !== 'presentation') {
-      this.currentView = 'presentation';
-    }
+    // No need to change view - overlay is now global and will appear regardless of current view
+    console.log('Scenario finished - showing end dialog overlay');
   }
 
+
+  private handleScenarioFinished() {
+    if (this.gameFinished) return; // Already handled
+    console.log('Scenario finished – displaying overlay and scheduling redirect');
+    this.gameFinished = true;
+  // Stay on overlay until user selects an action.
+  }
 }

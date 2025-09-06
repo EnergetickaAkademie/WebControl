@@ -192,7 +192,8 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
       this.currentSlideIndex++;
       this.loadCurrentSlide();
     } else {
-      // At last slide – decide whether to advance or finish
+      // At last slide - user is trying to advance beyond last slide
+      console.log('User trying to advance from last slide - checking if scenario end');
       this.handleEndOfSlides();
     }
   }
@@ -205,11 +206,14 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
   }
 
   private handleEndOfSlides() {
-    // If not last round of scenario ask parent to advance
+    console.log('handleEndOfSlides called - gameStatus:', this.gameStatus);
+    // If not last round of scenario, ask parent to advance
     if (this.gameStatus && this.gameStatus.current_round < this.gameStatus.total_rounds) {
+      console.log('Not last round, advancing to next round');
       this.advanceToNextRound.emit();
     } else {
-      // Scenario finished – notify parent to show final dialog (statistics link)
+      // This is the last round of the scenario - scenario finished when user tries to advance
+      console.log('Last round detected, emitting scenarioFinished');
       this.scenarioFinished.emit();
     }
   }

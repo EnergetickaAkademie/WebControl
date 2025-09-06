@@ -1,12 +1,12 @@
 /* End-of-scenario overlay */
 .end-of-scenario-overlay {
-  position: absolute;
+  position: fixed; /* Changed to fixed to ensure it appears above everything */
   inset: 0;
   background: rgba(0,0,0,0.75);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 5000;
+  z-index: 9999; /* Higher z-index to ensure it appears above fullscreen content */
   backdrop-filter: blur(4px);
 }
 
