@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
@@ -18,6 +19,10 @@ export class StatisticsComponent implements OnInit, OnDestroy {
   gameStatistics: any = null;
   loading = true;
   error: string | null = null;
+  // Keep a direct reference to the created chart to ensure proper cleanup.
+  private combinedChart: Chart | null = null;
+  private statsSub: Subscription | null = null;
+  private chartInitTimeout: any = null;
 
   constructor(
     private authService: AuthService,
@@ -29,15 +34,32 @@ export class StatisticsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    // Clean up the combined chart
-    Chart.getChart('combinedTeamChart')?.destroy();
+    // Properly destroy the chart instance to avoid memory leaks
+    if (this.combinedChart) {
+      try { this.combinedChart.destroy(); } catch (e) { console.warn('Chart destroy error', e); }
+      this.combinedChart = null;
+    }
+    if (this.statsSub) {
+      this.statsSub.unsubscribe();
+      this.statsSub = null;
+    }
+    if (this.chartInitTimeout) {
+      clearTimeout(this.chartInitTimeout);
+      this.chartInitTimeout = null;
+    }
   }
 
   loadStatistics() {
     this.loading = true;
     this.error = null;
     
-    this.authService.getComprehensiveGameStatistics().subscribe({
+    // Cancel any in-flight request before starting a new one (e.g., user presses 'r')
+    if (this.statsSub) {
+      this.statsSub.unsubscribe();
+      this.statsSub = null;
+    }
+
+    this.statsSub = this.authService.getComprehensiveGameStatistics().subscribe({
       next: (response: any) => {
         console.log('Statistics loaded:', response);
         // Store the original response structure
@@ -45,7 +67,13 @@ export class StatisticsComponent implements OnInit, OnDestroy {
         this.loading = false;
         
         // Initialize charts after data is loaded
-        setTimeout(() => this.initializeCharts(), 100);
+        if (this.chartInitTimeout) {
+          clearTimeout(this.chartInitTimeout);
+        }
+        this.chartInitTimeout = setTimeout(() => {
+          this.initializeCharts();
+          this.chartInitTimeout = null;
+        }, 100);
       },
       error: (error: any) => {
         console.error('Error loading statistics:', error);
@@ -84,10 +112,10 @@ export class StatisticsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Destroy existing chart if it exists
-    const existingChart = Chart.getChart('combinedTeamChart');
-    if (existingChart) {
-      existingChart.destroy();
+    // Destroy existing chart instance we track (Chart.getChart with string id would not work as expected in v4)
+    if (this.combinedChart) {
+      try { this.combinedChart.destroy(); } catch (e) { console.warn('Chart destroy error', e); }
+      this.combinedChart = null;
     }
 
     const teams = this.gameStatistics.game_statistics.team_performance;
@@ -111,7 +139,7 @@ export class StatisticsComponent implements OnInit, OnDestroy {
       borderWidth: 2
     }));
 
-    new Chart(ctx, {
+  this.combinedChart = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: teamLabels,
@@ -193,7 +221,8 @@ export class StatisticsComponent implements OnInit, OnDestroy {
   }
 
   goBackToRoot() {
-    this.router.navigate(['/']);
+  // Navigate directly to setup to avoid extra redirect churn which can retain component refs temporarily
+  this.router.navigate(['/setup']);
   }
 
   getTeamNames(): string[] {
