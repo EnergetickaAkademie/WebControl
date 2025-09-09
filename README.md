@@ -63,9 +63,26 @@ For debugging with detailed logs and hot reloading:
 
 2. **Debug mode features:**
    - Frontend hot reloading enabled
-   - Detailed logging in CoreAPI
+   - Detailed logging in CoreAPI (DEBUG=true)
    - Source maps for easier debugging
    - Development server ports exposed
+
+3. **Toggle debug logging in production:**
+   ```bash
+   # Edit docker-compose.yml and change:
+   # - DEBUG=false  # Set to 'true' for verbose logging
+   # to:
+   # - DEBUG=true   # Enable verbose logging
+   
+   # Then restart:
+   docker-compose down && docker-compose up --build -d
+   ```
+
+4. **Debug mode logging includes:**
+   - Game statistics and round details
+   - Authentication attempts (including passwords)
+   - Binary protocol data exchanges
+   - Detailed error traces
 
 ## 🔧 Development - Important Cache Management
 

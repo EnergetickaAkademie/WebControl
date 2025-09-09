@@ -1,3 +1,7 @@
+# Production docker-compose configuration
+# For development/debug mode, use: docker-compose -f docker-compose.debug.yml up --build
+# Or set DEBUG=true in environment below for verbose logging
+
 services:
   # CoreAPI (Now uses Simple Auth)
   coreapi:
@@ -5,6 +9,7 @@ services:
     container_name: webcontrol-coreapi-1
     environment:
       - JWT_SECRET=your-secret-key-change-in-production
+      - DEBUG=false  # Set to 'true' for verbose logging
     volumes:
       - ./config:/app/config:ro
     networks:

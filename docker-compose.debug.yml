@@ -4,6 +4,7 @@ services:
     container_name: webcontrol-coreapi-1
     environment:
       - JWT_SECRET=your-secret-key-change-in-production
+      - DEBUG=true  # Enable verbose logging for debug mode
     networks:
       - app-network
     restart: unless-stopped
