@@ -975,7 +975,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
           if (this.currentView === 'game') {
             event.preventDefault();
             if (!this.isGameLoading) {
-              this.nextRound();
+              // Check if game is already finished (last round reached)
+              if (this.gameStatus && this.gameStatus.current_round >= this.gameStatus.total_rounds) {
+                console.log('Game already finished - showing end dialog from keyboard input');
+                this.handleScenarioFinished();
+              } else if (this.currentRound && (this.currentRound as any).status === 'game_finished') {
+                // Handle case where nextRound returned game_finished status
+                console.log('Game finished status detected - showing end dialog from keyboard input');
+                this.handleScenarioFinished();
+              } else {
+                this.nextRound();
+              }
             }
           }
           break;
