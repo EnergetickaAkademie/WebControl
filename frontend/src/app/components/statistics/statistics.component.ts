@@ -6,6 +6,15 @@ import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { CommonModule } from '@angular/common';
 
+// Debug utility - checks for debug flag in localStorage or URL params
+const DEBUG = localStorage.getItem('DEBUG') === 'true' || new URLSearchParams(window.location.search).get('debug') === 'true';
+
+function debugLog(message: string, ...args: any[]) {
+  if (DEBUG) {
+    console.log(`DEBUG: ${message}`, ...args);
+  }
+}
+
 Chart.register(...registerables, ChartDataLabels);
 
 @Component({
@@ -17,6 +26,7 @@ Chart.register(...registerables, ChartDataLabels);
 })
 export class StatisticsComponent implements OnInit, OnDestroy {
   gameStatistics: any = null;
+  boardNames: {[key: string]: string} = {}; // Mapping of board_id to display_name
   loading = true;
   error: string | null = null;
   // Keep a direct reference to the created chart to ensure proper cleanup.
@@ -64,6 +74,7 @@ export class StatisticsComponent implements OnInit, OnDestroy {
         console.log('Statistics loaded:', response);
         // Store the original response structure
         this.gameStatistics = response;
+        this.boardNames = response.board_names || {}; // Store board names mapping
         this.loading = false;
         
         // Initialize charts after data is loaded
@@ -120,7 +131,18 @@ export class StatisticsComponent implements OnInit, OnDestroy {
 
     const teams = this.gameStatistics.game_statistics.team_performance;
     const teamKeys = Object.keys(teams);
-    const teamLabels = teamKeys.map((key, index) => `Tým ${index + 1}`);
+    
+    // Debug logging
+    debugLog('Statistics team_performance data:', teams);
+    debugLog('Team keys:', teamKeys);
+    
+    const teamLabels = teamKeys.map(key => {
+      const teamName = this.getTeamDisplayName(key, teams[key]);
+      debugLog(`Team ${key} -> team_name: ${teams[key].team_name} -> final label: ${teamName}`);
+      return teamName;
+    });
+    
+    debugLog('Final team labels:', teamLabels);
 
     // Metrics data
     const factors = [
@@ -155,15 +177,25 @@ export class StatisticsComponent implements OnInit, OnDestroy {
             ticks: {
               callback: function(value: any) {
                 return value + '%';
-              }
+              },
+              font: {
+                size: 16  // Make y-axis labels bigger
+              },
+              color: '#ffffff'
             },
             grid: {
-              color: 'rgba(255, 255, 255, 0.1)'
+              color: '#ffffff'
             }
           },
           x: {
+            ticks: {
+              font: {
+                size: 16  // Make x-axis labels bigger
+              },
+              color: '#ffffff'  // Also set color for consistency
+            },
             grid: {
-              color: 'rgba(255, 255, 255, 0.1)'
+              color: '#ffffff'
             }
           }
         },
@@ -227,8 +259,9 @@ export class StatisticsComponent implements OnInit, OnDestroy {
 
   getTeamNames(): string[] {
     if (!this.gameStatistics?.game_statistics?.team_performance) return [];
-    return Object.keys(this.gameStatistics.game_statistics.team_performance).map(key => 
-      this.gameStatistics.game_statistics.team_performance[key].team_name || key
+    const teams = this.gameStatistics.game_statistics.team_performance;
+    return Object.keys(teams).map(key => 
+      this.getTeamDisplayName(key, teams[key])
     );
   }
 
@@ -250,7 +283,7 @@ export class StatisticsComponent implements OnInit, OnDestroy {
       const score = ((team.ecology || 0) + (team.finances || 0) + (team.popularity || 0)) / 3;
       if (score > highestScore) {
         highestScore = score;
-        winner = team.team_name || key;
+        winner = this.getTeamDisplayName(key, team);
       }
     }
     
@@ -281,5 +314,30 @@ export class StatisticsComponent implements OnInit, OnDestroy {
     if (!team) return 'N/A';
     const score = ((team.ecology || 0) + (team.finances || 0) + (team.popularity || 0)) / 3;
     return score.toFixed(1);
+  }
+
+  // Helper method to get team display name (similar to dashboard)
+  getTeamDisplayName(teamKey: string, teamData: any): string {
+    debugLog('Statistics getTeamDisplayName called with teamKey:', teamKey, 'teamData:', teamData);
+    debugLog('Statistics boardNames mapping =', this.boardNames);
+    
+    // First try the board_names mapping from API response
+    if (this.boardNames[teamKey]) {
+      debugLog('Statistics using boardNames mapping:', this.boardNames[teamKey]);
+      return this.boardNames[teamKey];
+    }
+    
+    // Use team_name from backend if available
+    if (teamData?.team_name) {
+      debugLog('Statistics using backend team_name:', teamData.team_name);
+      return teamData.team_name;
+    }
+    
+    // Fallback for backwards compatibility
+    const match = teamKey.toString().match(/\d+/);
+    const teamNumber = match ? parseInt(match[0], 10) : 0;
+    const fallbackName = `Tým ${teamNumber}`;
+    debugLog('Statistics using fallback name:', fallbackName);
+    return fallbackName;
   }
 }

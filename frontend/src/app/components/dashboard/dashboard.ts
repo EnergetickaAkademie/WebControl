@@ -6,6 +6,16 @@ import { FormsModule } from '@angular/forms';
 import { interval, Subscription } from 'rxjs';
 import { SlidePresentationComponent } from '../slide-presentation/slide-presentation';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+
+// Debug utility - checks for debug flag in localStorage or URL params
+const DEBUG = localStorage.getItem('DEBUG') === 'true' || new URLSearchParams(window.location.search).get('debug') === 'true';
+
+function debugLog(message: string, ...args: any[]) {
+  if (DEBUG) {
+    console.log(`DEBUG: ${message}`, ...args);
+  }
+}
+
 // Enum matching the Python RoundType enum
 enum RoundType {
   DAY = 1,
@@ -34,6 +44,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   userInfo: any = null;
   gameStatus: any = null;
   connectedBoards: any[] = [];
+  boardNames: {[key: string]: string} = {}; // Mapping of board_id to display_name
   isLoading = true;
   isGameLoading = false;
   
@@ -182,6 +193,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         next: (response: any) => {
           this.gameStatus = response.game_status;
           this.connectedBoards = response.boards || [];
+          this.boardNames = response.board_names || {}; // Store board names mapping
           this.currentRoundDetails = response.round_details;
           
           // If game inactive: only redirect when there is clearly no finished round context
@@ -427,20 +439,38 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Helper method to determine if a board should be shown as placeholder
   isBoardPlaceholder(board: any): boolean {
-    return !board || board.is_placeholder || board.connected === false;
+    return !board || !board.connected;
   }
 
   // Helper method to get team display name
   getTeamDisplayName(board: any): string {
+    // Debug logging to see what data we're getting
+    debugLog('getTeamDisplayName called with board:', board);
+    debugLog('board.display_name =', board?.display_name);
+    debugLog('board.board_id =', board?.board_id);
+    debugLog('boardNames mapping =', this.boardNames);
+    
+    // First try the board_names mapping from API response
+    if (board?.board_id && this.boardNames[board.board_id]) {
+      debugLog('Using boardNames mapping:', this.boardNames[board.board_id]);
+      return this.boardNames[board.board_id];
+    }
+    
     // Use display_name from backend if available, otherwise fall back to generated name
     if (board?.display_name) {
+      debugLog('Using backend display_name:', board.display_name);
       return board.display_name;
     }
     // Fallback for backwards compatibility
-    if (!board?.board_id) return 'Tým 0';
+    if (!board?.board_id) {
+      debugLog('No board_id, returning Tým 0');
+      return 'Tým 0';
+    }
     const match = board.board_id.toString().match(/\d+/);
     const teamNumber = match ? parseInt(match[0], 10) : 0;
-    return `Tým ${teamNumber}`;
+    const fallbackName = `Tým ${teamNumber}`;
+    debugLog('Using fallback name:', fallbackName);
+    return fallbackName;
   }
 
   // Helper method to get team number from board_id (kept for backwards compatibility)
@@ -520,47 +550,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Helper method to pad teams to minimum number (5 teams)
   private padToEvenTeams(boards: any[]): any[] {
-    const minTeams = 5;
-    const paddedBoards = [...boards];
-
-    // Collect existing numeric team ids
-    const existingNumbers = new Set<number>();
-    boards.forEach(b => {
-      const match = b.board_id?.toString().match(/\d+/);
-      if (match) {
-        const n = parseInt(match[0], 10);
-        if (!isNaN(n)) existingNumbers.add(n);
-      }
-    });
-
-    // Add placeholders for missing teams up to minTeams
-    for (let team = 1; team <= minTeams; team++) {
-      if (!existingNumbers.has(team)) {
-        paddedBoards.push({
-          board_id: `board${team}`,
-          last_updated: null,
-          production: 0,
-          consumption: 0,
-          is_placeholder: true
-        });
-      }
-    }
-
-    // Sort by numeric id to keep layout stable
-    paddedBoards.sort((a, b) => {
+    // Since backend now provides all configured boards, just return them sorted
+    return boards.sort((a, b) => {
       const getNumericId = (board: any) => {
         const match = board.board_id?.toString().match(/\d+/);
         return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
       };
       return getNumericId(a) - getNumericId(b);
     });
-
-    return paddedBoards;
   }
 
   // Grid balance status indicator for teams
   getGridStatusIcon(board: any): SafeHtml {
-    if (!board || board.is_placeholder || board.connected === false) {
+    if (!board || !board.connected) {
       return this.s.bypassSecurityTrustHtml('<img src="/icons/DASH_status_grey.svg" alt="Inactive" style="width: 32px; height: 32px;">');
     }
     

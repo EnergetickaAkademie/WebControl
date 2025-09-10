@@ -5,6 +5,15 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { interval, Subscription } from 'rxjs';
 
+// Debug utility - checks for debug flag in localStorage or URL params
+const DEBUG = localStorage.getItem('DEBUG') === 'true' || new URLSearchParams(window.location.search).get('debug') === 'true';
+
+function debugLog(message: string, ...args: any[]) {
+  if (DEBUG) {
+    console.log(`DEBUG: ${message}`, ...args);
+  }
+}
+
 @Component({
   selector: 'app-scenario-selection',
   templateUrl: './scenario-selection.html',
@@ -17,6 +26,7 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
   selectedScenario: string | null = '';
   isGameLoading: boolean = false;
   connectedBoards: any[] = [];
+  boardNames: {[key: string]: string} = {}; // Mapping of board_id to display_name
   gameStatus: any = null;
   userInfo: any = null;
   isLoading = true;
@@ -128,6 +138,7 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
       next: (response: any) => {
         this.gameStatus = response.game_status || null;
         this.connectedBoards = response.boards || [];
+        this.boardNames = response.board_names || {}; // Store board names mapping
         
         // If game is active, redirect to dashboard
         if (this.gameStatus?.game_active) {
@@ -191,10 +202,33 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
   }
 
   getTeamDisplayName(board: any): string {
-    if (!board?.board_id) return 'Team 0';
+    debugLog('Setup getTeamDisplayName called with board:', board);
+    debugLog('Setup board.display_name =', board?.display_name);
+    debugLog('Setup board.board_id =', board?.board_id);
+    debugLog('Setup boardNames mapping =', this.boardNames);
+    
+    // First try the board_names mapping from API response
+    if (board?.board_id && this.boardNames[board.board_id]) {
+      debugLog('Setup using boardNames mapping:', this.boardNames[board.board_id]);
+      return this.boardNames[board.board_id];
+    }
+    
+    // Use display_name from backend if available
+    if (board?.display_name) {
+      debugLog('Setup using backend display_name:', board.display_name);
+      return board.display_name;
+    }
+    
+    // Fallback for backwards compatibility
+    if (!board?.board_id) {
+      debugLog('Setup no board_id, returning Team 0');
+      return 'Team 0';
+    }
     const match = board.board_id.toString().match(/\d+/);
     const teamNumber = match ? parseInt(match[0], 10) : 0;
-    return `Team ${teamNumber}`;
+    const fallbackName = `Team ${teamNumber}`;
+    debugLog('Setup using fallback name:', fallbackName);
+    return fallbackName;
   }
 
   isBoardPlaceholder(board: any): boolean {
