@@ -42,9 +42,12 @@
         <div class="boards-left">
           <div *ngFor="let board of getLeftBoards()" class="board-card" [class.placeholder]="isBoardPlaceholder(board)">
             <div class="board-header">
-              <h4>{{ getTeamDisplayName(board) }}</h4>
+              <h4 class="header-team-name">{{ getTeamDisplayName(board) }}</h4>
               <div class="board-indicators">
-                <span class="grid-status" [innerHTML]="getGridStatusIcon(board)"></span>
+                <span 
+                  class="grid-status-icon" 
+                  [style.background-image]="'url(' + getGridStatusIcon(board) + ')'"
+                ></span>
               </div>
             </div>
             <div class="board-data">
@@ -89,7 +92,7 @@
 
           <!-- Special Effects Box (Bottom) -->
           <div *ngIf="specialEffects.length > 0" class="special-effects-box">
-            <h4>Speciální efekty:</h4>
+            <!--<h4>Speciální efekty:</h4>-->
             <ul class="effects-list">
               <li *ngFor="let effect of specialEffects" class="effect-item">
                 <div class="effect-icon">
@@ -106,9 +109,12 @@
         <div class="boards-right">
           <div *ngFor="let board of getRightBoards()" class="board-card" [class.placeholder]="isBoardPlaceholder(board)">
             <div class="board-header">
-              <h4>{{ getTeamDisplayName(board) }}</h4>
+              <h4 class="header-team-name">{{ getTeamDisplayName(board) }}</h4>
               <div class="board-indicators">
-                <span class="grid-status" [innerHTML]="getGridStatusIcon(board)"></span>
+                <span 
+                  class="grid-status-icon" 
+                  [style.background-image]="'url(' + getGridStatusIcon(board) + ')'"
+                ></span>
               </div>
             </div>
             <div class="board-data">

@@ -563,25 +563,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   // Grid balance status indicator for teams
-  getGridStatusIcon(board: any): SafeHtml {
+  getGridStatusIcon(board: any): string {
     if (!board || !board.connected) {
-      return this.s.bypassSecurityTrustHtml('<img src="/icons/DASH_status_grey.svg" alt="Inactive" style="width: 32px; height: 32px;">');
+        return '/icons/DASH_status_grey.svg';
     }
-    
+
     const production = board.production || 0;
     const consumption = board.consumption || 0;
     const balance = production - consumption;
     
-    let iconPath: string;
-    if (Math.abs(balance) <= 1) { // Within 1 MW tolerance - green (balanced)
-      iconPath = '/icons/DASH_status_green.svg';
-    } else if (Math.abs(balance) <= 5) { // Within 5 MW tolerance - orange (warning) 
-      iconPath = '/icons/DASH_status_orange.svg';
-    } else { // Over 5 MW imbalance - red (critical)
-      iconPath = '/icons/DASH_status_red.svg';
+    if (Math.abs(balance) <= 1) {
+        return '/icons/DASH_status_green.svg';
+    } else if (Math.abs(balance) <= 5) {
+        return '/icons/DASH_status_orange.svg';
+    } else {
+        return '/icons/DASH_status_red.svg';
     }
-    
-    return this.s.bypassSecurityTrustHtml(`<img src="${iconPath}" alt="Grid status" style="width: 32px; height: 32px;">`);
   }
 
   // Weather and round info getters
