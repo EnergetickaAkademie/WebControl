@@ -287,6 +287,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.authService.nextRound().subscribe({
       next: (response: any) => {
         console.log('Advanced to next round:', response);
+        debugLog('Full nextRound response from start:', JSON.stringify(response));
         this.currentRound = response;
         
         // Set round details from the response - important for slide data
@@ -356,6 +357,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.authService.nextRound().subscribe({
       next: (response: any) => {
         console.log('Advanced to next round:', response);
+        debugLog('Full nextRound response:', JSON.stringify(response));
         this.currentRound = response;
         
         // Set round details from the response - important for slide data
@@ -625,28 +627,88 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return '';
   }
 
-  get weatherInfo(): any {
-    // Ensure we have stable data before returning weather info
-    if (!this.translations || !this.translations.weather) {
-      return null;
+get weatherInfo(): any {
+    // 1. First check if we have display_data from polling (currentRoundDetails)
+    if (this.currentRoundDetails?.display_data) {
+        return this.currentRoundDetails.display_data;
     }
 
-    // First check if we have display data from current round
-    if ((this.currentRound as any)?.display_data) {
-      return (this.currentRound as any).display_data;
+    // 2. Check if we have display_data from the current round response
+    const displayData = (this.currentRound as any)?.display_data;
+    if (displayData) {
+        return displayData;
+    }
+
+    // 3. Fallback to the old system only if display_data is not available
+    if (!this.translations || !this.translations.weather) {
+        return null;
     }
     
-    // Fallback to the old weather system only if we have stable weather data
     if (!this.currentRoundDetails?.weather || 
         this.currentRoundDetails.weather.length === 0 ||
         !this.currentRoundDetails.weather[0]?.name) {
-      return null;
+        return null;
     }
     
-    // Get the first weather condition
     const weather = this.currentRoundDetails.weather[0];
     const weatherTranslation = this.translations.weather?.[weather.name.toUpperCase()] || null;
+    
     return weatherTranslation;
+}
+
+  /**
+   * Apply fallback logic for temperature and wind_speed.
+   * If temperature or wind_speed is null/undefined, iterate through all weather conditions to find a real value.
+   */
+  private applyWeatherFallbacks(displayData: any): any {
+    if (!displayData) return null;
+    
+    // Create a copy to avoid modifying the original
+    const data = { ...displayData };
+    
+    // Define the order of weather conditions to check for fallbacks
+    const weatherFallbackOrder = [
+      'SUNNY', 'PARTLY_CLOUDY', 'CLOUDY', 'WINDY', 'BREEZY', 'CALM',
+      'RAINY', 'SNOWY', 'FOGGY', 'DAY', 'NIGHT'
+    ];
+    
+    // Apply temperature fallback if needed
+    if (data.temperature === null || data.temperature === undefined || data.temperature === '') {
+      for (const weatherKey of weatherFallbackOrder) {
+        const fallbackWeather = this.translations?.weather?.[weatherKey] || this.translations?.round_types?.[weatherKey];
+        if (fallbackWeather?.temperature && fallbackWeather.temperature !== null && fallbackWeather.temperature !== '') {
+          data.temperature = fallbackWeather.temperature;
+          debugLog(`Temperature fallback: using ${fallbackWeather.temperature} from ${weatherKey}`);
+          break;
+        }
+      }
+      
+      // Final fallback if no temperature found
+      if (!data.temperature) {
+        data.temperature = '18°';
+        debugLog('Temperature fallback: using default 18°');
+      }
+    }
+    
+    // Apply wind_speed fallback if needed
+    if (data.wind_speed === null || data.wind_speed === undefined || data.wind_speed === '') {
+      for (const weatherKey of weatherFallbackOrder) {
+        const fallbackWeather = this.translations?.weather?.[weatherKey] || this.translations?.round_types?.[weatherKey];
+        if (fallbackWeather?.wind_speed && fallbackWeather.wind_speed !== null && fallbackWeather.wind_speed !== '') {
+          data.wind_speed = fallbackWeather.wind_speed;
+          debugLog(`Wind speed fallback: using ${fallbackWeather.wind_speed} from ${weatherKey}`);
+          break;
+        }
+      }
+      
+      // Final fallback if no wind speed found
+      if (!data.wind_speed) {
+        data.wind_speed = '3 m/s';
+        debugLog('Wind speed fallback: using default 3 m/s');
+      }
+    }
+    
+    return data;
   }
 
   get temperature(): string {
@@ -786,18 +848,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   get weatherTemperature(): string {
     const weatherInfo = this.weatherInfo;
-    if (weatherInfo?.temperature) {
-      return weatherInfo.temperature;
-    }
-    
-    // Fallback to round type default temperature
-    const roundType = this.currentRoundDetails?.round_type || this.currentRound?.round_type;
-    if (roundType === 1) { // DAY
-      return this.translations.round_types?.DAY?.default_temperature || '25°';
-    } else if (roundType === 2) { // NIGHT
-      return this.translations.round_types?.NIGHT?.default_temperature || '10°';
-    }
-    return '';
+    // This now correctly returns the random temperature from the backend's display_data
+    // without any incorrect frontend fallbacks.
+    return weatherInfo?.temperature || '';
   }
 
   get weatherTypeName(): string {
@@ -822,9 +875,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return true;
     }
     
-    // Fallback: show wind for day rounds (for testing purposes)
+    // Fallback: show wind for both day and night rounds (for testing purposes)
     const roundType = this.currentRoundDetails?.round_type || this.currentRound?.round_type;
-    if (roundType === 1) { // DAY - show wind by default for testing
+    if (roundType === 1 || roundType === 2) { // DAY or NIGHT - show wind by default
       return true;
     }
     
