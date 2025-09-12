@@ -1001,7 +1001,10 @@ get weatherInfo(): any {
     }
   }
 
-  // Keyboard event handlers
+  private lastNextRoundPress: number = 0;
+  private nextRoundPressTimeout: any = null;
+  private nextRoundRequiresDoublePress: boolean = true; // Enable/disable feature
+
   @HostListener('document:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
     // Handle different keyboard events based on current view
@@ -1033,23 +1036,76 @@ get weatherInfo(): any {
           // Presentation view should handle its own slide navigation
           if (this.currentView === 'game') {
             event.preventDefault();
-            if (!this.isGameLoading) {
-              // Check if game is already finished (last round reached)
-              if (this.gameStatus && this.gameStatus.current_round >= this.gameStatus.total_rounds) {
-                console.log('Game already finished - showing end dialog from keyboard input');
-                this.handleScenarioFinished();
-              } else if (this.currentRound && (this.currentRound as any).status === 'game_finished') {
-                // Handle case where nextRound returned game_finished status
-                console.log('Game finished status detected - showing end dialog from keyboard input');
-                this.handleScenarioFinished();
-              } else {
-                this.nextRound();
-              }
-            }
+            this.handleNextRoundAttempt();
+          }
+          break;
+        case 'd': // Press 'D' to toggle double-press requirement (for debugging)
+          if (event.ctrlKey) { // Only toggle when Ctrl is held to prevent accidental toggling
+            event.preventDefault();
+            this.toggleDoublePressRequirement();
           }
           break;
       }
     }
+  }
+
+  handleNextRoundAttempt() {
+    if (this.isGameLoading) {
+      return;
+    }
+    
+    const now = Date.now();
+    
+    // If double-press is disabled, proceed immediately
+    if (!this.nextRoundRequiresDoublePress) {
+      this.executeNextRound();
+      return;
+    }
+    
+    // Check if this is the second press within the time window
+    if (now - this.lastNextRoundPress < 1000) { // 1 second window
+      // Clear any pending timeout
+      if (this.nextRoundPressTimeout) {
+        clearTimeout(this.nextRoundPressTimeout);
+        this.nextRoundPressTimeout = null;
+      }
+      
+      // This is a valid double-press, execute the next round
+      this.lastNextRoundPress = 0;
+      console.log('Double-press confirmed, advancing to next round');
+      this.executeNextRound();
+    } else {
+      // First press - set the timestamp
+      this.lastNextRoundPress = now;
+      console.log('First press detected, press again within 1 second to advance');
+      
+      // Set a timeout to reset if the second press doesn't come
+      this.nextRoundPressTimeout = setTimeout(() => {
+        this.lastNextRoundPress = 0;
+        this.nextRoundPressTimeout = null;
+        console.log('Double-press timeout expired, press again to advance');
+      }, 1000);
+    }
+  }
+
+  executeNextRound() {
+    // Check if game is already finished (last round reached)
+    if (this.gameStatus && this.gameStatus.current_round >= this.gameStatus.total_rounds) {
+      console.log('Game already finished - showing end dialog from keyboard input');
+      this.handleScenarioFinished();
+    } else if (this.currentRound && (this.currentRound as any).status === 'game_finished') {
+      // Handle case where nextRound returned game_finished status
+      console.log('Game finished status detected - showing end dialog from keyboard input');
+      this.handleScenarioFinished();
+    } else {
+      this.nextRound();
+    }
+  }
+
+  // Method to toggle double-press requirement
+  toggleDoublePressRequirement() {
+    this.nextRoundRequiresDoublePress = !this.nextRoundRequiresDoublePress;
+    console.log(`Double-press requirement: ${this.nextRoundRequiresDoublePress ? 'ENABLED' : 'DISABLED'}`);
   }
 
   confirmEndGame() {
