@@ -44,7 +44,7 @@
 
     <!-- Keyboard Shortcuts Information -->
     <div class="keyboard-shortcuts-section">
-      <h2>⌨️ Klávesové zkratky</h2>
+      <h2>Ovládání</h2>
       <div class="shortcuts-grid">
         <div class="shortcut-item">
           <span class="shortcut-key">Q</span>
@@ -73,15 +73,15 @@
       </div>
       <p class="shortcuts-note">* Zkratky jsou aktivní během hry a prezentace</p>
 
-      Pro opuštění stránky statistik, stačí dvakrát stisknout klávesu <span class="shortcut-key">ESC</span>
+      Pro opuštění stránky statistik stačí dvakrát stisknout klávesu <span class="shortcut-key">ESC</span>
     </div>
 
-    <!-- Connected Boards -->
+    <!-- Team Status -->
     <div class="boards-section">
-      <h2>Připojené týmy</h2>
+      <h2>Stav týmů</h2>
       <div class="boards-container setup-horizontal">
         <div class="boards-left">
-          <div *ngFor="let board of getLeftBoards(); let i = index" class="board-card" [class.placeholder]="isBoardPlaceholder(board)">
+          <div *ngFor="let board of getLeftBoards(); let i = index" class="board-card" [class.placeholder]="isBoardPlaceholder(board)" [class.disconnected]="!isBoardConnected(board)">
             <div class="board-header">
               <h4>{{ getTeamDisplayName(board) }}</h4>
               <div class="board-indicators">
@@ -89,20 +89,18 @@
               </div>
             </div>
             <div class="board-data">
-              <div class="power-line">
-                <span class="power-label">Výroba:</span>
-                <span class="power-value">{{ board.production || 0 | number:'1.0-0' }} MW</span>
-              </div>
-              <div class="power-line">
-                <span class="power-label">Spotřeba:</span>
-                <span class="power-value">{{ board.consumption || 0 | number:'1.0-0' }} MW</span>
+              <div class="connection-status">
+                <span class="status-label">Stav:</span>
+                <span class="status-value" [class.connected]="isBoardConnected(board)" [class.disconnected]="!isBoardConnected(board)">
+                  {{ isBoardConnected(board) ? 'Připojeno' : 'Odpojeno' }}
+                </span>
               </div>
             </div>
           </div>
         </div>
 
         <div class="boards-right">
-          <div *ngFor="let board of getRightBoards(); let i = index" class="board-card" [class.placeholder]="isBoardPlaceholder(board)">
+          <div *ngFor="let board of getRightBoards(); let i = index" class="board-card" [class.placeholder]="isBoardPlaceholder(board)" [class.disconnected]="!isBoardConnected(board)">
             <div class="board-header">
               <h4>{{ getTeamDisplayName(board) }}</h4>
               <div class="board-indicators">
@@ -110,13 +108,11 @@
               </div>
             </div>
             <div class="board-data">
-              <div class="power-line">
-                <span class="power-label">Výroba:</span>
-                <span class="power-value">{{ board.production || 0 | number:'1.0-0' }} MW</span>
-              </div>
-              <div class="power-line">
-                <span class="power-label">Spotřeba:</span>
-                <span class="power-value">{{ board.consumption || 0 | number:'1.0-0' }} MW</span>
+              <div class="connection-status">
+                <span class="status-label">Stav:</span>
+                <span class="status-value" [class.connected]="isBoardConnected(board)" [class.disconnected]="!isBoardConnected(board)">
+                  {{ isBoardConnected(board) ? 'Připojeno' : 'Odpojeno' }}
+                </span>
               </div>
             </div>
           </div>

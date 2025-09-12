@@ -235,6 +235,16 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
     return board?.is_placeholder === true;
   }
 
+  isBoardConnected(board: any): boolean {
+    // If it's a placeholder, it's not connected
+    if (this.isBoardPlaceholder(board)) {
+      return false;
+    }
+    
+    // Use the connected field from the backend, which has the proper connection logic
+    return board?.connected === true;
+  }
+
   getGridStatusIcon(board: any): string {
     if (this.isBoardPlaceholder(board)) {
       return '<div style="width: 16px; height: 16px; background-color: #ccc; border-radius: 50%;"></div>';

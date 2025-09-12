@@ -284,30 +284,49 @@
   color: #aaa;
 }
 
+/* Disconnected board styling */
+.board-card.disconnected {
+  opacity: 0.5;
+  background-color: #f8f8f8;
+}
+
+.board-card.disconnected .board-header h4 {
+  color: #888;
+}
+
 .board-data {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.power-line {
+/* Connection status styling */
+.connection-status {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
 }
 
-.power-label {
+.status-label {
   color: #000;
   font-family: 'DINPro-Regular', Arial, sans-serif;
   font-weight: 400;
   font-size: 28px;
 }
 
-.power-value {
-  color: #000;
+.status-value {
   font-family: 'DINPro-Black', Arial, sans-serif;
   font-weight: 900;
   font-size: 32px;
+  margin-left: 0.8vw;
+}
+
+.status-value.connected {
+  color: #28a745; /* Green for connected */
+}
+
+.status-value.disconnected {
+  color: #dc3545; /* Red for disconnected */
 }
 
 .game-status p {
