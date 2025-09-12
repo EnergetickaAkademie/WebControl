@@ -54,19 +54,19 @@
           <span class="shortcut-key">L</span>
           <span class="shortcut-description">Odhlásit se (s potvrzením)</span>
         </div>
-        <div class="shortcut-item">2x
+        <div class="shortcut-item">1x
           <span class="shortcut-key">→</span>
           <span class="shortcut-description">Další slide</span>
         </div>
-        <div class="shortcut-item">
+        <div class="shortcut-item">2x
           <span class="shortcut-key">→</span>
           <span class="shortcut-description">Další herní kolo</span>
         </div>
         <div class="shortcut-item">
           <span class="shortcut-key">F</span>
-          <span class="shortcut-description">Přepnout fullscreen</span>
+          <span class="shortcut-description">Zapnout fullscreen</span>
         </div>
-        <div class="shortcut-item">
+        <div class="shortcut-item">2x
           <span class="shortcut-key">ESC</span>
           <span class="shortcut-description">Ukončit fullscreen</span>
         </div>
@@ -122,19 +122,19 @@
 
     <!-- Game Status -->
     <div *ngIf="gameStatus" class="game-status">
-      <h2>🎮 Stav hry</h2>
+      <h2>Stav hry</h2>
       <p><strong>Stav:</strong> {{ gameStatus.game_active ? 'Aktivní' : 'Neaktivní' }}</p>
       <p><strong>Aktuální kolo:</strong> {{ gameStatus.current_round }} / {{ gameStatus.total_rounds }}</p>
       <p><strong>Připojená zařízení:</strong> {{ connectedBoards.length }}</p>
       
       <!-- Show Statistics Button - appears when game has ended -->
       <div *ngIf="isGameFinished()" class="game-finished-actions">
-        <p class="game-finished-message">🏆 Hra byla dokončena! Zobrazit výsledky a statistiky týmů.</p>
-        <button 
+        <p class="game-finished-message">Hra byla ukončena, pro zobrazení statistik týmů klikněte níže:</p>
+        <button
           class="btn btn-statistics" 
           (click)="showGameStatistics()"
           [disabled]="isLoadingStatistics">
-          {{ isLoadingStatistics ? 'Načítání...' : '📊 Zobrazit statistiky' }}
+          {{ isLoadingStatistics ? 'Načítání...' : 'Zobrazit statistiky' }}
         </button>
       </div>
     </div>
