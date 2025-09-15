@@ -250,21 +250,11 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
       return '<div style="width: 16px; height: 16px; background-color: #ccc; border-radius: 50%;"></div>';
     }
     
-    if (!board?.last_updated) {
+    // Use the same logic as dashboard - check board.connected directly
+    if (!board || !board.connected) {
       return '<div style="width: 16px; height: 16px; background-color: #ff4444; border-radius: 50%;"></div>';
-    }
-    
-    const lastUpdate = new Date(board.last_updated);
-    const now = new Date();
-    const timeDiff = now.getTime() - lastUpdate.getTime();
-    const secondsSinceUpdate = Math.floor(timeDiff / 1000);
-    
-    if (secondsSinceUpdate < 10) {
-      return '<div style="width: 16px; height: 16px; background-color: #44ff44; border-radius: 50%;"></div>';
-    } else if (secondsSinceUpdate < 30) {
-      return '<div style="width: 16px; height: 16px; background-color: #ffaa00; border-radius: 50%;"></div>';
     } else {
-      return '<div style="width: 16px; height: 16px; background-color: #ff4444; border-radius: 50%;"></div>';
+      return '<div style="width: 16px; height: 16px; background-color: #44ff44; border-radius: 50%;"></div>';
     }
   }
 
