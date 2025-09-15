@@ -515,10 +515,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   getLeftBoards(): any[] {
     // Sort boards by board_id to ensure consistent ordering
     const sortedBoards = this.connectedBoards.slice().sort((a, b) => {
-      // Extract numeric part of board_id for proper sorting (e.g., board1, board2, board10)
+      // Extract numeric part of board_id for proper sorting (e.g., w1b1, w1b2, w1b10)
       const getNumericId = (board: any) => {
-        const match = board.board_id?.toString().match(/\d+/);
-        return match ? parseInt(match[0], 10) : 0;
+        const match = board.board_id?.toString().match(/\d+/g);
+        return match ? parseInt(match[match.length - 1], 10) : 0;
       };
       return getNumericId(a) - getNumericId(b);
     });
@@ -534,10 +534,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   getRightBoards(): any[] {
     // Sort boards by board_id to ensure consistent ordering
     const sortedBoards = this.connectedBoards.slice().sort((a, b) => {
-      // Extract numeric part of board_id for proper sorting (e.g., board1, board2, board10)
+      // Extract numeric part of board_id for proper sorting (e.g., w1b1, w1b2, w1b10)
       const getNumericId = (board: any) => {
-        const match = board.board_id?.toString().match(/\d+/);
-        return match ? parseInt(match[0], 10) : 0;
+        const match = board.board_id?.toString().match(/\d+/g);
+        return match ? parseInt(match[match.length - 1], 10) : 0;
       };
       return getNumericId(a) - getNumericId(b);
     });
@@ -555,8 +555,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Since backend now provides all configured boards, just return them sorted
     return boards.sort((a, b) => {
       const getNumericId = (board: any) => {
-        const match = board.board_id?.toString().match(/\d+/);
-        return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
+        const match = board.board_id?.toString().match(/\d+/g);
+        return match ? parseInt(match[match.length - 1], 10) : Number.MAX_SAFE_INTEGER;
       };
       return getNumericId(a) - getNumericId(b);
     });

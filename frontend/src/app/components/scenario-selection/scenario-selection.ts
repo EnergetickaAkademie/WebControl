@@ -271,8 +271,8 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
   getLeftBoards(): any[] {
     const sortedBoards = this.connectedBoards.slice().sort((a, b) => {
       const getNumericId = (board: any) => {
-        const match = board.board_id?.toString().match(/\d+/);
-        return match ? parseInt(match[0], 10) : 0;
+        const match = board.board_id?.toString().match(/\d+/g);
+        return match ? parseInt(match[match.length - 1], 10) : 0;
       };
       return getNumericId(a) - getNumericId(b);
     });
@@ -285,8 +285,8 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
   getRightBoards(): any[] {
     const sortedBoards = this.connectedBoards.slice().sort((a, b) => {
       const getNumericId = (board: any) => {
-        const match = board.board_id?.toString().match(/\d+/);
-        return match ? parseInt(match[0], 10) : 0;
+        const match = board.board_id?.toString().match(/\d+/g);
+        return match ? parseInt(match[match.length - 1], 10) : 0;
       };
       return getNumericId(a) - getNumericId(b);
     });
@@ -297,43 +297,15 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
   }
 
   private padToMinimumTeams(boards: any[]): any[] {
-    const minTeams = 5;
-    const existingNumbers = new Set<number>();
-    
-    boards.forEach(b => {
-      const match = b.board_id?.toString().match(/\d+/g); // Use global match to get all numbers
-      if (match) {
-        // Get the last number found in the board_id
-        const n = parseInt(match[match.length - 1], 10);
-        if (!isNaN(n)) {
-          existingNumbers.add(n);
-        }
-      }
-    });
-
-    const paddedBoards = [...boards];
-
-    for (let team = 1; team <= minTeams; team++) {
-      if (!existingNumbers.has(team)) {
-        paddedBoards.push({
-          board_id: `board${team}`,
-          last_updated: null,
-          production: 0,
-          consumption: 0,
-          is_placeholder: true
-        });
-      }
-    }
-
-    paddedBoards.sort((a, b) => {
+    // Since the backend now provides all configured boards,
+    // we don't need to add placeholders - just sort them
+    return boards.sort((a, b) => {
       const getNumericId = (board: any) => {
         const match = board.board_id?.toString().match(/\d+/g);
         return match ? parseInt(match[match.length - 1], 10) : Number.MAX_SAFE_INTEGER;
       };
       return getNumericId(a) - getNumericId(b);
     });
-
-    return paddedBoards;
   }
 
   trackScenario(index: number, item: any) {
