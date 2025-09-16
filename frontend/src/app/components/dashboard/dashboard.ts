@@ -304,8 +304,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
         };
         
         if (response.status === 'game_finished') {
-          // Don't automatically show dialog - wait for user to try advancing
-          console.log('Game finished, but waiting for user to try advancing');
+          // Immediately show end-of-scenario overlay (previously waited for manual advance)
+          console.log('Game finished status received – displaying end-of-scenario overlay');
+          this.handleScenarioFinished();
           return;
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
           console.log('Slides round, switching to presentation view');
@@ -374,8 +375,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
         };
         
         if (response.status === 'game_finished') {
-          // Don't automatically show dialog - wait for user to try advancing
-          console.log('Game finished, but waiting for user to try advancing');
+          // Immediately show end-of-scenario overlay (previously waited for manual advance)
+          console.log('Game finished status received – displaying end-of-scenario overlay');
+          this.handleScenarioFinished();
           return;
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
           console.log('Slides round, switching to presentation view');
