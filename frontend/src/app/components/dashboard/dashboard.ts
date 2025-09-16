@@ -32,6 +32,7 @@ interface GameRound {
     production_coefficients: any;
     consumption_modifiers: any;
   };
+  display_data?: any; // Include display_data for weather effects
 }
 
 @Component({
@@ -214,7 +215,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
               game_data: {
                 production_coefficients: response.round_details.production_coefficients || {},
                 consumption_modifiers: response.round_details.building_consumptions || {}
-              }
+              },
+              display_data: response.round_details.display_data // Include display_data for effects
             };
 
             // Dynamically switch view based on round type during polling
@@ -731,8 +733,8 @@ get weatherInfo(): any {
       return [];
     }
 
-    // Always prefer display data from current round (even if effects array is empty)
-    const displayData = (this.currentRound as any)?.display_data;
+    // Always prefer display data from current round details (where backend sends it)
+    const displayData = this.currentRoundDetails?.display_data || (this.currentRound as any)?.display_data;
     if (displayData !== undefined) {
       // Return the filtered effects from backend (already priority-filtered)
       return displayData.effects || [];
