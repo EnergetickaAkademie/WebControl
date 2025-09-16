@@ -207,15 +207,10 @@ export class SlidePresentationComponent implements OnInit, OnDestroy, OnChanges 
 
   private handleEndOfSlides() {
     console.log('handleEndOfSlides called - gameStatus:', this.gameStatus);
-    // If not last round of scenario, ask parent to advance
-    if (this.gameStatus && this.gameStatus.current_round < this.gameStatus.total_rounds) {
-      console.log('Not last round, advancing to next round');
-      this.advanceToNextRound.emit();
-    } else {
-      // This is the last round of the scenario - scenario finished when user tries to advance
-      console.log('Last round detected, emitting scenarioFinished');
-      this.scenarioFinished.emit();
-    }
+    console.log('User trying to advance from last slide - checking if scenario end');
+    // Always ask parent to advance to next round - let backend decide if game is finished
+    // The backend will return either next round data or game_finished status
+    this.advanceToNextRound.emit();
   }
 
   // Fullscreen methods - delegate to parent if external fullscreen is used

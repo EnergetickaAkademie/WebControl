@@ -1090,17 +1090,10 @@ get weatherInfo(): any {
   }
 
   executeNextRound() {
-    // Check if game is already finished (last round reached)
-    if (this.gameStatus && this.gameStatus.current_round >= this.gameStatus.total_rounds) {
-      console.log('Game already finished - showing end dialog from keyboard input');
-      this.handleScenarioFinished();
-    } else if (this.currentRound && (this.currentRound as any).status === 'game_finished') {
-      // Handle case where nextRound returned game_finished status
-      console.log('Game finished status detected - showing end dialog from keyboard input');
-      this.handleScenarioFinished();
-    } else {
-      this.nextRound();
-    }
+    // Always call nextRound() and let the backend decide if game is finished
+    // The backend will return either the next round data or game_finished status
+    console.log('Executing next round request...');
+    this.nextRound();
   }
 
   // Method to toggle double-press requirement
