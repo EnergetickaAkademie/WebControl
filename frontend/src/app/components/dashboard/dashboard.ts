@@ -199,10 +199,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
           
           // If game inactive: only redirect when there is clearly no finished round context
           if (!this.gameStatus?.game_active) {
-            // Don't automatically show finished dialog - wait for user to try advancing
-            // If there are no round details at all (e.g. user refreshed after game ended), then redirect
-            if (!this.currentRoundDetails || Object.keys(this.currentRoundDetails).length === 0) {
-              this.router.navigate(['/setup']);
+            // Don't redirect if the game end dialog is currently shown
+            if (!this.gameFinished) {
+              // If there are no round details at all (e.g. user refreshed after game ended), then redirect
+              if (!this.currentRoundDetails || Object.keys(this.currentRoundDetails).length === 0) {
+                this.router.navigate(['/setup']);
+              }
             }
             // Do not return early; we still want to preserve last known round details for overlay
           }
@@ -1132,15 +1134,20 @@ get weatherInfo(): any {
   scenarioFinishedHandler() {
     console.log('scenarioFinishedHandler called - setting gameFinished to true');
     this.gameFinished = true;
-    // No need to change view - overlay is now global and will appear regardless of current view
-    console.log('Scenario finished - showing end dialog overlay');
+    
+    // Stop polling when game finishes to avoid interference with end dialog
+    this.stopAllPolling();
+    console.log('Scenario finished - showing end dialog overlay and stopping polling');
   }
 
 
   private handleScenarioFinished() {
     if (this.gameFinished) return; // Already handled
-    console.log('Scenario finished – displaying overlay and scheduling redirect');
+    console.log('Scenario finished – displaying overlay and stopping polling');
     this.gameFinished = true;
-  // Stay on overlay until user selects an action.
+    
+    // Stop polling when game finishes to avoid interference with end dialog
+    this.stopAllPolling();
+    console.log('Polling stopped - end dialog will remain until user chooses action');
   }
 }
