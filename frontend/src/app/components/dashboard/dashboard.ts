@@ -32,6 +32,7 @@ interface GameRound {
     production_coefficients: any;
     consumption_modifiers: any;
   };
+  display_data?: any; // Include display_data for weather effects
 }
 
 @Component({
@@ -198,10 +199,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
           
           // If game inactive: only redirect when there is clearly no finished round context
           if (!this.gameStatus?.game_active) {
-            // Don't automatically show finished dialog - wait for user to try advancing
-            // If there are no round details at all (e.g. user refreshed after game ended), then redirect
-            if (!this.currentRoundDetails || Object.keys(this.currentRoundDetails).length === 0) {
-              this.router.navigate(['/setup']);
+            // Don't redirect if the game end dialog is currently shown
+            if (!this.gameFinished) {
+              // If there are no round details at all (e.g. user refreshed after game ended), then redirect
+              if (!this.currentRoundDetails || Object.keys(this.currentRoundDetails).length === 0) {
+                this.router.navigate(['/setup']);
+              }
             }
             // Do not return early; we still want to preserve last known round details for overlay
           }
@@ -214,7 +217,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
               game_data: {
                 production_coefficients: response.round_details.production_coefficients || {},
                 consumption_modifiers: response.round_details.building_consumptions || {}
-              }
+              },
+              display_data: response.round_details.display_data // Include display_data for effects
             };
 
             // Dynamically switch view based on round type during polling
@@ -304,8 +308,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
         };
         
         if (response.status === 'game_finished') {
-          // Don't automatically show dialog - wait for user to try advancing
-          console.log('Game finished, but waiting for user to try advancing');
+          // Immediately show end-of-scenario overlay (previously waited for manual advance)
+          console.log('Game finished status received – displaying end-of-scenario overlay');
+          this.handleScenarioFinished();
           return;
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
           console.log('Slides round, switching to presentation view');
@@ -374,8 +379,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
         };
         
         if (response.status === 'game_finished') {
-          // Don't automatically show dialog - wait for user to try advancing
-          console.log('Game finished, but waiting for user to try advancing');
+          // Immediately show end-of-scenario overlay (previously waited for manual advance)
+          console.log('Game finished status received – displaying end-of-scenario overlay');
+          this.handleScenarioFinished();
           return;
         } else if (response.round_type === RoundType.SLIDE || response.round_type === RoundType.SLIDE_RANGE) {
           console.log('Slides round, switching to presentation view');
@@ -729,8 +735,8 @@ get weatherInfo(): any {
       return [];
     }
 
-    // Always prefer display data from current round (even if effects array is empty)
-    const displayData = (this.currentRound as any)?.display_data;
+    // Always prefer display data from current round details (where backend sends it)
+    const displayData = this.currentRoundDetails?.display_data || (this.currentRound as any)?.display_data;
     if (displayData !== undefined) {
       // Return the filtered effects from backend (already priority-filtered)
       return displayData.effects || [];
@@ -1086,17 +1092,10 @@ get weatherInfo(): any {
   }
 
   executeNextRound() {
-    // Check if game is already finished (last round reached)
-    if (this.gameStatus && this.gameStatus.current_round >= this.gameStatus.total_rounds) {
-      console.log('Game already finished - showing end dialog from keyboard input');
-      this.handleScenarioFinished();
-    } else if (this.currentRound && (this.currentRound as any).status === 'game_finished') {
-      // Handle case where nextRound returned game_finished status
-      console.log('Game finished status detected - showing end dialog from keyboard input');
-      this.handleScenarioFinished();
-    } else {
-      this.nextRound();
-    }
+    // Always call nextRound() and let the backend decide if game is finished
+    // The backend will return either the next round data or game_finished status
+    console.log('Executing next round request...');
+    this.nextRound();
   }
 
   // Method to toggle double-press requirement
@@ -1135,15 +1134,20 @@ get weatherInfo(): any {
   scenarioFinishedHandler() {
     console.log('scenarioFinishedHandler called - setting gameFinished to true');
     this.gameFinished = true;
-    // No need to change view - overlay is now global and will appear regardless of current view
-    console.log('Scenario finished - showing end dialog overlay');
+    
+    // Stop polling when game finishes to avoid interference with end dialog
+    this.stopAllPolling();
+    console.log('Scenario finished - showing end dialog overlay and stopping polling');
   }
 
 
   private handleScenarioFinished() {
     if (this.gameFinished) return; // Already handled
-    console.log('Scenario finished – displaying overlay and scheduling redirect');
+    console.log('Scenario finished – displaying overlay and stopping polling');
     this.gameFinished = true;
-  // Stay on overlay until user selects an action.
+    
+    // Stop polling when game finishes to avoid interference with end dialog
+    this.stopAllPolling();
+    console.log('Polling stopped - end dialog will remain until user chooses action');
   }
 }

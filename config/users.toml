@@ -3,11 +3,11 @@ lecturer1 = { password = "lecturer123", name = "lecturer1", group = "group1" }
 lecturer2 = { password = "lecturer456", name = "lecturer2", group = "group1" }
 
 [boards]
-board1 = { password = "board123", name = "board1", group = "group1", display_name = "Tým 1" }
-board2 = { password = "board123", name = "board2", group = "group1", display_name = "Tým 2" }
-board3 = { password = "board123", name = "board3", group = "group1", display_name = "Tým 3" }
-board4 = { password = "board123", name = "board4", group = "group1", display_name = "Tým 4" }
-board5 = { password = "board123", name = "board5", group = "group1", display_name = "Tým 5" }
+board1 = { password = "board123", name = "board1", group = "group1", display_name = "Tým 1", id = 1 }
+board2 = { password = "board123", name = "board2", group = "group1", display_name = "Tým 2", id = 2 }
+board3 = { password = "board123", name = "board3", group = "group1", display_name = "Tým 3", id = 3 }
+board4 = { password = "board123", name = "board4", group = "group1", display_name = "Tým 4", id = 4 }
+board5 = { password = "board123", name = "board5", group = "group1", display_name = "Tým 5", id = 5 }
 
 [groups]
 group1 = { name = "Primary Game Group", max_boards = 10 }
