@@ -301,6 +301,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           slides: response.slides, // for slide ranges
           slide_range: response.slide_range, // for slide range metadata
           comment: response.comment,
+          buildings_comment: response.buildings_comment, // buildings comment from scenario
+          outages: response.outages || [], // outages list
+          cumulative_registered_sources: response.cumulative_registered_sources || [], // cumulative registered/allowed sources
           weather: response.weather,
           production_coefficients: response.game_data?.production_coefficients,
           consumption_modifiers: response.game_data?.consumption_modifiers,
@@ -372,6 +375,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           slides: response.slides, // for slide ranges
           slide_range: response.slide_range, // for slide range metadata
           comment: response.comment,
+          buildings_comment: response.buildings_comment, // buildings comment from scenario
+          outages: response.outages || [], // outages list
+          cumulative_registered_sources: response.cumulative_registered_sources || [], // cumulative registered/allowed sources
           weather: response.weather,
           production_coefficients: response.game_data?.production_coefficients,
           consumption_modifiers: response.game_data?.consumption_modifiers,
@@ -522,22 +528,43 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Helper method to check if a power plant is allowed
   isPowerPlantAllowed(plantIndex: number): boolean {
-    // plantIndex: 0=thermal, 1=gas, 2=nuclear, 3=storage, 4=hydro, 5=wind, 6=solar
-    if (!this.currentRoundDetails?.production_coefficients) {
-      return true; // Default to allowed if no data
+    // plantIndex: 0=coal(thermal), 1=gas, 2=nuclear, 3=hydro_storage, 4=hydro, 5=wind, 6=photovoltaic(solar)
+    if (!this.currentRoundDetails?.cumulative_registered_sources) {
+      return false; // Default to disabled if no data
     }
     
-    const coefficients = this.currentRoundDetails.production_coefficients;
-    const plantKeys = ['thermal', 'gas', 'nuclear', 'storage', 'hydro', 'wind', 'solar'];
+    const cumulativeSources = this.currentRoundDetails.cumulative_registered_sources;
+    // Map icons to backend Source enum names (as they are sent via str())
+    // Backend converts enum names to Title Case with spaces: COAL -> "Coal", HYDRO_STORAGE -> "Hydro Storage"
+    const plantKeys = ['Coal', 'Gas', 'Nuclear', 'Hydro Storage', 'Hydro', 'Wind', 'Photovoltaic'];
     const key = plantKeys[plantIndex];
     
-    // If coefficient exists and is > 0, plant is allowed
-    return coefficients[key] !== undefined ? coefficients[key] > 0 : true;
+    // Check if the source is in the cumulative registered sources list
+    return cumulativeSources.includes(key);
   }
 
   // Helper method to get scenario comment
   get scenarioComment(): string {
     return this.currentRoundDetails?.comment || '';
+  }
+
+  // Helper method to get buildings comment
+  get buildingsComment(): string {
+    return this.currentRoundDetails?.buildings_comment || '';
+  }
+
+  // Helper method to get outages
+  get currentOutages(): string[] {
+    return this.currentRoundDetails?.outages || [];
+  }
+
+  // Helper method to check if a source has an outage (only show if source is registered)
+  hasOutage(sourceName: string): boolean {
+    const outages = this.currentOutages;
+    const cumulativeSources = this.currentRoundDetails?.cumulative_registered_sources || [];
+    
+    // Only show outage if the source is both in outages list AND in cumulative registered sources
+    return outages.includes(sourceName) && cumulativeSources.includes(sourceName);
   }
 
   // Helper method to get round type name

@@ -83,20 +83,20 @@
           <!-- Buildings Info Box -->
           <div class="buildings-info-box">
             <img src="/icons/rework/ico_build.svg" alt="Buildings icon" class="buildings-icon">
-            <span class="buildings-text">Můžete postavit až X malých staveb.</span>
+            <span class="buildings-text">{{ buildingsComment || 'Nic se nestaví' }}</span>
           </div>
 
           <!-- Disabled Sources Box -->
           <div class="disabled-sources-box">
             <span class="disabled-sources-label">Odstavené zdroje:</span>
             <div class="disabled-sources-icons">
-              <img src="/icons/rework/ico_plyn_off.svg" alt="Gas disabled">
-              <img src="/icons/rework/ico_solar_off.svg" alt="Solar disabled">
-              <img src="/icons/rework/ico_vitr_off.svg" alt="Wind disabled">
+              <img *ngIf="hasOutage('Gas')" src="/icons/rework/ico_plyn_off.svg" alt="Gas disabled">
+              <img *ngIf="hasOutage('Photovoltaic')" src="/icons/rework/ico_solar_off.svg" alt="Solar disabled">
+              <img *ngIf="hasOutage('Wind')" src="/icons/rework/ico_vitr_off.svg" alt="Wind disabled">
             </div>
           </div>
 
-          <!-- Special Effects Box (if any) -->
+          <!-- Special Effects Box (if any) - COMMENTED OUT -->
           <!-- <div *ngIf="specialEffects.length > 0" class="special-effects-box">
             <ul class="effects-list">
               <li *ngFor="let effect of specialEffects" class="effect-item">
