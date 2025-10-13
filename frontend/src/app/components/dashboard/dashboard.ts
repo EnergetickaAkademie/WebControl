@@ -488,6 +488,58 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return match ? parseInt(match[0], 10) : 0;
   }
 
+  // Helper method to get all boards in one array for single column display
+  getAllBoards(): any[] {
+    // Sort boards by board_id to ensure consistent ordering
+    const sortedBoards = this.connectedBoards.slice().sort((a, b) => {
+      const getNumericId = (board: any) => {
+        const match = board.board_id?.toString().match(/\d+/g);
+        return match ? parseInt(match[match.length - 1], 10) : 0;
+      };
+      return getNumericId(a) - getNumericId(b);
+    });
+    return sortedBoards;
+  }
+
+  // Helper method to get team background color based on status
+  getTeamBackgroundColor(board: any): string {
+    if (!board || !board.connected) {
+      return '#b5b5b5'; // Grey for not connected
+    }
+
+    const production = board.production || 0;
+    const consumption = board.consumption || 0;
+    const balance = production - consumption;
+    
+    if (Math.abs(balance) <= 1) {
+      return '#8cc63f'; // Green for balanced
+    } else if (Math.abs(balance) <= 5) {
+      return '#fbb03b'; // Yellow for not perfectly balanced
+    } else {
+      return '#ff3131'; // Red for blackout
+    }
+  }
+
+  // Helper method to check if a power plant is allowed
+  isPowerPlantAllowed(plantIndex: number): boolean {
+    // plantIndex: 0=thermal, 1=gas, 2=nuclear, 3=storage, 4=hydro, 5=wind, 6=solar
+    if (!this.currentRoundDetails?.production_coefficients) {
+      return true; // Default to allowed if no data
+    }
+    
+    const coefficients = this.currentRoundDetails.production_coefficients;
+    const plantKeys = ['thermal', 'gas', 'nuclear', 'storage', 'hydro', 'wind', 'solar'];
+    const key = plantKeys[plantIndex];
+    
+    // If coefficient exists and is > 0, plant is allowed
+    return coefficients[key] !== undefined ? coefficients[key] > 0 : true;
+  }
+
+  // Helper method to get scenario comment
+  get scenarioComment(): string {
+    return this.currentRoundDetails?.comment || 'Vítejte ve hře! Sledujte spotřebu a výrobu energie.';
+  }
+
   // Helper method to get round type name
   getRoundTypeName(roundType: number): string {
     switch (roundType) {

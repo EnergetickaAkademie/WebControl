@@ -36,52 +36,42 @@
 
     <!-- Game View - For Day/Night Rounds -->
     <div *ngIf="currentView === 'game'" class="game-view">
-      <!-- New Game Layout: Left - Middle - Right -->
+      <!-- New Game Layout: Left (60%) - Right (40% Teams) -->
       <div class="game-layout">
-        <!-- Left Side - Boards -->
-        <div class="boards-left">
-          <div *ngFor="let board of getLeftBoards()" class="board-card" [class.placeholder]="isBoardPlaceholder(board)">
-            <div class="board-header">
-              <h4 class="header-team-name">{{ getTeamDisplayName(board) }}</h4>
-              <div class="board-indicators">
-                <span 
-                  class="grid-status-icon" 
-                  [style.background-image]="'url(' + getGridStatusIcon(board) + ')'"
-                ></span>
-              </div>
-            </div>
-            <div class="board-data">
-              <div class="power-line">
-                <span class="power-label">Výroba:</span>
-                <span class="power-value">{{ board.production || 0 | number:'1.0-0' }} MW</span>
-              </div>
-              <div class="power-line">
-                <span class="power-label">Spotřeba:</span>
-                <span class="power-value">{{ board.consumption || 0 | number:'1.0-0' }} MW</span>
-              </div>
+        <!-- Left Side (60%) - Power Plants, Comment, Weather, Buildings, Disabled Sources -->
+        <div class="left-column">
+          <!-- Power Plants Icons Row -->
+          <div class="power-plants-row">
+            <div class="power-plant-icon" *ngFor="let plant of [0,1,2,3,4,5,6]; let i = index">
+              <img [src]="'/icons/rework/' + (isPowerPlantAllowed(i) ? ['01_tepelna_on.svg', '02_plynova_on.svg', '03_jaderna_on.svg', '04_akumulace_on.svg', '05_vodni_on.svg', '06_vetrna_on.svg', '07_solar_on.svg'][i] : ['01_tepelna_off.svg', '02_plynova_off.svg', '03_jaderna_off.svg', '04_akumulace_off.svg', '05_vodni_off.svg', '06_vetrna_off.svg', '07_solar_off.svg'][i])" 
+                   alt="Power plant icon">
             </div>
           </div>
-        </div>
 
-        <!-- Middle - Weather and Special Effects -->
-        <div class="weather-info">
-          <!-- Weather Box (Top) -->
+          <!-- Scenario Comment Text -->
+          <div class="scenario-comment">
+            {{ scenarioComment }}
+          </div>
+
+          <!-- Weather Box -->
           <div class="weather-box" [style.background-image]="weatherBoxBackground">
             <div class="weather-box-content">
-              <!-- Left Column - Weather Icon -->
+              <!-- Left Column - Weather Icon (30%) -->
               <div class="weather-icon-column">
                 <div class="weather-main-icon" [innerHTML]="weatherMainIcon"></div>
               </div>
               
-              <!-- Right Column - Weather Info -->
-              <div class="weather-info-column">
-                <!-- Temperature Row -->
+              <!-- Middle Column - Temperature (30%) -->
+              <div class="weather-temperature-column">
                 <div class="weather-temperature">{{ weatherTemperature }}</div>
-                
-                <!-- Weather Type Row -->
+              </div>
+
+              <!-- Right Column - Weather Info (40%) -->
+              <div class="weather-info-column">
+                <!-- Weather Type at top -->
                 <div class="weather-type">{{ weatherTypeName }}</div>
                 
-                <!-- Wind Row (Optional) -->
+                <!-- Wind Row at bottom -->
                 <div class="weather-wind" *ngIf="windInfo">
                   <div class="wind-icon" [innerHTML]="windIcon"></div>
                   <div class="wind-speed">{{ windSpeed }}</div>
@@ -90,9 +80,24 @@
             </div>
           </div>
 
-          <!-- Special Effects Box (Bottom) -->
+          <!-- Buildings Info Box -->
+          <div class="buildings-info-box">
+            <img src="/icons/rework/ico_build.svg" alt="Buildings icon" class="buildings-icon">
+            <span class="buildings-text">Můžete postavit až X malých staveb.</span>
+          </div>
+
+          <!-- Disabled Sources Box -->
+          <div class="disabled-sources-box">
+            <span class="disabled-sources-label">Odstavené zdroje:</span>
+            <div class="disabled-sources-icons">
+              <img src="/icons/rework/ico_plyn_off.svg" alt="Gas disabled">
+              <img src="/icons/rework/ico_solar_off.svg" alt="Solar disabled">
+              <img src="/icons/rework/ico_vitr_off.svg" alt="Wind disabled">
+            </div>
+          </div>
+
+          <!-- Special Effects Box (if any) -->
           <div *ngIf="specialEffects.length > 0" class="special-effects-box">
-            <!--<h4>Speciální efekty:</h4>-->
             <ul class="effects-list">
               <li *ngFor="let effect of specialEffects" class="effect-item">
                 <div class="effect-icon">
@@ -105,26 +110,25 @@
           </div>
         </div>
 
-        <!-- Right Side - Boards -->
-        <div class="boards-right">
-          <div *ngFor="let board of getRightBoards()" class="board-card" [class.placeholder]="isBoardPlaceholder(board)">
-            <div class="board-header">
-              <h4 class="header-team-name">{{ getTeamDisplayName(board) }}</h4>
-              <div class="board-indicators">
-                <span 
-                  class="grid-status-icon" 
-                  [style.background-image]="'url(' + getGridStatusIcon(board) + ')'"
-                ></span>
-              </div>
+        <!-- Right Side (40%) - All Teams in One Column -->
+        <div class="teams-column">
+          <div *ngFor="let board of getAllBoards()" 
+               class="team-card" 
+               [class.placeholder]="isBoardPlaceholder(board)"
+               [style.background-color]="getTeamBackgroundColor(board)">
+            <!-- Left: Team Name -->
+            <div class="team-name">
+              {{ getTeamDisplayName(board) }}
             </div>
-            <div class="board-data">
-              <div class="power-line">
-                <span class="power-label">Výroba:</span>
-                <span class="power-value">{{ board.production || 0 | number:'1.0-0' }} MW</span>
+            <!-- Right: Production and Consumption -->
+            <div class="team-stats">
+              <div class="stat-line">
+                <span class="stat-label">Výroba:</span>
+                <span class="stat-value">{{ board.production || 0 | number:'1.0-0' }} MW</span>
               </div>
-              <div class="power-line">
-                <span class="power-label">Spotřeba:</span>
-                <span class="power-value">{{ board.consumption || 0 | number:'1.0-0' }} MW</span>
+              <div class="stat-line">
+                <span class="stat-label">Spotřeba:</span>
+                <span class="stat-value">{{ board.consumption || 0 | number:'1.0-0' }} MW</span>
               </div>
             </div>
           </div>
