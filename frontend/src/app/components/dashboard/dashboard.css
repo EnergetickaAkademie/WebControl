@@ -524,10 +524,10 @@
 /* Main Game Layout: Left (60%) - Right (40%) */
 .game-layout {
   display: grid;
-  grid-template-columns: 60% 40%; /* Left column 60%, right column 40% */
-  gap: 20px;
+  grid-template-columns: 58% 40%; /* Left column 58%, right column 40%, more gap between */
+  gap: 2%; /* Increased gap from 20px to 2% for more horizontal space */
   height: 100vh;
-  padding: 20px;
+  padding: 20px 7vw; /* Increased horizontal padding from 40px to 80px */
   box-sizing: border-box;
 }
 
@@ -535,6 +535,7 @@
 .left-column {
   display: flex;
   flex-direction: column;
+  justify-content: center; /* Center vertically */
   gap: 15px;
   height: 100%;
 }
@@ -543,7 +544,7 @@
 .power-plants-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end; /* Align to bottom so all icons have same baseline */
   gap: 10px;
   height: 10%; /* 10% of column height */
 }
@@ -551,14 +552,16 @@
 .power-plant-icon {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-end; /* Align to bottom */
   justify-content: center;
+  height: 100%;
 }
 
 .power-plant-icon img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  object-position: bottom; /* Align image to bottom */
 }
 
 /* Scenario Comment Text */
@@ -566,20 +569,21 @@
   height: 7%; /* 70% of icon height */
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* Left justified */
   padding: 10px 20px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border-radius: 8px;
-  font-size: 1.5vw;
-  font-family: 'DINPro-Regular', Arial, sans-serif;
-  text-align: center;
-  color: #000;
+  background-color: transparent; /* Remove box background */
+  border-radius: 0;
+  font-size: 2.5vw;
+  font-family: 'DINPro-Bold', Arial, sans-serif; /* Made bold */
+  font-weight: 700;
+  text-align: left; /* Left aligned text */
+  color: #31194e;
 }
 
 /* Weather Box - 35% height */
 .weather-box {
-  height: 35%;
-  border: 3px solid #000;
+  height: 30%;
+  /*border: 3px solid #000;*/
   border-radius: 12px;
   position: relative;
   display: flex;
@@ -587,6 +591,7 @@
   background-position: center;
   background-repeat: no-repeat;
   background-color: white;
+  padding: 50px 50px;
 }
 
 /* Weather Box Content - Three Columns */
@@ -627,10 +632,10 @@
 }
 
 .weather-temperature {
-  font-size: 5vw;
+  font-size: 7vw;
   font-weight: 900;
   font-family: 'DINPro-Black', Arial, sans-serif;
-  color: #000;
+  color: #31194e;
   text-align: center;
   line-height: 1;
 }
@@ -650,7 +655,7 @@
   font-size: 2.5vw;
   font-weight: 700;
   font-family: 'DINPro-Bold', Arial, sans-serif;
-  color: #000;
+  color: #31194e;
   text-align: left;
   line-height: 1.2;
 }
@@ -682,6 +687,7 @@
 .wind-speed {
   font-weight: bold;
   font-family: 'DINPro-Bold', Arial, sans-serif;
+  color: #31194e;
 }
 
 /* Buildings Info Box - 15% height */
@@ -689,23 +695,25 @@
   height: 15%;
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 10px 20px;
+  justify-content: flex-start; /* Left justified */
+  gap: 20px; /* Space between icon and text */
+  padding: 10px 80px;
   background-color: rgba(255, 255, 255, 0.9);
   border-radius: 8px;
-  border: 2px solid #000;
+  /*border: 2px solid #000;*/
 }
 
 .buildings-icon {
-  height: 80%;
+  height: 60%; /* Reduced from 80% to match outage icons size */
   object-fit: contain;
 }
 
 .buildings-text {
   font-size: 1.8vw;
-  font-family: 'DINPro-Regular', Arial, sans-serif;
-  color: #000;
-  flex: 1;
+  font-family: 'DINPro-Bold', Arial, sans-serif;
+  color: #31194e;
+  margin: auto;
+  font-weight: 700;
 }
 
 /* Disabled Sources Box - Same height as buildings */
@@ -713,28 +721,31 @@
   height: 15%;
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 10px 20px;
+  justify-content: flex-start; /* Left justified */
+  gap: 20px; /* Space between label and icons */
+  padding: 10px 80px;
   background-color: rgba(255, 255, 255, 0.9);
   border-radius: 8px;
-  border: 2px solid #000;
+  /*border: 2px solid #000;*/
 }
 
 .disabled-sources-label {
   font-size: 1.8vw;
-  font-family: 'DINPro-Regular', Arial, sans-serif;
-  color: #000;
+  font-family: 'DINPro-Bold', Arial, sans-serif;
+  color: #31194e;
   margin-right: 10px;
+  font-weight: 700;
 }
 
 .disabled-sources-icons {
   display: flex;
   gap: 15px;
   align-items: center;
+  margin: auto;
 }
 
 .disabled-sources-icons img {
-  height: 4vh;
+  height: 60%;
   object-fit: contain;
 }
 
@@ -789,6 +800,7 @@
 .teams-column {
   display: flex;
   flex-direction: column;
+  justify-content: center; /* Center vertically on the page */
   gap: 12px;
   height: 100%;
   overflow-y: auto;
@@ -797,33 +809,42 @@
 /* Team Card */
 .team-card {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Left: team name, Right: stats */
-  gap: 15px;
-  padding: 15px 20px;
-  border-radius: 8px;
-  min-height: 18vh;
+  grid-template-columns: 25% 75%; /* Team name 25%, stats 75% */
+  gap: 0; /* Remove gap to have clean division */
+  border-radius: 33px; /*WHEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE Esquie*/
+  min-height: 14vh; /* Increased from 12vh to 14vh to make rows a bit larger */
   align-items: center;
+  background-color: white; /* White background for the whole card */
+  overflow: hidden; /* Ensure border-radius applies to children */
+  border: 2px solid #31194e;
+  margin: 10px 0px 10px 0px;
 }
 
 .team-card.placeholder {
   opacity: 0.6;
 }
 
-/* Team Name - Left Side */
+/* Team Name - Left Side with colored background */
 .team-name {
-  font-size: 2.5vw;
+  font-size: 4vw; /* Increased from 2.5vw */
   font-family: 'DINPro-Black', Arial, sans-serif;
   font-weight: 900;
-  color: #000;
+  color: #31194e;
   display: flex;
   align-items: center;
+  justify-content: center;
+  padding: 15px 10px; /* Reduced horizontal padding */
+  height: 100%; /* Take full height of card */
+  border-right: 2px solid #000; /* Vertical line between columns */
 }
 
-/* Team Stats - Right Side */
+/* Team Stats - Right Side with white background */
 .team-stats {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px; /* Reduced gap */
+  padding: 10px 30px; /* Increased horizontal padding from 20px to 30px */
+  background-color: white;
 }
 
 .stat-line {
@@ -834,15 +855,23 @@
 
 .stat-label {
   font-size: 1.5vw;
-  font-family: 'DINPro-Regular', Arial, sans-serif;
-  color: #000;
+  font-family: 'DINPro-Black', Arial, sans-serif; /* Made bold */
+  font-weight: 900;
+  text-transform: uppercase; /* Capitalized */
+  color: #31194e;
 }
 
 .stat-value {
   font-size: 1.8vw;
   font-family: 'DINPro-Black', Arial, sans-serif;
   font-weight: 900;
-  color: #000;
+  color: #31194e;
+}
+
+.stat-value::after {
+  content: ' MW';
+  font-weight: 400; /* MW not bold */
+  font-family: 'DINPro-Regular', Arial, sans-serif;
 }
 
 /* Game Status */
@@ -963,7 +992,7 @@
 
 .dashboard-container.fullscreen .game-layout {
   height: 100vh;
-  padding: 20px;
+  padding: 20px 80px; /* Match the increased horizontal padding */
   margin: 0;
 }
 

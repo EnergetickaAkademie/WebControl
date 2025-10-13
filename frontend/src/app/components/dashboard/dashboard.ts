@@ -537,7 +537,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Helper method to get scenario comment
   get scenarioComment(): string {
-    return this.currentRoundDetails?.comment || 'Vítejte ve hře! Sledujte spotřebu a výrobu energie.';
+    return this.currentRoundDetails?.comment || '';
   }
 
   // Helper method to get round type name

@@ -97,7 +97,7 @@
           </div>
 
           <!-- Special Effects Box (if any) -->
-          <div *ngIf="specialEffects.length > 0" class="special-effects-box">
+          <!-- <div *ngIf="specialEffects.length > 0" class="special-effects-box">
             <ul class="effects-list">
               <li *ngFor="let effect of specialEffects" class="effect-item">
                 <div class="effect-icon">
@@ -107,28 +107,27 @@
                 <span class="effect-text">{{ effect.text }}</span>
               </li>
             </ul>
-          </div>
+          </div> -->
         </div>
 
         <!-- Right Side (40%) - All Teams in One Column -->
         <div class="teams-column">
           <div *ngFor="let board of getAllBoards()" 
                class="team-card" 
-               [class.placeholder]="isBoardPlaceholder(board)"
-               [style.background-color]="getTeamBackgroundColor(board)">
-            <!-- Left: Team Name -->
-            <div class="team-name">
+               [class.placeholder]="isBoardPlaceholder(board)">
+            <!-- Left: Team Name with colored background -->
+            <div class="team-name" [style.background-color]="getTeamBackgroundColor(board)">
               {{ getTeamDisplayName(board) }}
             </div>
-            <!-- Right: Production and Consumption -->
+            <!-- Right: Production and Consumption with white background -->
             <div class="team-stats">
               <div class="stat-line">
                 <span class="stat-label">Výroba:</span>
-                <span class="stat-value">{{ board.production || 0 | number:'1.0-0' }} MW</span>
+                <span class="stat-value">{{ board.production || 0 | number:'1.0-0' }}</span>
               </div>
               <div class="stat-line">
                 <span class="stat-label">Spotřeba:</span>
-                <span class="stat-value">{{ board.consumption || 0 | number:'1.0-0' }} MW</span>
+                <span class="stat-value">{{ board.consumption || 0 | number:'1.0-0' }}</span>
               </div>
             </div>
           </div>
