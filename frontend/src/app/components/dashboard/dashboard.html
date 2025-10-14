@@ -41,18 +41,25 @@
         <!-- Left Side (60%) - Power Plants, Comment, Weather, Buildings, Disabled Sources -->
         <div class="left-column">
           <!-- Power Plants Icons Row -->
+          <!-- Scenario Comment Text -->
           <div class="power-plants-row">
-            <div class="power-plant-icon" *ngFor="let plant of [0,1,2,3,4,5,6]; let i = index">
+            <div class="power-plant-icon" *ngFor="let plant of [0,1,2,3,4,5,6]; let i = index"
+                 [class.plant-coal]="i === 0"
+                 [class.plant-gas]="i === 1"
+                 [class.plant-nuclear]="i === 2"
+                 [class.plant-hydro-storage]="i === 3"
+                 [class.plant-hydro]="i === 4"
+                 [class.plant-wind]="i === 5"
+                 [class.plant-solar]="i === 6">
               <img [src]="'/icons/rework/' + (isPowerPlantAllowed(i) ? ['01_tepelna_on.svg', '02_plynova_on.svg', '03_jaderna_on.svg', '04_akumulace_on.svg', '05_vodni_on.svg', '06_vetrna_on.svg', '07_solar_on.svg'][i] : ['01_tepelna_off.svg', '02_plynova_off.svg', '03_jaderna_off.svg', '04_akumulace_off.svg', '05_vodni_off.svg', '06_vetrna_off.svg', '07_solar_off.svg'][i])" 
-                   alt="Power plant icon">
+              alt="Power plant icon">
             </div>
           </div>
-
-          <!-- Scenario Comment Text -->
+          
           <div class="scenario-comment">
             {{ scenarioComment }}
           </div>
-
+          
           <!-- Weather Box -->
           <div class="weather-box" [style.background-image]="weatherBoxBackground">
             <div class="weather-box-content">

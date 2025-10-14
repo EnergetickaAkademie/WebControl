@@ -543,25 +543,60 @@
 /* Power Plants Icons Row */
 .power-plants-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: center; /* Center the icons */
   align-items: flex-end; /* Align to bottom so all icons have same baseline */
-  gap: 10px;
+  gap: 55px; /* Fixed gap between icons */
   height: 10%; /* 10% of column height */
 }
 
 .power-plant-icon {
-  flex: 1;
+  flex: 0 0 auto; /* Don't grow or shrink, use natural size */
   display: flex;
   align-items: flex-end; /* Align to bottom */
   justify-content: center;
   height: 100%;
 }
 
-.power-plant-icon img {
-  width: 100%;
-  height: 100%;
+.power-plant-icon img{
   object-fit: contain;
   object-position: bottom; /* Align image to bottom */
+  height: 85%; /* Default height for all icons */
+}
+
+/* Individual power plant scaling - adjust these to match different icon heights */
+.plant-coal img{
+  /* Coal/Thermal plant */
+  height: 85%;
+}
+
+.plant-gas img {
+  /* Gas plant */
+  height: 90%;
+}
+
+.plant-nuclear img{
+  /* Nuclear plant */
+  height: 95%;
+}
+
+.plant-hydro-storage img{
+  /* Hydro storage plant */
+  height: 82%;
+}
+
+.plant-hydro img{
+  /* Hydro plant */
+  height: 80%;
+}
+
+.plant-wind img{
+  /* Wind plant */
+  height: 95%;
+}
+
+.plant-solar img{
+  /* Solar/Photovoltaic plant */
+  height: 80%;
 }
 
 /* Scenario Comment Text */
