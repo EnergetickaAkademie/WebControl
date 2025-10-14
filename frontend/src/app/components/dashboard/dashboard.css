@@ -545,8 +545,8 @@
   display: flex;
   justify-content: center; /* Center the icons */
   align-items: flex-end; /* Align to bottom so all icons have same baseline */
-  gap: 55px; /* Fixed gap between icons */
-  height: 10%; /* 10% of column height */
+  gap: 3vw; /* Responsive gap based on viewport width */
+  height: 5.3vw; /* 10% of column height */
 }
 
 .power-plant-icon {
@@ -561,6 +561,7 @@
   object-fit: contain;
   object-position: bottom; /* Align image to bottom */
   height: 85%; /* Default height for all icons */
+  max-width: 8vw; /* Add max-width so icons also shrink with viewport */
 }
 
 /* Individual power plant scaling - adjust these to match different icon heights */
