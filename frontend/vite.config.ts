@@ -3,8 +3,14 @@ import { angular } from '@angular-devkit/build-angular/plugins/experimental/vite
 
 const customConfig: UserConfig = {
   server: {
-    // Allow any host (handy for tunnelled / custom domains in debug setups)
-    allowedHosts: true,
+    allowedHosts: [
+      'localhost',
+      '127.0.0.1',
+      '::1',
+      'enak.cz',
+      'www.enak.cz',
+      "0.0.0.0"
+    ],
   },
 };
 
