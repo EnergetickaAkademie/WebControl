@@ -7,6 +7,7 @@ import { interval, Subscription } from 'rxjs';
 import { SlidePresentationComponent } from '../slide-presentation/slide-presentation';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BuildingManagerComponent } from '../building-manager/building-manager.component';
+import { ProductionManagerComponent } from '../production-manager/production-manager.component';
 
 // Debug utility - checks for debug flag in localStorage or URL params
 const DEBUG = localStorage.getItem('DEBUG') === 'true' || new URLSearchParams(window.location.search).get('debug') === 'true';
@@ -38,7 +39,7 @@ interface GameRound {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, FormsModule, SlidePresentationComponent, BuildingManagerComponent],
+  imports: [CommonModule, FormsModule, SlidePresentationComponent, BuildingManagerComponent, ProductionManagerComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -67,6 +68,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   @ViewChild(BuildingManagerComponent) buildingManager!: BuildingManagerComponent;
   showBuildingManager = false;
+
+  @ViewChild(ProductionManagerComponent) productionManager!: ProductionManagerComponent;
+  showProductionManager = false;
   
   // Translations
   translations: any = {
@@ -1139,6 +1143,15 @@ get weatherInfo(): any {
               } else {
                 this.buildingManager.close();
               }
+          break;
+        case 'p':
+          event.preventDefault();
+            this.showProductionManager = !this.showProductionManager;
+            if (this.showProductionManager) {
+              this.productionManager.show();
+            } else {
+              this.productionManager.close();
+            }
           break;
       }
     }
