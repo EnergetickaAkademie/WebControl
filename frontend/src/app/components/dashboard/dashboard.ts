@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService, GameStatusService } from '../../services';
 import { CommonModule } from '@angular/common';
@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { interval, Subscription } from 'rxjs';
 import { SlidePresentationComponent } from '../slide-presentation/slide-presentation';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { BuildingManagerComponent } from '../building-manager/building-manager.component';
 
 // Debug utility - checks for debug flag in localStorage or URL params
 const DEBUG = localStorage.getItem('DEBUG') === 'true' || new URLSearchParams(window.location.search).get('debug') === 'true';
@@ -37,7 +38,7 @@ interface GameRound {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, FormsModule, SlidePresentationComponent],
+  imports: [CommonModule, FormsModule, SlidePresentationComponent, BuildingManagerComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -63,6 +64,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Loading states to prevent flickering
   private isLoadingRound = false;
   private roundTransitionTimeout: any = null;
+
+  @ViewChild(BuildingManagerComponent) buildingManager!: BuildingManagerComponent;
+  showBuildingManager = false;
   
   // Translations
   translations: any = {
@@ -1126,6 +1130,15 @@ get weatherInfo(): any {
             event.preventDefault();
             this.toggleDoublePressRequirement();
           }
+          break;
+        case 'm':
+          event.preventDefault();
+            this.showBuildingManager = !this.showBuildingManager;
+              if (this.showBuildingManager) {
+                this.buildingManager.show();
+              } else {
+                this.buildingManager.close();
+              }
           break;
       }
     }
