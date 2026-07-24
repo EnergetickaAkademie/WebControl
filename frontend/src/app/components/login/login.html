@@ -1,34 +1,38 @@
 <div class="login-container">
   <div class="login-card">
-    <h2>Přihlášení lektora</h2>
+    <div class="login-header">
+      <h1>Energetická akademie</h1>
+      <p class="subtitle">Přihlášení lektora</p>
+    </div>
+
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
       <div class="form-group">
-        <label for="username">Uživatelské jméno:</label>
-        <input 
-          type="text" 
-          id="username" 
-          formControlName="username" 
-          placeholder="Zadejte vaše uživatelské jméno"
+        <label for="username">Uživatelské jméno</label>
+        <input
+          type="text"
+          id="username"
+          formControlName="username"
+          placeholder="např. lecturer1"
           [class.error]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched"
         >
         <div *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched" class="error-text">
           <span *ngIf="loginForm.get('username')?.errors?.['required']">Uživatelské jméno je povinné</span>
-          <span *ngIf="loginForm.get('username')?.errors?.['minlength']">Uživatelské jméno musí mít alespoň 3 znaky</span>
+          <span *ngIf="loginForm.get('username')?.errors?.['minlength']">Musí mít alespoň 3 znaky</span>
         </div>
       </div>
 
       <div class="form-group">
-        <label for="password">Heslo:</label>
-        <input 
-          type="password" 
-          id="password" 
-          formControlName="password" 
-          placeholder="Zadejte vaše heslo"
+        <label for="password">Heslo</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          placeholder="••••••••"
           [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
         >
         <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="error-text">
           <span *ngIf="loginForm.get('password')?.errors?.['required']">Heslo je povinné</span>
-          <span *ngIf="loginForm.get('password')?.errors?.['minlength']">Heslo musí mít alespoň 6 znaků</span>
+          <span *ngIf="loginForm.get('password')?.errors?.['minlength']">Musí mít alespoň 6 znaků</span>
         </div>
       </div>
 
@@ -36,12 +40,12 @@
         {{ errorMessage }}
       </div>
 
-      <button 
-        type="submit" 
+      <button
+        type="submit"
         [disabled]="loginForm.invalid || isLoading"
         class="login-btn"
       >
-        <span *ngIf="isLoading">Přihlašování...</span>
+        <span *ngIf="isLoading">Přihlašování…</span>
         <span *ngIf="!isLoading">Přihlásit se</span>
       </button>
     </form>

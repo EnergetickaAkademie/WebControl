@@ -1,90 +1,162 @@
+@font-face {
+  font-family: 'DINPro-Regular';
+  src: url('/fonts/DINPro-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'DINPro-Black';
+  src: url('/fonts/DINPro-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+}
+
+/* Force the login component to take over the entire viewport */
+:host {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #e9ecef;  /* solid grey */
+  font-family: 'DINPro-Regular', Arial, sans-serif;
+  z-index: 1000;        /* ensure it covers everything else */
+  overflow-y: auto;     /* allow scrolling if needed */
+}
+
+/* Reset body background as a fallback */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #e9ecef;  /* match the host */
+}
+
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px;
+  /* background not needed – inherits from host */
 }
 
 .login-card {
-  background: white;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  padding: 48px 40px 40px;
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
   width: 100%;
   max-width: 400px;
+  border: 1px solid #dde1e6;
+  transition: box-shadow 0.2s;
 }
 
-.login-card h2 {
+.login-card:hover {
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
+}
+
+.login-header {
   text-align: center;
-  margin-bottom: 30px;
-  color: #333;
+  margin-bottom: 32px;
+}
+
+.login-header h1 {
+  font-family: 'DINPro-Black', Arial, sans-serif;
+  font-weight: 900;
   font-size: 28px;
-  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.5px;
+}
+
+.login-header .subtitle {
+  font-size: 16px;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 400;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
-  color: #555;
+  margin-bottom: 6px;
+  color: #1f2937;
   font-weight: 500;
+  font-size: 14px;
 }
 
 .form-group input {
   width: 100%;
-  padding: 12px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
   font-size: 16px;
-  transition: border-color 0.3s ease;
+  font-family: 'DINPro-Regular', Arial, sans-serif;
+  transition: border-color 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
+  background: #fafbfc;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  background: #ffffff;
 }
 
 .form-group input.error {
-  border-color: #e74c3c;
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.form-group input.error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
 }
 
 .error-text {
-  color: #e74c3c;
-  font-size: 14px;
-  margin-top: 5px;
+  color: #ef4444;
+  font-size: 13px;
+  margin-top: 4px;
 }
 
 .error-message {
-  background: #ffeaea;
-  color: #e74c3c;
-  padding: 12px;
-  border-radius: 6px;
+  background: #fef2f2;
+  color: #b91c1c;
+  padding: 12px 16px;
+  border-radius: 8px;
   margin-bottom: 20px;
   text-align: center;
-  border: 1px solid #f8d7da;
+  border: 1px solid #fecaca;
+  font-size: 14px;
 }
 
 .login-btn {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1a1a2e;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 16px;
-  font-weight: 600;
+  font-family: 'DINPro-Black', Arial, sans-serif;
+  font-weight: 900;
   cursor: pointer;
-  transition: opacity 0.3s ease;
+  transition: background 0.2s, transform 0.1s;
+  letter-spacing: 0.3px;
 }
 
 .login-btn:hover:not(:disabled) {
-  opacity: 0.9;
+  background: #2d2d44;
+}
+
+.login-btn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .login-btn:disabled {
@@ -92,24 +164,12 @@
   cursor: not-allowed;
 }
 
-.demo-users {
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-}
-
-.demo-users h3 {
-  color: #666;
-  font-size: 16px;
-  margin-bottom: 12px;
-}
-
-.demo-users p {
-  margin: 8px 0;
-  font-size: 14px;
-  color: #777;
-}
-
-.demo-users strong {
-  color: #333;
+/* Responsive */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 32px 20px 28px;
+  }
+  .login-header h1 {
+    font-size: 24px;
+  }
 }

@@ -66,6 +66,14 @@
           <span class="shortcut-key">F</span>
           <span class="shortcut-description">Zapnout fullscreen</span>
         </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">P</span>
+          <span class="shortcut-description">Upravit výrobu/spotřebu</span>
+        </div>
+        <div class="shortcut-item">
+          <span class="shortcut-key">M</span>
+          <span class="shortcut-description">Upravit počty načtených budov</span>
+        </div>
         <div class="shortcut-item">2x
           <span class="shortcut-key">ESC</span>
           <span class="shortcut-description">Ukončit fullscreen</span>
@@ -120,14 +128,13 @@
       </div>
     </div>
 
-    <!-- Game Status -->
+    <!-- Game Status 
     <div *ngIf="gameStatus" class="game-status">
       <h2>Stav hry</h2>
       <p><strong>Stav:</strong> {{ gameStatus.game_active ? 'Aktivní' : 'Neaktivní' }}</p>
       <p><strong>Aktuální kolo:</strong> {{ gameStatus.current_round }} / {{ gameStatus.total_rounds }}</p>
       <p><strong>Připojená zařízení:</strong> {{ connectedBoards.length }}</p>
       
-      <!-- Show Statistics Button - appears when game has ended -->
       <div *ngIf="isGameFinished()" class="game-finished-actions">
         <p class="game-finished-message">Hra byla ukončena, pro zobrazení statistik týmů klikněte níže:</p>
         <button
@@ -138,6 +145,6 @@
         </button>
       </div>
     </div>
-
+    -->
   </div>
 </div>
