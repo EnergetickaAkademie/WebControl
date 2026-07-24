@@ -166,7 +166,7 @@ html, body {
 
 /* Responsive */
 @media (max-width: 480px) {
-  .login-card {
+  .login-card { 
     padding: 32px 20px 28px;
   }
   .login-header h1 {
