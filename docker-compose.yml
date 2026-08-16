@@ -10,8 +10,10 @@ services:
     environment:
       - JWT_SECRET=your-secret-key-change-in-production
       - DEBUG=false  # Set to 'true' for verbose logging
+      - BOARD_STATE_DB_PATH=/app/data/board_state.db
     volumes:
       - ./config:/app/config:ro
+      - coreapi-state:/app/data
     networks:
       - app-network
     restart: unless-stopped
@@ -32,3 +34,6 @@ services:
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  coreapi-state:
