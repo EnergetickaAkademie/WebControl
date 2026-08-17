@@ -3,7 +3,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService, GameStatusService } from '../../services';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { interval, Subscription } from 'rxjs';
+import { finalize, interval, Subscription } from 'rxjs';
 import { SlidePresentationComponent } from '../slide-presentation/slide-presentation';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { BuildingManagerComponent } from '../building-manager/building-manager.component';
@@ -80,6 +80,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   
   private gameStatusSubscription?: Subscription;
   private pollSubscription?: Subscription;
+  private pollInFlight = false;
 
   constructor(
     private authService: AuthService,
@@ -180,9 +181,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadGameStatus();
     this.pollSubscription = interval(500).subscribe(() => {
       this.loadGameStatus();
-      if (this.currentView === 'game') {
-        this.loadConnectedBoards();
-      }
     });
   }
 
@@ -196,9 +194,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadGameStatus() {
+    if (this.pollInFlight) {
+      return;
+    }
+    this.pollInFlight = true;
+
     // Use enhanced polling for lecturers to get round details
     if (this.userInfo?.user_type === 'lecturer') {
-      this.gameStatusService.pollForUsers().subscribe({
+      this.gameStatusService.pollForUsers().pipe(
+        finalize(() => this.pollInFlight = false)
+      ).subscribe({
         next: (response: any) => {
           this.gameStatus = response.game_status;
           this.connectedBoards = response.boards || [];
@@ -269,7 +274,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadBasicGameStatus() {
-    this.authService.getGameStatistics().subscribe({
+    this.authService.getGameStatistics().pipe(
+      finalize(() => this.pollInFlight = false)
+    ).subscribe({
       next: (response: any) => {
         this.gameStatus = response.game_status;
         this.connectedBoards = response.statistics || [];

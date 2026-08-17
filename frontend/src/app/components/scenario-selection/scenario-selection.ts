@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { interval, Subscription } from 'rxjs';
+import { finalize, interval, Subscription } from 'rxjs';
 
 // Debug utility - checks for debug flag in localStorage or URL params
 const DEBUG = localStorage.getItem('DEBUG') === 'true' || new URLSearchParams(window.location.search).get('debug') === 'true';
@@ -33,6 +33,7 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
   isLoadingStatistics = false;
 
   private pollSubscription?: Subscription;
+  private pollInFlight = false;
 
   constructor(
     private authService: AuthService,
@@ -134,7 +135,14 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
   }
 
   loadGameStatus() {
-    this.authService.pollForUsers().subscribe({
+    if (this.pollInFlight) {
+      return;
+    }
+    this.pollInFlight = true;
+
+    this.authService.pollForUsers().pipe(
+      finalize(() => this.pollInFlight = false)
+    ).subscribe({
       next: (response: any) => {
         this.gameStatus = response.game_status || null;
         this.connectedBoards = response.boards || [];

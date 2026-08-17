@@ -57,6 +57,48 @@ Board ID is extracted from the JWT token username (e.g., `board1`, `board2`, etc
 
 ## Binary Endpoints
 
+### Workshop v2 atomic sync
+
+**Endpoint:** `POST /coreapi/board/sync/v2`
+**Content-Type:** `application/octet-stream`
+
+This is the preferred workshop-v2 transport. Multi-byte values are big-endian
+and signed unless marked otherwise. A client must reject the entire response
+when its size, magic, version, flags, or echoed sequence is invalid.
+
+Request (52 bytes):
+
+| Offset | Size | Type | Description |
+|---:|---:|---|---|
+| 0 | 2 | char[2] | Magic `EA` |
+| 2 | 1 | uint8 | Version `2` |
+| 3 | 1 | uint8 | Flags; currently `0` |
+| 4 | 4 | uint32 | Request sequence |
+| 8 | 4 | int32 | Total production in whole MW |
+| 12 | 4 | int32 | Total consumption in whole MW |
+| 16 | 36 | int32[9] | Production by source ID in whole MW |
+
+Response (210 bytes):
+
+| Offset | Size | Type | Description |
+|---:|---:|---|---|
+| 0 | 2 | char[2] | Magic `EA` |
+| 2 | 1 | uint8 | Version `2` |
+| 3 | 1 | uint8 | Bit 0: game active |
+| 4 | 4 | uint32 | Echoed request sequence |
+| 8 | 4 | uint32 | Configuration revision |
+| 12 | 36 | int32[9] | Production coefficients × 1000 |
+| 48 | 36 | int32[9] | Minimum production ranges in milli-MW |
+| 84 | 36 | int32[9] | Maximum production ranges in milli-MW |
+| 120 | 72 | int32[18] | Building consumption in milli-MW |
+| 192 | 18 | uint8[18] | Authoritative building counts |
+
+Source array index `0` is reserved; indices `1`–`8` match `Enak.Source`.
+Building indices `0`–`17` match `Enak.Building`. The response always contains a
+complete snapshot, including when the configuration revision has not changed.
+
+The endpoints below remain available as a rollout fallback for older firmware.
+
 ### 1. Board Registration
 
 **Endpoint:** `POST /coreapi/register`  
