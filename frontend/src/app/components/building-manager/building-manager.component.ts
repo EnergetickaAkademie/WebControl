@@ -31,8 +31,11 @@ import { FormsModule } from '@angular/forms';
             </div>
           </div>
           <div class="actions">
-            <button (click)="save()" [disabled]="isSaving">Uložit</button>
-            <button (click)="close()">Zavřít</button>
+            <button class="reset-button" (click)="resetSelectedBoard()" [disabled]="isSaving || !selectedBoard">
+              Vynulovat budovy týmu
+            </button>
+            <button class="save-button" (click)="save()" [disabled]="isSaving">Uložit</button>
+            <button class="close-button" (click)="close()" [disabled]="isSaving">Zavřít</button>
           </div>
           <div *ngIf="saveMessage" class="message">{{ saveMessage }}</div>
         </div>
@@ -57,10 +60,12 @@ import { FormsModule } from '@angular/forms';
     `.count { min-width: 30px; text-align: center; font-weight: bold; }`,
     `.actions { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }`,
     `.actions button { padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; }`,
-    `.actions button:first-child { background: #27ae60; color: white; }`,
-    `.actions button:first-child:hover { background: #219a52; }`,
-    `.actions button:last-child { background: #e74c3c; color: white; }`,
-    `.actions button:last-child:hover { background: #c0392b; }`,
+    `.reset-button { margin-right: auto; background: #d35400; color: white; }`,
+    `.reset-button:hover { background: #b84700; }`,
+    `.save-button { background: #27ae60; color: white; }`,
+    `.save-button:hover { background: #219a52; }`,
+    `.close-button { background: #e74c3c; color: white; }`,
+    `.close-button:hover { background: #c0392b; }`,
     `.actions button:disabled { opacity: 0.6; cursor: not-allowed; }`,
     `.message { margin-top: 10px; color: #27ae60; text-align: center; }`
   ]
@@ -123,6 +128,36 @@ export class BuildingManagerComponent implements OnInit {
         this.selectedBoard = board;
       }
     }
+  }
+
+  resetSelectedBoard() {
+    if (!this.selectedBoard) return;
+
+    const board = this.selectedBoard;
+    const confirmed = window.confirm(
+      `Opravdu chcete vynulovat všechny načtené budovy týmu ${board.displayName}?`
+    );
+    if (!confirmed) return;
+
+    this.isSaving = true;
+    this.saveMessage = '';
+    this.http.post('/coreapi/lecturer/reset_board_buildings', {
+      board_id: board.id
+    }).subscribe({
+      next: () => {
+        board.items.forEach((item: { count: number }) => item.count = 0);
+        this.selectedBoard = board;
+        this.isSaving = false;
+        this.saveMessage = `Budovy týmu ${board.displayName} byly vynulovány.`;
+        setTimeout(() => this.saveMessage = '', 3000);
+      },
+      error: err => {
+        this.isSaving = false;
+        this.saveMessage = 'Reset budov se nezdařil.';
+        console.error(err);
+        setTimeout(() => this.saveMessage = '', 3000);
+      }
+    });
   }
 
   save() {
