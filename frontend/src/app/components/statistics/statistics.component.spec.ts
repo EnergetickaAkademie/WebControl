@@ -96,7 +96,7 @@ describe('StatisticsComponent', () => {
   });
 
   it('does not choose a single winner for a tie', () => {
-    component.gameStatistics!.team_performance.board2.popularity = 96;
+    component.gameStatistics!.team_performance['board2'].popularity = 96;
     expect(component.winnerLabel).toBe('Remíza');
     expect(component.getRank(component.sortedTeams[0])).toBe(1);
     expect(component.getRank(component.sortedTeams[1])).toBe(1);

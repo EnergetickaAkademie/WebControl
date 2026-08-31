@@ -75,6 +75,10 @@
             <span>Firmware</span>
             <strong>{{ board.firmware_version || 'Neznámá verze' }}</strong>
           </div>
+          <div class="board-status-row" *ngIf="board.firmware_protocol >= 1">
+            <span>Přenos</span>
+            <strong>{{ getTransport(board) }}</strong>
+          </div>
         </div>
         <div class="board-card-footer">
           <span *ngIf="isSelected(board)" class="selected-label">✓ Vybráno</span>

@@ -21,14 +21,36 @@ export class FirmwareComponent implements OnInit, OnDestroy {
   job: any = null;
   error = '';
   private poll?: Subscription;
+  private session?: Subscription;
 
   constructor(private auth: AuthService, private router: Router) {}
 
-  ngOnInit(): void { this.refresh(); }
-  ngOnDestroy(): void { this.poll?.unsubscribe(); }
+  ngOnInit(): void {
+    this.touchSession();
+    this.session = interval(5000).subscribe(() => {
+      this.touchSession();
+      this.refreshBoards();
+    });
+    this.refresh();
+  }
+  ngOnDestroy(): void { this.poll?.unsubscribe(); this.session?.unsubscribe(); }
+
+  private touchSession(): void {
+    this.auth.touchFirmwareSession().subscribe({
+      error: err => { this.error = err?.error?.error || 'Firmware session could not be maintained'; }
+    });
+  }
 
   refresh(): void {
     this.refreshing = true;
+    this.refreshBoards();
+    this.auth.getFirmwareReleases().subscribe({
+      next: value => { this.releases = value.releases || []; this.selectedVersion = this.selectedVersion || this.latestStable()?.version || ''; },
+      error: err => { this.error = err?.error?.error || 'Firmware releases could not be loaded'; }
+    });
+  }
+
+  private refreshBoards(): void {
     this.auth.getFirmwareBoards().subscribe({
       next: value => {
         this.boards = value.boards || [];
@@ -41,10 +63,6 @@ export class FirmwareComponent implements OnInit, OnDestroy {
         this.refreshing = false;
       },
       error: err => { this.error = err?.error?.error || 'Firmware boards could not be loaded'; this.loading = false; this.refreshing = false; }
-    });
-    this.auth.getFirmwareReleases().subscribe({
-      next: value => { this.releases = value.releases || []; this.selectedVersion = this.selectedVersion || this.latestStable()?.version || ''; },
-      error: err => { this.error = err?.error?.error || 'Firmware releases could not be loaded'; }
     });
   }
 
@@ -62,6 +80,10 @@ export class FirmwareComponent implements OnInit, OnDestroy {
   selectEligible(): void { this.boards.filter(board => this.eligible(board)).forEach(board => this.selectedBoards.add(board.board_id)); }
   isSelected(board: any): boolean { return this.selectedBoards.has(board.board_id); }
   getBoardName(board: any): string { return board?.display_name || board?.board_id || 'Board'; }
+
+  getTransport(board: any): string {
+    return board?.firmware_transport === 'direct' ? 'Lokální' : 'Vzdálená';
+  }
 
   getBoardStatus(board: any): string {
     if (!board?.connected) return 'Odpojeno';

@@ -36,7 +36,11 @@ Create the deployment-only `config/` directory with these files:
 - `config/users.toml`: lecturer and board accounts, display names, groups, and
   per-board `ota_password` values.
 - `config/firmware.toml`: firmware repository or manifest URL, GitHub token,
-  cache duration, and OTA port.
+  cache duration, OTA port, and explicitly allowed local OTA CIDRs.
+
+Set `direct_ota_cidrs` to the board network when CoreAPI runs locally with the
+boards. Leave it empty for cloud deployments. Boards with the pull-capable
+firmware then download updates through their existing outbound connection.
 
 The configuration is mounted read-only into CoreAPI. Edit it on the host and
 restart CoreAPI after changes:

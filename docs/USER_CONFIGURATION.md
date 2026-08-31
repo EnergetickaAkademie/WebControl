@@ -54,11 +54,30 @@ demo = { password = "demo123", ota_password = "demo-ota-secret", name = "Demo Bo
 - `password` - Login password (required)
 - `name` - Display name for the team/device (required)
 - `group` - Group assignment (optional, defaults to "group1")
-- `ota_password` - OTA password compiled into the board firmware (required for firmware updates)
+- `ota_password` - OTA password compiled into the board firmware (required for local direct updates)
 
-For mainboards that support web firmware updates, `ota_password` is the
-per-board password compiled into the OTA firmware. It is used by CoreAPI when
-probing and updating that board and is never returned by the configuration API.
+For mainboards that support local web firmware updates, `ota_password` is the
+per-board password compiled into the OTA firmware. It is used only for direct
+local updates and is never returned by the configuration API. Cloud-connected
+boards use their board JWT to pull firmware through CoreAPI instead.
+
+### Firmware transport
+
+The firmware settings are configured in `config/firmware.toml`:
+
+```toml
+[firmware]
+github_repository = "EnergetickaAkademie/v2-firmware"
+manifest_url = ""
+github_token = ""
+catalog_cache_seconds = 300
+ota_port = 8080
+direct_ota_cidrs = ["192.168.1.0/24"]
+```
+
+`direct_ota_cidrs` is required. It lists networks from which CoreAPI may
+attempt direct local OTA connections. Use an empty array for a cloud-only
+deployment. CoreAPI never probes arbitrary addresses reported by a board.
 
 ### Groups
 

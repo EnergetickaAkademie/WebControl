@@ -72,7 +72,7 @@ Request (52 bytes):
 |---:|---:|---|---|
 | 0 | 2 | char[2] | Magic `EA` |
 | 2 | 1 | uint8 | Version `2` |
-| 3 | 1 | uint8 | Flags; currently `0` |
+| 3 | 1 | uint8 | Flags; request flags remain `0` |
 | 4 | 4 | uint32 | Request sequence |
 | 8 | 4 | int32 | Total production in whole MW |
 | 12 | 4 | int32 | Total consumption in whole MW |
@@ -84,7 +84,7 @@ Response (210 bytes):
 |---:|---:|---|---|
 | 0 | 2 | char[2] | Magic `EA` |
 | 2 | 1 | uint8 | Version `2` |
-| 3 | 1 | uint8 | Bit 0: game active |
+| 3 | 1 | uint8 | Bit 0: game active; bit 1: firmware mode |
 | 4 | 4 | uint32 | Echoed request sequence |
 | 8 | 4 | uint32 | Configuration revision |
 | 12 | 36 | int32[9] | Production coefficients × 1000 |
@@ -96,6 +96,15 @@ Response (210 bytes):
 Source array index `0` is reserved; indices `1`–`8` match `Enak.Source`.
 Building indices `0`–`17` match `Enak.Building`. The response always contains a
 complete snapshot, including when the configuration revision has not changed.
+
+Boards advertise pull-OTA support with `X-ENAK-Firmware-Protocol: 1`. CoreAPI
+sets response bit 1 only while the lecturer firmware session is active or an
+update job is unfinished, and only for boards advertising that capability.
+Boards then use the authenticated `POST /coreapi/board/firmware/sync` endpoint
+temporarily. Its JSON response may contain a firmware command with a job ID,
+version, size, SHA-256 and image path. The board downloads the image once from
+that path, verifies it, installs it and reports the result on the next firmware
+sync.
 
 The endpoints below remain available as a rollout fallback for older firmware.
 

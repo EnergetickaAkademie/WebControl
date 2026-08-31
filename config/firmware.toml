@@ -4,3 +4,4 @@ manifest_url = ""
 github_token = ""
 catalog_cache_seconds = 300
 ota_port = 8080
+direct_ota_cidrs = []

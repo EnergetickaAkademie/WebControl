@@ -193,6 +193,12 @@ export class AuthService {
     return this.http.get(`${this.api}/lecturer/firmware/boards`, { headers: this.getHeaders() });
   }
 
+  touchFirmwareSession(): Observable<{ active: boolean; lease_seconds: number }> {
+    return this.http.post<{ active: boolean; lease_seconds: number }>(
+      `${this.api}/lecturer/firmware/session`, {}, { headers: this.getHeaders() }
+    );
+  }
+
   getFirmwareReleases(refresh = false): Observable<any> {
     return this.http.get(`${this.api}/lecturer/firmware/releases?refresh=${refresh}`, { headers: this.getHeaders() });
   }
