@@ -6,6 +6,7 @@
       <span *ngIf="userInfo" class="user-info">
         Vítejte, {{ userInfo.username }}! ({{ userInfo.user_type }})
       </span>
+      <button class="logout-btn" (click)="router.navigate(['/firmware'])">Firmware</button>
       <button class="logout-btn" (click)="logout()">Odhlásit se</button>
     </div>
   </div>

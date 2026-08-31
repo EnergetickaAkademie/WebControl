@@ -1,0 +1,9 @@
+.firmware-page { padding: 20px; font-family: Arial, sans-serif; color: #1f2937; }
+header, .section-title { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+header h1 { margin:0; }
+.panel { background:#fff; border:1px solid #dfe3ea; border-radius:8px; padding:20px; margin:18px 0; box-shadow:0 2px 5px #00000012; }
+select, button { padding:9px 12px; border:1px solid #cbd5e1; border-radius:5px; background:#fff; cursor:pointer; }
+.primary { margin-top:18px; background:#2563eb; color:#fff; border:0; }
+button:disabled { opacity:.5; cursor:not-allowed; }
+table { width:100%; border-collapse:collapse; margin-top:12px; } th, td { text-align:left; padding:10px; border-bottom:1px solid #e5e7eb; }
+.warning { background:#fff7ed; padding:12px; border-radius:5px; } .error { color:#b91c1c; }

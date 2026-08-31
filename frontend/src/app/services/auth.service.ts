@@ -187,4 +187,22 @@ export class AuthService {
   getTranslations(): Observable<any> {
     return this.http.get(`${this.api}/translations`, { headers: this.getHeaders() });
   }
+
+  getFirmwareBoards(): Observable<any> {
+    return this.http.get(`${this.api}/lecturer/firmware/boards`, { headers: this.getHeaders() });
+  }
+
+  getFirmwareReleases(refresh = false): Observable<any> {
+    return this.http.get(`${this.api}/lecturer/firmware/releases?refresh=${refresh}`, { headers: this.getHeaders() });
+  }
+
+  createFirmwareJob(version: string, boardIds: string[], confirmNonUpgrade = false): Observable<any> {
+    return this.http.post(`${this.api}/lecturer/firmware/jobs`,
+      { version, board_ids: boardIds, confirm_non_upgrade: confirmNonUpgrade },
+      { headers: this.getHeaders() });
+  }
+
+  getFirmwareJob(jobId: string): Observable<any> {
+    return this.http.get(`${this.api}/lecturer/firmware/jobs/${encodeURIComponent(jobId)}`, { headers: this.getHeaders() });
+  }
 }

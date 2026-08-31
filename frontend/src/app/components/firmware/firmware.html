@@ -1,0 +1,21 @@
+<main class="firmware-page">
+  <header><button (click)="back()">← Nastavení</button><h1>Aktualizace mainboardů</h1><button (click)="refresh()" [disabled]="refreshing">Obnovit</button></header>
+  <p class="warning" *ngIf="gameActive">Aktualizace jsou během aktivní hry zablokované.</p>
+  <p class="error" *ngIf="error">{{ error }}</p>
+  <section class="panel">
+    <h2>Dostupný firmware</h2>
+    <select [(ngModel)]="selectedVersion" [disabled]="!releases.length">
+      <option *ngFor="let release of releases" [value]="release.version" [disabled]="release.conflict">
+        {{ release.version }} — {{ release.channel === 'prerelease' ? 'předběžná verze' : 'stabilní' }} ({{ release.source }}){{ release.conflict ? ' — konflikt kontrolního součtu' : '' }}
+      </option>
+    </select>
+    <a *ngIf="selectedRelease()?.notes_url" [href]="selectedRelease()?.notes_url" target="_blank" rel="noopener">poznámky k vydání</a>
+  </section>
+  <section class="panel"><div class="section-title"><h2>Boards</h2><button (click)="selectEligible()">Vybrat dostupné</button></div>
+    <table><thead><tr><th></th><th>Board</th><th>Firmware</th><th>Stav</th><th>OTA</th></tr></thead><tbody>
+      <tr *ngFor="let board of boards"><td><input type="checkbox" [checked]="isSelected(board)" [disabled]="!eligible(board)" (change)="toggle(board)"></td><td>{{ board.display_name || board.board_id }}</td><td>{{ board.firmware_version || 'neznámý' }}</td><td>{{ board.connected ? 'Připojeno' : 'Odpojeno' }}</td><td>{{ board.ota_ready ? 'Připraveno' : (board.firmware_error || 'Vyžaduje bootstrap') }}</td></tr>
+    </tbody></table>
+    <button class="primary" (click)="start()" [disabled]="gameActive || !selectedVersion || !selectedBoards.size || !!job && ['queued','running'].includes(job.state)">Spustit aktualizaci ({{ selectedBoards.size }})</button>
+  </section>
+  <section class="panel" *ngIf="job"><h2>Průběh: {{ job.state }}</h2><p *ngIf="job.error" class="error">{{ job.error }}</p><ul><li *ngFor="let board of job.boards">{{ board.board_id }}: {{ board.state }}<span *ngIf="board.error"> — {{ board.error }}</span></li></ul></section>
+</main>
