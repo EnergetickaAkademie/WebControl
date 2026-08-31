@@ -1,21 +1,20 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
+import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { AuthService } from '../../services/auth.service';
-import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { CommonModule } from '@angular/common';
+import { BoardStatistics, GameStatistics, StatisticsResponse, TeamPerformance } from '../../models/game-statistics';
 
-// Debug utility - checks for debug flag in localStorage or URL params
-const DEBUG = localStorage.getItem('DEBUG') === 'true' || new URLSearchParams(window.location.search).get('debug') === 'true';
+Chart.register(...registerables);
 
-function debugLog(message: string, ...args: any[]) {
-  if (DEBUG) {
-    console.log(`DEBUG: ${message}`, ...args);
-  }
+interface TeamEntry {
+  boardId: string;
+  performance: TeamPerformance;
+  board?: BoardStatistics;
 }
 
-Chart.register(...registerables, ChartDataLabels);
+type ScoreKey = 'ecology' | 'finances' | 'stability' | 'development';
 
 @Component({
   selector: 'app-statistics',
@@ -25,30 +24,32 @@ Chart.register(...registerables, ChartDataLabels);
   styleUrls: ['./statistics.component.css']
 })
 export class StatisticsComponent implements OnInit, OnDestroy {
-  gameStatistics: any = null;
-  boardNames: {[key: string]: string} = {}; // Mapping of board_id to display_name
+  gameStatistics: GameStatistics | null = null;
   loading = true;
   error: string | null = null;
-  // Keep a direct reference to the created chart to ensure proper cleanup.
+
   private combinedChart: Chart | null = null;
   private statsSub: Subscription | null = null;
-  private chartInitTimeout: any = null;
+  private chartInitTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  readonly scoreMetrics: Array<{ key: ScoreKey; label: string; color: string }> = [
+    { key: 'ecology', label: 'Ekologie', color: '#159447' },
+    { key: 'finances', label: 'Finance', color: '#d97706' },
+    { key: 'stability', label: 'Stabilita', color: '#2563a6' },
+    { key: 'development', label: 'Rozvoj města', color: '#7c3aed' }
+  ];
 
   constructor(
     private authService: AuthService,
     private router: Router
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadStatistics();
   }
 
-  ngOnDestroy() {
-    // Properly destroy the chart instance to avoid memory leaks
-    if (this.combinedChart) {
-      try { this.combinedChart.destroy(); } catch (e) { console.warn('Chart destroy error', e); }
-      this.combinedChart = null;
-    }
+  ngOnDestroy(): void {
+    this.destroyChart();
     if (this.statsSub) {
       this.statsSub.unsubscribe();
       this.statsSub = null;
@@ -59,113 +60,144 @@ export class StatisticsComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadStatistics() {
+  loadStatistics(): void {
     this.loading = true;
     this.error = null;
-    
-    // Cancel any in-flight request before starting a new one (e.g., user presses 'r')
+    if (this.chartInitTimeout) {
+      clearTimeout(this.chartInitTimeout);
+      this.chartInitTimeout = null;
+    }
+    this.destroyChart();
+
     if (this.statsSub) {
       this.statsSub.unsubscribe();
       this.statsSub = null;
     }
 
     this.statsSub = this.authService.getComprehensiveGameStatistics().subscribe({
-      next: (response: any) => {
-        console.log('Statistics loaded:', response);
-        // Store the original response structure
-        this.gameStatistics = response;
-        this.boardNames = response.board_names || {}; // Store board names mapping
+      next: (response: StatisticsResponse) => {
+        this.gameStatistics = response.game_statistics;
         this.loading = false;
-        
-        // Initialize charts after data is loaded
-        if (this.chartInitTimeout) {
-          clearTimeout(this.chartInitTimeout);
-        }
         this.chartInitTimeout = setTimeout(() => {
-          this.initializeCharts();
+          this.initializeChart();
           this.chartInitTimeout = null;
-        }, 100);
+        }, 0);
       },
-      error: (error: any) => {
-        console.error('Error loading statistics:', error);
-        this.error = 'Failed to load game statistics';
+      error: () => {
+        this.error = 'Statistiky se nepodařilo načíst.';
         this.loading = false;
-        
-        // If it's a network error, try once more after a short delay
-        if (error.status === 0) {
-          console.log('Network error detected, retrying in 2 seconds...');
-          setTimeout(() => {
-            this.loadStatistics();
-          }, 2000);
-        }
       }
     });
   }
 
-  initializeCharts() {
-    console.log('initializeCharts called');
-    console.log('Chart.js available:', typeof Chart);
-    console.log('gameStatistics:', this.gameStatistics);
-    
-    if (!this.gameStatistics?.game_statistics?.team_performance) {
-      console.log('No team performance data found');
-      return;
-    }
+  get teamEntries(): TeamEntry[] {
+    const statistics = this.gameStatistics;
+    if (!statistics) return [];
 
-    console.log('Creating combined team chart...');
-    this.createCombinedTeamChart();
+    const boards = new Map(statistics.boards.map(board => [board.board_id, board]));
+    return Object.entries(statistics.team_performance).map(([boardId, performance]) => ({
+      boardId,
+      performance,
+      board: boards.get(boardId)
+    }));
   }
 
-  createCombinedTeamChart() {
-    const ctx = document.getElementById('combinedTeamChart') as HTMLCanvasElement;
-    if (!ctx) {
-      console.warn('Canvas element combinedTeamChart not found');
-      return;
-    }
-
-    // Destroy existing chart instance we track (Chart.getChart with string id would not work as expected in v4)
-    if (this.combinedChart) {
-      try { this.combinedChart.destroy(); } catch (e) { console.warn('Chart destroy error', e); }
-      this.combinedChart = null;
-    }
-
-    const teams = this.gameStatistics.game_statistics.team_performance;
-    const teamKeys = Object.keys(teams);
-    
-    // Debug logging
-    debugLog('Statistics team_performance data:', teams);
-    debugLog('Team keys:', teamKeys);
-    
-    const teamLabels = teamKeys.map(key => {
-      const teamName = this.getTeamDisplayName(key, teams[key]);
-      debugLog(`Team ${key} -> team_name: ${teams[key].team_name} -> final label: ${teamName}`);
-      return teamName;
+  get sortedTeams(): TeamEntry[] {
+    return [...this.teamEntries].sort((a, b) => {
+      const scoreDifference = b.performance.popularity - a.performance.popularity;
+      return scoreDifference || a.performance.team_name.localeCompare(b.performance.team_name, 'cs');
     });
-    
-    debugLog('Final team labels:', teamLabels);
+  }
 
-    // Metrics data
-    const factors = [
-      { key: 'ecology', label: 'Ekologie', color: '#2ca02c' },
-      { key: 'finances', label: 'Finance', color: '#ff7f0e' },
-      { key: 'elmix', label: 'Stabilita', color: '#d62728' },
-      { key: 'popularity', label: 'Popularita', color: '#1f77b4' }
-    ];
+  get hasTeams(): boolean {
+    return this.teamEntries.length > 0;
+  }
 
-    // Create datasets for each factor
-    const datasets = factors.map(factor => ({
-      label: factor.label,
-      data: teamKeys.map(teamKey => teams[teamKey][factor.key] || 0),
-      backgroundColor: factor.color,
-      borderColor: factor.color,
-      borderWidth: 2
-    }));
+  get winnerLabel(): string {
+    const teams = this.sortedTeams;
+    if (!teams.length) return 'Není k dispozici';
+    const highest = teams[0].performance.popularity;
+    const winners = teams
+      .filter(team => team.performance.popularity === highest)
+      .map(team => team.performance.team_name);
+    return winners.length > 1 ? 'Remíza' : winners[0];
+  }
 
-  this.combinedChart = new Chart(ctx, {
+  get highestPopularity(): number {
+    return this.sortedTeams[0]?.performance.popularity ?? 0;
+  }
+
+  get scenarioName(): string {
+    return this.gameStatistics?.game_summary.scenario_name || 'Dokončená hra';
+  }
+
+  get playedRounds(): number {
+    return this.gameStatistics?.game_summary.total_rounds ?? 0;
+  }
+
+  getBoard(team: TeamEntry): BoardStatistics | undefined {
+    return team.board;
+  }
+
+  getRank(team: TeamEntry): number {
+    const score = team.performance.popularity;
+    return 1 + this.sortedTeams.filter(entry => entry.performance.popularity > score).length;
+  }
+
+  getMetricValue(team: TeamEntry, key: ScoreKey): number {
+    return team.performance[key];
+  }
+
+  formatScore(value: number): string {
+    return `${value.toFixed(1)} %`;
+  }
+
+  formatEnergy(value: number | undefined): string {
+    return `${(value ?? 0).toFixed(0)} MW`;
+  }
+
+  getBalanceClass(value: number | undefined): string {
+    if ((value ?? 0) > 0) return 'positive';
+    if ((value ?? 0) < 0) return 'negative';
+    return 'neutral';
+  }
+
+  goBackToSetup(): void {
+    this.router.navigate(['/setup']);
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent): void {
+    switch (event.key.toLowerCase()) {
+      case 'q':
+      case 'escape':
+        this.goBackToSetup();
+        break;
+      case 'r':
+        this.loadStatistics();
+        break;
+    }
+  }
+
+  private initializeChart(): void {
+    const canvas = document.getElementById('teamComparisonChart') as HTMLCanvasElement | null;
+    if (!canvas || !this.gameStatistics || !this.hasTeams) return;
+
+    this.destroyChart();
+    const teams = this.sortedTeams;
+    const configuration: ChartConfiguration<'bar'> = {
       type: 'bar',
       data: {
-        labels: teamLabels,
-        datasets: datasets
+        labels: teams.map(team => team.performance.team_name),
+        datasets: this.scoreMetrics.map(metric => ({
+          label: metric.label,
+          data: teams.map(team => this.getMetricValue(team, metric.key)),
+          backgroundColor: metric.color,
+          borderColor: metric.color,
+          borderWidth: 1,
+          borderRadius: 4,
+          maxBarThickness: 26
+        }))
       },
       options: {
         responsive: true,
@@ -175,169 +207,41 @@ export class StatisticsComponent implements OnInit, OnDestroy {
             beginAtZero: true,
             max: 100,
             ticks: {
-              callback: function(value: any) {
-                return value + '%';
-              },
-              font: {
-                size: 16  // Make y-axis labels bigger
-              },
-              color: '#ffffff'
+              color: '#718096',
+              callback: value => `${value} %`
             },
-            grid: {
-              color: '#ffffff'
-            }
+            grid: { color: '#edf0f4' }
           },
           x: {
-            ticks: {
-              font: {
-                size: 16  // Make x-axis labels bigger
-              },
-              color: '#ffffff'  // Also set color for consistency
-            },
-            grid: {
-              color: '#ffffff'
-            }
+            ticks: { color: '#52708d' },
+            grid: { display: false }
           }
         },
         plugins: {
           legend: {
-            position: 'right' as any,
+            position: 'bottom',
             labels: {
-              color: '#ffffff',
-              font: {
-                size: 18,
-                weight: 'bold' as any
-              },
-              padding: 25,
+              color: '#52708d',
               usePointStyle: true,
-              pointStyle: 'rect',
-              boxWidth: 20,
-              boxHeight: 20
+              padding: 18
             }
           },
           tooltip: {
             callbacks: {
-              label: function(context: any) {
-                return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
-              }
-            }
-          },
-          datalabels: {
-            anchor: 'center' as any,
-            align: 'center' as any,
-            color: '#ffffff',
-            font: {
-              weight: 'bold' as any,
-              size: 12
-            },
-            formatter: function(value: number) {
-              return value.toFixed(1) + '%';
+              label: context => `${context.dataset.label}: ${Number(context.parsed.y).toFixed(1)} %`
             }
           }
         }
       }
-    });
+    };
+
+    this.combinedChart = new Chart(canvas, configuration);
   }
 
-  @HostListener('window:keydown', ['$event'])
-  handleKeyboardEvent(event: KeyboardEvent) {
-    switch (event.key.toLowerCase()) {
-      case 'q':
-      case 'escape':
-        this.goBackToRoot();
-        break;
-      case 'r':
-        this.loadStatistics();
-        break;
+  private destroyChart(): void {
+    if (this.combinedChart) {
+      this.combinedChart.destroy();
+      this.combinedChart = null;
     }
-  }
-
-  goBackToRoot() {
-  // Navigate directly to setup to avoid extra redirect churn which can retain component refs temporarily
-  this.router.navigate(['/setup']);
-  }
-
-  getTeamNames(): string[] {
-    if (!this.gameStatistics?.game_statistics?.team_performance) return [];
-    const teams = this.gameStatistics.game_statistics.team_performance;
-    return Object.keys(teams).map(key => 
-      this.getTeamDisplayName(key, teams[key])
-    );
-  }
-
-  getBestRoundScore(team: any): string {
-    if (!team) return 'N/A';
-    const metrics = [team.ecology || 0, team.finances || 0, team.popularity || 0];
-    return Math.max(...metrics).toFixed(1);
-  }
-
-  getWinner(): string {
-    const teams = this.gameStatistics?.game_statistics?.team_performance;
-    if (!teams) return 'N/A';
-    
-    let winner = '';
-    let highestScore = -1;
-    
-    for (const [key, teamData] of Object.entries(teams)) {
-      const team = teamData as any;
-      const score = ((team.ecology || 0) + (team.finances || 0) + (team.popularity || 0)) / 3;
-      if (score > highestScore) {
-        highestScore = score;
-        winner = this.getTeamDisplayName(key, team);
-      }
-    }
-    
-    return winner || 'N/A';
-  }
-
-  getAverageScore(): string {
-    const teams = this.gameStatistics?.game_statistics?.team_performance;
-    if (!teams) return 'N/A';
-    
-    const teamKeys = Object.keys(teams);
-    if (teamKeys.length === 0) return 'N/A';
-    
-    const totalScore = teamKeys.reduce((sum, key) => {
-      const team = teams[key];
-      const score = ((team.ecology || 0) + (team.finances || 0) + (team.popularity || 0)) / 3;
-      return sum + score;
-    }, 0);
-    
-    return (totalScore / teamKeys.length).toFixed(1);
-  }
-
-  getTeamKeys(): string[] {
-    return this.gameStatistics?.game_statistics?.team_performance ? Object.keys(this.gameStatistics.game_statistics.team_performance) : [];
-  }
-
-  getTeamAverageScore(team: any): string {
-    if (!team) return 'N/A';
-    const score = ((team.ecology || 0) + (team.finances || 0) + (team.popularity || 0)) / 3;
-    return score.toFixed(1);
-  }
-
-  // Helper method to get team display name (similar to dashboard)
-  getTeamDisplayName(teamKey: string, teamData: any): string {
-    debugLog('Statistics getTeamDisplayName called with teamKey:', teamKey, 'teamData:', teamData);
-    debugLog('Statistics boardNames mapping =', this.boardNames);
-    
-    // First try the board_names mapping from API response
-    if (this.boardNames[teamKey]) {
-      debugLog('Statistics using boardNames mapping:', this.boardNames[teamKey]);
-      return this.boardNames[teamKey];
-    }
-    
-    // Use team_name from backend if available
-    if (teamData?.team_name) {
-      debugLog('Statistics using backend team_name:', teamData.team_name);
-      return teamData.team_name;
-    }
-    
-    // Fallback for backwards compatibility
-    const match = teamKey.toString().match(/\d+/);
-    const teamNumber = match ? parseInt(match[0], 10) : 0;
-    const fallbackName = `Tým ${teamNumber}`;
-    debugLog('Statistics using fallback name:', fallbackName);
-    return fallbackName;
   }
 }

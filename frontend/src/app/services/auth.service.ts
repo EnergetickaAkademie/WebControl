@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { StatisticsResponse } from '../models/game-statistics';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -132,8 +133,8 @@ export class AuthService {
     return this.http.get(`${this.api}/get_statistics`, { headers: this.getHeaders() });
   }
 
-  getComprehensiveGameStatistics(): Observable<any> {
-    return this.http.get(`${this.api}/game_statistics`, { headers: this.getHeaders() });
+  getComprehensiveGameStatistics(): Observable<StatisticsResponse> {
+    return this.http.get<StatisticsResponse>(`${this.api}/game_statistics`, { headers: this.getHeaders() });
   }
 
   pollForUsers(): Observable<any> {

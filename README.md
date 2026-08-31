@@ -1,264 +1,113 @@
-# WebControl - Energy Management System
+# WebControl
 
-A comprehensive energy management system with secure lecturer authentication and IoT board integration.
+WebControl is an educational energy-management system. Lecturers control
+scenario-based games in the Angular web application. ESP32 boards report power
+generation and consumption to the Flask API.
 
-## Features
+## Components
 
-- **🔒 Simple Authentication**: JWT-based authentication for user management
-- **🌟 CoreAPI Integration**: Manages IoT boards and energy data
-- **⚡ Real-time Monitoring**: Track power generation and consumption
-- **🎮 Game Management**: Control rounds and scoring for educational purposes
-- **📱 Mobile Friendly**: Responsive design for all devices
+- `frontend/`: Angular application served by Nginx.
+- `CoreAPI/`: Flask API, game state, scoring, authentication, and board APIs.
+- `config/`: deployment configuration for users, boards, and firmware updates.
+- `scripts/esp32_board_simulation.py`: optional board simulator.
 
-## System Components
+## Requirements
 
-- **Frontend**: Angular 17 application
-- **CoreAPI**: Flask-based API for IoT board management with simple authentication
-- **Reverse Proxy**: Nginx for routing and CORS handling
+- Docker with Docker Compose.
+- Git with submodule support.
 
-## Demo Users
-
-The system includes predefined user accounts for testing:
-
-### Lecturer Accounts (Game Control)
-- **lecturer1** / lecturer123 (Dr. John Smith, Computer Science)
-- **lecturer2** / lecturer456 (Prof. Maria Garcia, Physics)
-
-### Board Accounts (IoT Devices)
-- **board1** / board123 (Solar Panel Board #1)
-- **board2** / board456 (Wind Turbine Board #2)
-- **board3** / board789 (Battery Storage Board #3)
-
-## Quick Start
-
-### Production Mode (Recommended)
-
-1. **Start all services:**
-   ```bash
-   docker-compose up --build -d
-   ```
-
-2. **Visit:** http://localhost (users are created automatically on first start)
-
-### Development Mode
-
-1. **Start services:**
-   ```bash
-   docker-compose up --build
-   ```
-
-2. **Test with simulation:**
-   ```bash
-   python3 esp32_board_simulation.py
-   ```
-
-### Debug Mode
-
-For debugging with detailed logs and hot reloading:
-
-1. **Start services in debug mode:**
-   ```bash
-   docker-compose -f docker-compose.debug.yml up --build
-   ```
-
-2. **Debug mode features:**
-   - Frontend hot reloading enabled
-   - Detailed logging in CoreAPI (DEBUG=true)
-   - Source maps for easier debugging
-   - Development server ports exposed
-
-3. **Toggle debug logging in production:**
-   ```bash
-   # Edit docker-compose.yml and change:
-   # - DEBUG=false  # Set to 'true' for verbose logging
-   # to:
-   # - DEBUG=true   # Enable verbose logging
-   
-   # Then restart:
-   docker-compose down && docker-compose up --build -d
-   ```
-
-4. **Debug mode logging includes:**
-   - Game statistics and round details
-   - Authentication attempts (including passwords)
-   - Binary protocol data exchanges
-   - Detailed error traces
-
-## 🔧 Development - Important Cache Management
-
-**⚠️ CRITICAL: After making changes to CoreAPI, you MUST clear Docker cache to see updates!**
-
-### Force CoreAPI Updates After Changes
-
-1. **Stop all services:**
-   ```bash
-   docker-compose down
-   ```
-
-2. **Remove CoreAPI image and cache:**
-   ```bash
-   docker rmi webcontrol-coreapi-1 || true
-   docker builder prune -f
-   ```
-
-3. **Rebuild and start with fresh cache:**
-   ```bash
-   docker-compose up --build --force-recreate
-   ```
-
-### Alternative: Complete Cache Reset
-
-If you're still seeing old code after changes:
+Clone the repository with its CoreAPI submodule:
 
 ```bash
-# Nuclear option - removes ALL Docker cache
-docker-compose down
-docker system prune -a -f
-docker-compose up --build
+git clone --recurse-submodules https://github.com/EnergetickaAkademie/WebControl.git
+cd WebControl
 ```
 
-### Quick Development Workflow
+If the repository was cloned without submodules, run:
 
 ```bash
-# After making changes to CoreAPI code:
-docker-compose down
-docker rmi webcontrol-coreapi-1
-docker-compose up --build
+git submodule update --init --recursive
 ```
 
-## Testing
+## Configuration
 
-The project includes a Python script for testing:
+Create the deployment-only `config/` directory with these files:
 
-- **`esp32_board_simulation.py`** - Simulates multiple ESP32 boards using the binary protocol
+- `config/users.toml`: lecturer and board accounts, display names, groups, and
+  per-board `ota_password` values.
+- `config/firmware.toml`: firmware repository or manifest URL, GitHub token,
+  cache duration, and OTA port.
 
-### Running Tests
+The configuration is mounted read-only into CoreAPI. Edit it on the host and
+restart CoreAPI after changes:
 
 ```bash
-# Test with board simulation
-python3 esp32_board_simulation.py
-
-# Test CoreAPI health
-curl http://localhost/coreapi/health
-
-# Test with authentication
-curl -X POST http://localhost/coreapi/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "lecturer1", "password": "lecturer123"}'
+docker compose restart coreapi
 ```
 
-## Project Structure
+Do not commit passwords or tokens. See
+[docs/USER_CONFIGURATION.md](docs/USER_CONFIGURATION.md) for the TOML format.
 
+## Run locally
+
+Production containers:
+
+```bash
+docker compose up --build -d
 ```
-WebControl/
-├── CoreAPI/              # Flask-based API backend
-├── frontend/             # Angular frontend application
-├── docker-compose.yml    # Docker setup for production
-├── docker-compose.debug.yml  # Docker setup for debug mode
-├── nginx.conf           # Nginx configuration
-└── esp32_board_simulation.py  # Multi-board simulation
+
+Open `http://localhost` after the containers start.
+
+For frontend hot reload and verbose CoreAPI logging:
+
+```bash
+docker compose -f docker-compose.debug.yml up --build
 ```
 
-## API Endpoints
+Stop the services with:
 
-See `COREAPI_INTEGRATION.md` for detailed API documentation.
+```bash
+docker compose down
+```
 
-## Binary Protocol
+The production compose file builds both images locally. Pushing to the
+`deploy` branch also runs the GitHub Actions workflow that publishes the
+`coreapi` and `webcontrol` images to GHCR.
 
-ESP32 devices can use an optimized binary protocol. See `ESP32_BINARY_PROTOCOL.md` for details.
+## Test and build
 
-## Development
+CoreAPI:
 
-The system is designed for educational energy management games where:
-- Lecturers can control game rounds and monitor all boards
-- IoT boards (ESP32) can register and submit power data
-- Real-time dashboard shows power generation/consumption
+```bash
+cd CoreAPI
+python -m pytest -q
+```
 
-## Security
+Frontend:
 
-- Simple JWT-based authentication
-- CORS properly configured for frontend integration
-- Board endpoints are public for ESP32 device access
-- User endpoints require authentication
+```bash
+cd frontend
+npm ci
+npm test -- --watch=false
+npm run build -- --configuration production
+```
+
+Optional board simulation:
+
+```bash
+python scripts/esp32_board_simulation.py
+```
+
+## Documentation
+
+- [docs/ENDPOINTS.md](docs/ENDPOINTS.md): lecturer and board endpoints.
+- [docs/ESP32_BINARY_PROTOCOL.md](docs/ESP32_BINARY_PROTOCOL.md): binary
+  protocol formats.
+- [docs/COREAPI_INTEGRATION.md](docs/COREAPI_INTEGRATION.md): frontend and
+  API integration details.
+- [CoreAPI/README.md](CoreAPI/README.md): CoreAPI-specific information.
+- [frontend/README.md](frontend/README.md): Angular development commands.
+
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## Support
-
-For issues and questions, please use the GitHub issue tracker.
-│   │   └── dashboard/         # Protected dashboard
-│   └── package.json
-└── CoreAPI/
-    ├── Dockerfile
-    ├── src/
-    │   ├── main.py           # Flask application
-    │   ├── state.py          # Game state management
-    │   └── simple_auth.py    # Simple JWT authentication
-    └── requirements.txt
-```
-
-## Troubleshooting
-
-### Users Not Created
-If users are not created automatically:
-1. Check CoreAPI logs: `docker-compose logs coreapi`
-2. Ensure the database file is writable
-3. Restart the CoreAPI service: `docker-compose restart coreapi`
-
-### CoreAPI Authentication Issues
-1. Verify CoreAPI is running: `curl http://localhost/coreapi/health`
-2. Check nginx routing: `docker-compose logs nginx`
-3. Test with proper authentication headers
-
-### CoreAPI Code Changes Not Reflected
-**This is the most common issue!**
-
-1. **Stop services:**
-   ```bash
-   docker-compose down
-   ```
-
-2. **Remove CoreAPI image:**
-   ```bash
-   docker rmi webcontrol-coreapi-1
-   ```
-
-3. **Rebuild:**
-   ```bash
-   docker-compose up --build
-   ```
-
-### Frontend Changes Not Reflected
-1. **For debug mode:** Changes should auto-reload
-2. **For production mode:** Rebuild frontend container:
-   ```bash
-   docker-compose down
-   docker rmi webcontrol-nginx-1
-   docker-compose up --build
-   ```
-
-### View Container Logs
-```bash
-# View all logs
-docker-compose logs
-
-# View specific service logs
-docker-compose logs coreapi
-docker-compose logs nginx
-
-# Follow logs in real-time
-docker-compose logs -f coreapi
-```
-
-## Support
-
-This application uses simple JWT authentication with a Flask-based IoT management system for educational energy monitoring scenarios.
+MIT. See [LICENSE](LICENSE).

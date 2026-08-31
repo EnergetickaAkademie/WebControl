@@ -45,15 +45,20 @@ Board accounts are used by ESP32 devices and student teams.
 
 ```toml
 [boards]
-board1 = { password = "board123", name = "Solar Panel Team", group = "group1" }
-board2 = { password = "board456", name = "Wind Power Team", group = "group1" }
-demo = { password = "demo123", name = "Demo Board", group = "demo" }
+board1 = { password = "board123", ota_password = "board-ota-secret-1", name = "Solar Panel Team", group = "group1" }
+board2 = { password = "board456", ota_password = "board-ota-secret-2", name = "Wind Power Team", group = "group1" }
+demo = { password = "demo123", ota_password = "demo-ota-secret", name = "Demo Board", group = "demo" }
 ```
 
 **Fields:**
 - `password` - Login password (required)
 - `name` - Display name for the team/device (required)
 - `group` - Group assignment (optional, defaults to "group1")
+- `ota_password` - OTA password compiled into the board firmware (required for firmware updates)
+
+For mainboards that support web firmware updates, `ota_password` is the
+per-board password compiled into the OTA firmware. It is used by CoreAPI when
+probing and updating that board and is never returned by the configuration API.
 
 ### Groups
 

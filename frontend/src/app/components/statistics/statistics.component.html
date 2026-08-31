@@ -1,20 +1,118 @@
-<div class="statistics-container">
-  <div class="loading" *ngIf="loading">
-    <p>Načítám statistiky...</p>
+<main class="statistics-page">
+  <div class="state-panel" *ngIf="loading">
+    <span class="loading-spinner" aria-hidden="true"></span>
+    <p>Načítám finální statistiky...</p>
   </div>
 
-  <div class="error" *ngIf="error">
+  <div class="state-panel error-panel" *ngIf="!loading && error">
     <p>{{ error }}</p>
-    <button (click)="loadStatistics()" class="retry-button">Znovu načíst</button>
+    <button class="primary-button" type="button" (click)="loadStatistics()">Znovu načíst</button>
   </div>
 
-  <div class="content" *ngIf="!loading && !error && gameStatistics">
-    <!-- Combined Team Performance Chart -->
-    <div class="main-chart-section">
-      <h2>Finální skóre týmů podle faktorů</h2>
-      <div class="chart-container">
-        <canvas id="combinedTeamChart"></canvas>
+  <ng-container *ngIf="!loading && !error && gameStatistics">
+    <header class="page-header">
+      <div>
+        <button class="back-button" type="button" (click)="goBackToSetup()">← Nastavení</button>
+        <p class="eyebrow">FINÁLNÍ VYHODNOCENÍ</p>
+        <h1>Statistiky hry</h1>
+        <p class="subtitle">{{ scenarioName }} · {{ playedRounds }} odehraných kol</p>
       </div>
-    </div>
-  </div>
-</div>
+      <button class="refresh-button" type="button" (click)="loadStatistics()">
+        <span aria-hidden="true">↻</span> Obnovit
+      </button>
+    </header>
+
+    <section class="summary-grid" aria-label="Souhrn hry">
+      <div class="summary-card">
+        <span class="summary-label">Vedoucí tým</span>
+        <strong class="summary-value summary-value-name">{{ winnerLabel }}</strong>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Nejvyšší popularita</span>
+        <strong class="summary-value selected">{{ formatScore(highestPopularity) }}</strong>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Hodnocené týmy</span>
+        <strong class="summary-value">{{ teamEntries.length }}</strong>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Odehraná kola</span>
+        <strong class="summary-value">{{ playedRounds }}</strong>
+      </div>
+    </section>
+
+    <section class="panel leaderboard-panel" *ngIf="hasTeams; else noStatistics">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">CELKOVÉ POŘADÍ</p>
+          <h2>Popularita týmů</h2>
+        </div>
+        <span class="section-note">Rozhoduje kombinace všech faktorů</span>
+      </div>
+
+      <div class="leaderboard-list">
+        <article class="leaderboard-row" *ngFor="let team of sortedTeams">
+          <span class="rank-badge" [class.rank-winner]="getRank(team) === 1">{{ getRank(team) }}</span>
+          <div class="leaderboard-team">
+            <strong>{{ team.performance.team_name }}</strong>
+            <span>Deska {{ team.performance.team_number }}</span>
+          </div>
+          <div class="leaderboard-track" aria-hidden="true">
+            <span [style.width.%]="team.performance.popularity"></span>
+          </div>
+          <strong class="leaderboard-score">{{ formatScore(team.performance.popularity) }}</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel chart-panel" *ngIf="hasTeams">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">POROVNÁNÍ FAKTORŮ</p>
+          <h2>Výsledky podle oblastí</h2>
+        </div>
+        <span class="section-note">0 až 100 %</span>
+      </div>
+      <div class="chart-container">
+        <canvas id="teamComparisonChart" aria-label="Porovnání výsledků týmů podle faktorů"></canvas>
+      </div>
+    </section>
+
+    <section class="team-grid" *ngIf="hasTeams">
+      <article class="team-card" *ngFor="let team of sortedTeams">
+        <div class="team-card-header">
+          <div>
+            <span class="team-rank">#{{ getRank(team) }}</span>
+            <h2>{{ team.performance.team_name }}</h2>
+            <span class="team-id">Deska {{ team.performance.team_number }}</span>
+          </div>
+          <div class="popularity-score">
+            <span>Popularita</span>
+            <strong>{{ formatScore(team.performance.popularity) }}</strong>
+          </div>
+        </div>
+
+        <div class="metric-list">
+          <div class="metric-row" *ngFor="let metric of scoreMetrics">
+            <div class="metric-label"><span>{{ metric.label }}</span><strong>{{ formatScore(getMetricValue(team, metric.key)) }}</strong></div>
+            <div class="metric-track"><span [style.width.%]="getMetricValue(team, metric.key)" [style.backgroundColor]="metric.color"></span></div>
+          </div>
+        </div>
+
+        <div class="energy-summary" *ngIf="getBoard(team) as board">
+          <div><span>Výroba</span><strong>{{ formatEnergy(board.total_energy_produced) }}</strong></div>
+          <div><span>Spotřeba</span><strong>{{ formatEnergy(board.total_energy_consumed) }}</strong></div>
+          <div><span>Bilance</span><strong [class]="getBalanceClass(board.energy_balance)">{{ formatEnergy(board.energy_balance) }}</strong></div>
+        </div>
+      </article>
+    </section>
+
+    <ng-template #noStatistics>
+      <section class="panel empty-panel">
+        <p class="eyebrow">ŽÁDNÁ DATA</p>
+        <h2>Statistiky nejsou k dispozici</h2>
+        <p>Hra zatím neobsahuje žádné odehrané kolo s platnými údaji.</p>
+      </section>
+    </ng-template>
+  </ng-container>
+</main>

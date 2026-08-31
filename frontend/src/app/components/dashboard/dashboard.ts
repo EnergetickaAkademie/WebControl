@@ -446,7 +446,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.authService.endGame().subscribe({
       next: (response: any) => {
         console.log('Game ended:', response);
-        this.router.navigate(['/setup']);
+        this.router.navigate(['/statistics']);
       },
       error: (error: any) => {
         console.error('Failed to end game:', error);
