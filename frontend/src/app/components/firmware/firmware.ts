@@ -30,7 +30,16 @@ export class FirmwareComponent implements OnInit, OnDestroy {
   refresh(): void {
     this.refreshing = true;
     this.auth.getFirmwareBoards().subscribe({
-      next: value => { this.boards = value.boards || []; this.gameActive = !!value.game_active; this.loading = false; this.refreshing = false; },
+      next: value => {
+        this.boards = value.boards || [];
+        this.selectedBoards.forEach(boardId => {
+          const board = this.boards.find(item => item.board_id === boardId);
+          if (!board || !this.eligible(board)) this.selectedBoards.delete(boardId);
+        });
+        this.gameActive = !!value.game_active;
+        this.loading = false;
+        this.refreshing = false;
+      },
       error: err => { this.error = err?.error?.error || 'Firmware boards could not be loaded'; this.loading = false; this.refreshing = false; }
     });
     this.auth.getFirmwareReleases().subscribe({
@@ -41,6 +50,9 @@ export class FirmwareComponent implements OnInit, OnDestroy {
 
   latestStable(): any { return this.releases.find(item => item.channel === 'stable' && !item.conflict); }
   selectedRelease(): any { return this.releases.find(item => item.version === this.selectedVersion); }
+  get connectedBoardsCount(): number { return this.boards.filter(board => !!board.connected).length; }
+  get availableBoardsCount(): number { return this.boards.filter(board => this.eligible(board)).length; }
+  get selectedBoardsCount(): number { return this.selectedBoards.size; }
   private versionKey(value: string): number[] {
     const match = /^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-.*)?$/.exec(value || '');
     return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : [-1, -1, -1];
@@ -49,6 +61,28 @@ export class FirmwareComponent implements OnInit, OnDestroy {
   toggle(board: any): void { if (!this.eligible(board)) return; this.selectedBoards.has(board.board_id) ? this.selectedBoards.delete(board.board_id) : this.selectedBoards.add(board.board_id); }
   selectEligible(): void { this.boards.filter(board => this.eligible(board)).forEach(board => this.selectedBoards.add(board.board_id)); }
   isSelected(board: any): boolean { return this.selectedBoards.has(board.board_id); }
+  getBoardName(board: any): string { return board?.display_name || board?.board_id || 'Board'; }
+
+  getBoardStatus(board: any): string {
+    if (!board?.connected) return 'Odpojeno';
+    if (board.firmware_error) return board.firmware_error;
+    if (!board.ota_ready) return 'Vyžaduje bootstrap';
+    if (!board.ota_reachable) return 'OTA nedostupné';
+    return 'Připraveno';
+  }
+
+  getBoardStatusClass(board: any): string {
+    if (this.eligible(board)) return 'ready';
+    if (board?.connected) return 'attention';
+    return 'offline';
+  }
+
+  onBoardKeydown(event: KeyboardEvent, board: any): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.toggle(board);
+    }
+  }
 
   start(): void {
     const ids = [...this.selectedBoards];

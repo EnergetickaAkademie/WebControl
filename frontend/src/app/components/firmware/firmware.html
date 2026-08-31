@@ -1,21 +1,111 @@
 <main class="firmware-page">
-  <header><button (click)="back()">← Nastavení</button><h1>Aktualizace mainboardů</h1><button (click)="refresh()" [disabled]="refreshing">Obnovit</button></header>
+  <header class="page-header">
+    <div>
+      <button class="back-button" (click)="back()">← Nastavení</button>
+      <h1>Aktualizace mainboardů</h1>
+      <p class="subtitle">Vyberte dostupné desky a aktualizujte jejich firmware přes Wi-Fi.</p>
+    </div>
+    <button class="refresh-button" (click)="refresh()" [disabled]="refreshing">
+      <span [class.spinning]="refreshing">↻</span> {{ refreshing ? 'Načítání…' : 'Obnovit' }}
+    </button>
+  </header>
+
   <p class="warning" *ngIf="gameActive">Aktualizace jsou během aktivní hry zablokované.</p>
-  <p class="error" *ngIf="error">{{ error }}</p>
-  <section class="panel">
-    <h2>Dostupný firmware</h2>
-    <select [(ngModel)]="selectedVersion" [disabled]="!releases.length">
-      <option *ngFor="let release of releases" [value]="release.version" [disabled]="release.conflict">
-        {{ release.version }} — {{ release.channel === 'prerelease' ? 'předběžná verze' : 'stabilní' }} ({{ release.source }}){{ release.conflict ? ' — konflikt kontrolního součtu' : '' }}
-      </option>
-    </select>
-    <a *ngIf="selectedRelease()?.notes_url" [href]="selectedRelease()?.notes_url" target="_blank" rel="noopener">poznámky k vydání</a>
+  <p class="error-message" *ngIf="error">{{ error }}</p>
+
+  <section class="summary-grid" *ngIf="!loading">
+    <div class="summary-card"><span class="summary-value">{{ boards.length }}</span><span>Celkem desek</span></div>
+    <div class="summary-card"><span class="summary-value connected">{{ connectedBoardsCount }}</span><span>Připojeno</span></div>
+    <div class="summary-card"><span class="summary-value ready">{{ availableBoardsCount }}</span><span>Připraveno k aktualizaci</span></div>
+    <div class="summary-card"><span class="summary-value selected">{{ selectedBoardsCount }}</span><span>Vybráno</span></div>
   </section>
-  <section class="panel"><div class="section-title"><h2>Boards</h2><button (click)="selectEligible()">Vybrat dostupné</button></div>
-    <table><thead><tr><th></th><th>Board</th><th>Firmware</th><th>Stav</th><th>OTA</th></tr></thead><tbody>
-      <tr *ngFor="let board of boards"><td><input type="checkbox" [checked]="isSelected(board)" [disabled]="!eligible(board)" (change)="toggle(board)"></td><td>{{ board.display_name || board.board_id }}</td><td>{{ board.firmware_version || 'neznámý' }}</td><td>{{ board.connected ? 'Připojeno' : 'Odpojeno' }}</td><td>{{ board.ota_ready ? 'Připraveno' : (board.firmware_error || 'Vyžaduje bootstrap') }}</td></tr>
-    </tbody></table>
-    <button class="primary" (click)="start()" [disabled]="gameActive || !selectedVersion || !selectedBoards.size || !!job && ['queued','running'].includes(job.state)">Spustit aktualizaci ({{ selectedBoards.size }})</button>
+
+  <section class="panel release-panel">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">CÍLOVÁ VERZE</p>
+        <h2>Dostupný firmware</h2>
+      </div>
+      <span class="source-badge" *ngIf="selectedRelease()">{{ selectedRelease()?.source }}</span>
+    </div>
+    <div class="release-controls" *ngIf="releases.length; else noReleases">
+      <select [(ngModel)]="selectedVersion" aria-label="Vyberte verzi firmwaru">
+        <option *ngFor="let release of releases" [value]="release.version" [disabled]="release.conflict">
+          {{ release.version }} — {{ release.channel === 'prerelease' ? 'předběžná verze' : 'stabilní' }}{{ release.conflict ? ' — konflikt kontrolního součtu' : '' }}
+        </option>
+      </select>
+      <a *ngIf="selectedRelease()?.notes_url" [href]="selectedRelease()?.notes_url" target="_blank" rel="noopener">Poznámky k vydání ↗</a>
+    </div>
+    <ng-template #noReleases><p class="muted">Žádné verze firmwaru nejsou k dispozici.</p></ng-template>
   </section>
-  <section class="panel" *ngIf="job"><h2>Průběh: {{ job.state }}</h2><p *ngIf="job.error" class="error">{{ job.error }}</p><ul><li *ngFor="let board of job.boards">{{ board.board_id }}: {{ board.state }}<span *ngIf="board.error"> — {{ board.error }}</span></li></ul></section>
+
+  <section class="panel boards-panel">
+    <div class="section-heading board-heading">
+      <div>
+        <p class="eyebrow">VÝBĚR ZAŘÍZENÍ</p>
+        <h2>Stav desek</h2>
+      </div>
+      <button class="secondary-button" (click)="selectEligible()" [disabled]="!availableBoardsCount">Vybrat připravené</button>
+    </div>
+
+    <div class="board-grid" *ngIf="boards.length; else noBoards">
+      <button *ngFor="let board of boards"
+              type="button"
+              class="board-card"
+              [class.selected]="isSelected(board)"
+              [class.unavailable]="!eligible(board)"
+              [disabled]="!eligible(board)"
+              [attr.aria-pressed]="isSelected(board)"
+              [attr.aria-label]="getBoardName(board) + ': ' + getBoardStatus(board)"
+              (click)="toggle(board)"
+              (keydown)="onBoardKeydown($event, board)">
+        <div class="board-card-header">
+          <div>
+            <h3>{{ getBoardName(board) }}</h3>
+            <span class="board-id">{{ board.board_id }}</span>
+          </div>
+          <span class="status-dot" [ngClass]="getBoardStatusClass(board)"></span>
+        </div>
+        <div class="board-card-body">
+          <div class="board-status-row">
+            <span>Stav</span>
+            <strong [ngClass]="getBoardStatusClass(board)">{{ getBoardStatus(board) }}</strong>
+          </div>
+          <div class="board-status-row">
+            <span>Firmware</span>
+            <strong>{{ board.firmware_version || 'Neznámá verze' }}</strong>
+          </div>
+        </div>
+        <div class="board-card-footer">
+          <span *ngIf="isSelected(board)" class="selected-label">✓ Vybráno</span>
+          <span *ngIf="!isSelected(board) && eligible(board)" class="select-label">Kliknutím vybrat</span>
+          <span *ngIf="!eligible(board)" class="select-label">Není dostupné</span>
+        </div>
+      </button>
+    </div>
+    <ng-template #noBoards><p class="muted">Žádné desky zatím nebyly zaregistrovány.</p></ng-template>
+
+    <div class="action-bar">
+      <span class="selection-note" *ngIf="selectedBoardsCount; else noSelection">Vybráno {{ selectedBoardsCount }} desek</span>
+      <ng-template #noSelection><span class="selection-note">Vyberte alespoň jednu připravenou desku</span></ng-template>
+      <button class="primary-button" (click)="start()" [disabled]="gameActive || !selectedVersion || !selectedBoardsCount || !!job && ['queued','running'].includes(job.state)">
+        {{ job && ['queued','running'].includes(job.state) ? 'Aktualizace probíhá…' : 'Spustit aktualizaci' }}
+      </button>
+    </div>
+  </section>
+
+  <section class="panel job-panel" *ngIf="job">
+    <div class="section-heading">
+      <div><p class="eyebrow">PRŮBĚH AKTUALIZACE</p><h2>{{ job.state }}</h2></div>
+      <span class="job-version">{{ job.version }}</span>
+    </div>
+    <p class="error-message" *ngIf="job.error">{{ job.error }}</p>
+    <div class="job-list">
+      <div class="job-row" *ngFor="let board of job.boards">
+        <span>{{ board.board_id }}</span>
+        <span class="job-state" [class]="board.state">{{ board.state }}</span>
+        <span class="job-error" *ngIf="board.error">{{ board.error }}</span>
+      </div>
+    </div>
+  </section>
 </main>

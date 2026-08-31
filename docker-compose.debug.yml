@@ -7,9 +7,6 @@ services:
       - DEBUG=true  # Enable verbose logging for debug mode
       - BOARD_STATE_DB_PATH=/app/data/board_state.db
       - FIRMWARE_STATE_DIR=/app/data/firmware
-      - FIRMWARE_GITHUB_REPOSITORY=EnergetickaAkademie/v2-firmware
-      - FIRMWARE_MANIFEST_URL=${FIRMWARE_MANIFEST_URL:-}
-      - OTA_PASSWORD=${OTA_PASSWORD:-}
     volumes:
       - ./config:/app/config:ro
       - coreapi-state:/app/data

@@ -1,0 +1,6 @@
+[firmware]
+github_repository = "EnergetickaAkademie/v2-firmware"
+manifest_url = ""
+github_token = ""
+catalog_cache_seconds = 300
+ota_port = 8080
