@@ -86,6 +86,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private sseFailures = 0;
   private streamSeq = 0;
   private pollingFallback = false;
+  private readonly snapshotReconciliationMs = 2000;
 
   constructor(
     private authService: AuthService,
@@ -184,11 +185,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.stopAllPolling();
     
     if (this.userInfo?.user_type === 'lecturer') {
-      this.loadGameStatus((response: any) => this.connectEventStream(response.stream_seq || 0));
+      this.loadGameStatus((response: any) => {
+        this.startPollTimer(this.snapshotReconciliationMs);
+        this.connectEventStream(response.stream_seq || 0);
+      });
       return;
     }
     this.loadGameStatus();
-    this.pollSubscription = interval(500).subscribe(() => this.loadGameStatus());
+    this.startPollTimer(500);
+  }
+
+  private startPollTimer(periodMs: number) {
+    this.pollSubscription?.unsubscribe();
+    this.pollSubscription = interval(periodMs).subscribe(() => this.loadGameStatus());
   }
 
   stopAllPolling() {
@@ -345,13 +354,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.pollingFallback) return;
     this.pollingFallback = true;
     this.sseSubscription?.unsubscribe();
-    this.pollSubscription = interval(500).subscribe(() => this.loadGameStatus());
+    this.startPollTimer(500);
+    this.sseProbeSubscription?.unsubscribe();
     this.sseProbeSubscription = interval(30000).subscribe(() => {
       // A successful snapshot plus stream connection is the recovery point.
       this.loadGameStatus((response: any) => {
         this.pollingFallback = false;
-        this.pollSubscription?.unsubscribe();
-        this.pollSubscription = undefined;
+        this.startPollTimer(this.snapshotReconciliationMs);
         this.sseFailures = 0;
         this.connectEventStream(response.stream_seq || 0);
       });
