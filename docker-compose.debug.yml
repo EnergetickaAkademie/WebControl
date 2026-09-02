@@ -7,9 +7,30 @@ services:
       - DEBUG=true  # Enable verbose logging for debug mode
       - BOARD_STATE_DB_PATH=/app/data/board_state.db
       - FIRMWARE_STATE_DIR=/app/data/firmware
+      - MQTT_ENABLED=${MQTT_ENABLED:-false}
+      - MQTT_V3_ENABLED=${MQTT_V3_ENABLED:-false}
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=1883
+      - MQTT_USERNAME=coreapi
+      - MQTT_PASSWORD=${MQTT_COREAPI_PASSWORD:-}
+      - MQTT_PUBLIC_URI=${MQTT_PUBLIC_URI:-ws://localhost/mqtt}
     volumes:
       - ./config:/app/config:ro
       - coreapi-state:/app/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  mosquitto:
+    image: eclipse-mosquitto:2.1.2-alpine
+    container_name: webcontrol-mosquitto-debug-1
+    environment:
+      MQTT_COREAPI_PASSWORD: ${MQTT_COREAPI_PASSWORD:-}
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto/passwd:/mosquitto/config/passwd:ro
+      - ./mosquitto/acl:/mosquitto/config/acl:ro
+      - mosquitto-data:/mosquitto/data
     networks:
       - app-network
     restart: unless-stopped
@@ -42,6 +63,8 @@ services:
     depends_on:
       coreapi:
         condition: service_started
+      mosquitto:
+        condition: service_started
       frontend:
         condition: service_healthy # Wait for frontend to be healthy
     networks:
@@ -54,3 +77,4 @@ networks:
 
 volumes:
   coreapi-state:
+  mosquitto-data:

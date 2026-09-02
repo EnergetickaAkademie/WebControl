@@ -1,0 +1,3 @@
+# Generate the real ACL with scripts/generate_mqtt_auth.py.
+user coreapi
+topic readwrite enak/v3/#

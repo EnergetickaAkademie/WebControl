@@ -80,7 +80,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   
   private gameStatusSubscription?: Subscription;
   private pollSubscription?: Subscription;
+  private sseSubscription?: Subscription;
+  private sseProbeSubscription?: Subscription;
   private pollInFlight = false;
+  private sseFailures = 0;
+  private streamSeq = 0;
+  private pollingFallback = false;
 
   constructor(
     private authService: AuthService,
@@ -95,8 +100,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadTranslations();
     this.checkReloadRecovery();
     
-    // Start polling for game status
-    this.startPolling();
+    // Live updates start after the profile identifies the user's role.
     
     // Auto-enter fullscreen when dashboard loads
     setTimeout(() => {
@@ -120,12 +124,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.authService.profile().subscribe({
       next: (response: any) => {
   // Backend returns { user: {...} }
-  this.userInfo = response.user || response.user_info || null;
+        this.userInfo = response.user || response.user_info || null;
         this.isLoading = false;
+        this.startPolling();
       },
       error: (error: any) => {
         console.error('Failed to load profile', error);
         this.isLoading = false;
+        this.startPolling();
       }
     });
   }
@@ -177,11 +183,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Stop any existing polling first
     this.stopAllPolling();
     
-    // Poll for game status and connected boards
+    if (this.userInfo?.user_type === 'lecturer') {
+      this.loadGameStatus((response: any) => this.connectEventStream(response.stream_seq || 0));
+      return;
+    }
     this.loadGameStatus();
-    this.pollSubscription = interval(500).subscribe(() => {
-      this.loadGameStatus();
-    });
+    this.pollSubscription = interval(500).subscribe(() => this.loadGameStatus());
   }
 
   stopAllPolling() {
@@ -190,10 +197,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
     if (this.pollSubscription) {
       this.pollSubscription.unsubscribe();
+      this.pollSubscription = undefined;
+    }
+    if (this.sseSubscription) {
+      this.sseSubscription.unsubscribe();
+      this.sseSubscription = undefined;
+    }
+    if (this.sseProbeSubscription) {
+      this.sseProbeSubscription.unsubscribe();
+      this.sseProbeSubscription = undefined;
     }
   }
 
-  loadGameStatus() {
+  loadGameStatus(onSuccess?: (response: any) => void) {
     if (this.pollInFlight) {
       return;
     }
@@ -209,6 +225,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.connectedBoards = response.boards || [];
           this.boardNames = response.board_names || {}; // Store board names mapping
           this.currentRoundDetails = response.round_details;
+          this.streamSeq = Math.max(this.streamSeq, Number(response.stream_seq || 0));
+          onSuccess?.(response);
           
           // If game inactive: only redirect when there is clearly no finished round context
           if (!this.gameStatus?.game_active) {
@@ -266,11 +284,78 @@ export class DashboardComponent implements OnInit, OnDestroy {
           console.error('Failed to load enhanced game status', error);
           // Fallback to basic statistics
           this.loadBasicGameStatus();
+          if (onSuccess) this.enablePollingFallback();
         }
       });
     } else {
       this.loadBasicGameStatus();
     }
+  }
+
+  private connectEventStream(after: number) {
+    if (this.userInfo?.user_type !== 'lecturer' || this.pollingFallback) return;
+    this.sseSubscription?.unsubscribe();
+    this.streamSeq = Math.max(this.streamSeq, Number(after || 0));
+    this.sseSubscription = this.gameStatusService.streamEvents(this.streamSeq).subscribe({
+      next: event => {
+        if (event.id <= this.streamSeq) return;
+        this.streamSeq = event.id;
+        if (event.event === 'resync') {
+          this.recoverEventStream();
+        } else if (event.event === 'board_delta') {
+          const index = this.connectedBoards.findIndex(board => board.board_id === event.data?.board_id);
+          if (index >= 0) {
+            this.connectedBoards[index] = event.data;
+          } else {
+            this.connectedBoards = [...this.connectedBoards, event.data];
+          }
+        } else if (event.event === 'game_delta' || event.event === 'firmware_delta') {
+          // Round transitions carry presentation metadata, so refresh the
+          // complete snapshot for those infrequent events.
+          this.loadGameStatus();
+        }
+      },
+      error: () => this.handleEventStreamFailure(),
+      complete: () => this.handleEventStreamFailure(),
+    });
+  }
+
+  private handleEventStreamFailure() {
+    if (this.pollingFallback) return;
+    this.sseSubscription?.unsubscribe();
+    this.sseSubscription = undefined;
+    this.sseFailures += 1;
+    if (this.sseFailures >= 3) {
+      this.enablePollingFallback();
+      return;
+    }
+    window.setTimeout(() => this.recoverEventStream(), Math.min(5000, this.sseFailures * 1000));
+  }
+
+  private recoverEventStream() {
+    if (this.pollingFallback) return;
+    // Always obtain a new snapshot before resuming at its cursor.
+    this.loadGameStatus((response: any) => {
+      this.sseFailures = 0;
+      this.connectEventStream(response.stream_seq || 0);
+    });
+  }
+
+  private enablePollingFallback() {
+    if (this.pollingFallback) return;
+    this.pollingFallback = true;
+    this.sseSubscription?.unsubscribe();
+    this.pollSubscription = interval(500).subscribe(() => this.loadGameStatus());
+    this.sseProbeSubscription = interval(30000).subscribe(() => {
+      // A successful snapshot plus stream connection is the recovery point.
+      this.loadGameStatus((response: any) => {
+        this.pollingFallback = false;
+        this.pollSubscription?.unsubscribe();
+        this.pollSubscription = undefined;
+        this.sseFailures = 0;
+        this.connectEventStream(response.stream_seq || 0);
+      });
+    });
   }
 
   loadBasicGameStatus() {

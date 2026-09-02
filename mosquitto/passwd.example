@@ -1,0 +1,2 @@
+# Deliberately empty. Generate passwd and acl during deployment; never commit
+# generated credentials.

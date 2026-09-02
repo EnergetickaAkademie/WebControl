@@ -208,5 +208,11 @@ coverage/
 
 config/users.toml
 
-log.txt
+# Generated MQTT broker credentials and ACLs
+mosquitto/passwd
+mosquitto/acl
 
+# Deployment TLS material
+tls/
+
+log.txt

@@ -27,6 +27,13 @@ export interface PollResponse {
   game_status: GameStatus;
   lecturer_info: any;
   round_details?: RoundDetails;
+  stream_seq?: number;
+}
+
+export interface DashboardEvent {
+  id: number;
+  event: 'board_delta' | 'game_delta' | 'firmware_delta' | 'resync' | string;
+  data: any;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -60,6 +67,60 @@ export class GameStatusService {
    */
   pollForUsers(): Observable<PollResponse> {
     return this.http.get<PollResponse>(`${this.api}/pollforusers`, { headers: this.getHeaders() });
+  }
+
+  /** Stream authenticated group updates. The cursor is replayed by CoreAPI. */
+  streamEvents(after: number): Observable<DashboardEvent> {
+    return new Observable(observer => {
+      const controller = new AbortController();
+      const token = localStorage.getItem('auth-token');
+      fetch(`${this.api}/events/v3?after=${encodeURIComponent(after)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include',
+        signal: controller.signal,
+      }).then(async response => {
+        if (!response.ok || !response.body) {
+          throw new Error(`SSE request failed (${response.status})`);
+        }
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let current: Partial<DashboardEvent> = {};
+        const dispatch = () => {
+          if (current.id !== undefined && current.event) {
+            let data: any = {};
+            try { data = JSON.parse(String(current.data || '{}')); } catch (_) {
+              observer.error(new Error('Invalid SSE event data'));
+              return;
+            }
+            observer.next({ id: Number(current.id), event: current.event, data });
+          }
+          current = {};
+        };
+        while (true) {
+          const chunk = await reader.read();
+          if (chunk.done) break;
+          buffer += decoder.decode(chunk.value, { stream: true });
+          const lines = buffer.split(/\r?\n/);
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            if (line === '') { dispatch(); continue; }
+            if (line.startsWith(':')) continue;
+            const separator = line.indexOf(':');
+            const field = separator < 0 ? line : line.slice(0, separator);
+            const value = separator < 0 ? '' : line.slice(separator + 1).replace(/^ /, '');
+            if (field === 'id') current.id = Number(value);
+            else if (field === 'event') current.event = value;
+            else if (field === 'data') current.data = `${current.data || ''}${value}`;
+          }
+        }
+        dispatch();
+        observer.complete();
+      }).catch(error => {
+        if (error?.name !== 'AbortError') observer.error(error);
+      });
+      return () => controller.abort();
+    });
   }
 
   /**
