@@ -1,10 +1,11 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, isDevMode, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { AuthService } from '../../services/auth.service';
 import { BoardStatistics, GameStatistics, StatisticsResponse, TeamPerformance } from '../../models/game-statistics';
+import { STATISTICS_PREVIEW_RESPONSE } from './statistics-preview.data';
 
 Chart.register(...registerables);
 
@@ -27,6 +28,7 @@ export class StatisticsComponent implements OnInit, OnDestroy {
   gameStatistics: GameStatistics | null = null;
   loading = true;
   error: string | null = null;
+  readonly previewMode: boolean;
 
   private combinedChart: Chart | null = null;
   private statsSub: Subscription | null = null;
@@ -42,7 +44,9 @@ export class StatisticsComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) {
+    this.previewMode = isDevMode() && (this.router.url ?? '').split('?')[0] === '/statistics-preview';
+  }
 
   ngOnInit(): void {
     this.loadStatistics();
@@ -69,6 +73,11 @@ export class StatisticsComponent implements OnInit, OnDestroy {
     }
     this.destroyChart();
 
+    if (this.previewMode) {
+      this.applyStatistics(STATISTICS_PREVIEW_RESPONSE);
+      return;
+    }
+
     if (this.statsSub) {
       this.statsSub.unsubscribe();
       this.statsSub = null;
@@ -76,18 +85,22 @@ export class StatisticsComponent implements OnInit, OnDestroy {
 
     this.statsSub = this.authService.getComprehensiveGameStatistics().subscribe({
       next: (response: StatisticsResponse) => {
-        this.gameStatistics = response.game_statistics;
-        this.loading = false;
-        this.chartInitTimeout = setTimeout(() => {
-          this.initializeChart();
-          this.chartInitTimeout = null;
-        }, 0);
+        this.applyStatistics(response);
       },
       error: () => {
         this.error = 'Statistiky se nepodařilo načíst.';
         this.loading = false;
       }
     });
+  }
+
+  private applyStatistics(response: StatisticsResponse): void {
+    this.gameStatistics = response.game_statistics;
+    this.loading = false;
+    this.chartInitTimeout = setTimeout(() => {
+      this.initializeChart();
+      this.chartInitTimeout = null;
+    }, 0);
   }
 
   get teamEntries(): TeamEntry[] {
