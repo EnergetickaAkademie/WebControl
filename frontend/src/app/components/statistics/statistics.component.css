@@ -226,6 +226,58 @@ button:focus-visible {
 .leaderboard-track span { display: block; height: 100%; background: #2563eb; border-radius: inherit; }
 .leaderboard-score { min-width: 70px; color: #2563a6; text-align: right; }
 
+.factor-info-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.factor-info-card {
+  min-height: 214px;
+  padding: 20px 18px;
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-top: 4px solid var(--factor-color);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(36, 52, 71, .06);
+}
+
+.factor-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--factor-color) 12%, #fff);
+  color: var(--factor-color);
+}
+
+.factor-icon svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+}
+
+.factor-info-card h2 {
+  margin: 0 0 8px;
+  color: #243447;
+  font-size: 19px;
+  font-weight: 400;
+}
+
+.factor-info-card p {
+  margin: 0;
+  color: #718096;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 .comparison-chart { display: grid; gap: 16px; }
 
 .comparison-team {
@@ -348,6 +400,7 @@ button:focus-visible {
 
 @media (max-width: 1200px) {
   .team-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .factor-info-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 800px) {
@@ -357,6 +410,7 @@ button:focus-visible {
   .summary-grid { grid-template-columns: repeat(2, 1fr); }
   .section-heading { align-items: flex-start; flex-direction: column; }
   .section-note { text-align: left; }
+  .factor-info-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .comparison-team { grid-template-columns: 1fr; }
   .comparison-team-name {
     justify-items: start;
@@ -369,6 +423,7 @@ button:focus-visible {
 @media (max-width: 480px) {
   .summary-grid { grid-template-columns: 1fr; }
   .panel { padding: 18px; }
+  .factor-info-grid { grid-template-columns: 1fr; }
   .leaderboard-row { gap: 9px; }
   .leaderboard-team { min-width: 90px; }
   .leaderboard-score { min-width: 60px; font-size: 13px; }

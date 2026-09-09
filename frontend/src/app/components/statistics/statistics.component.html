@@ -48,7 +48,6 @@
           <p class="eyebrow">CELKOVÉ POŘADÍ</p>
           <h2>Popularita týmů</h2>
         </div>
-        <span class="section-note">Rozhoduje kombinace všech faktorů</span>
       </div>
 
       <div class="leaderboard-list">
@@ -63,6 +62,36 @@
           <strong class="leaderboard-score">{{ formatScore(team.performance.popularity) }}</strong>
         </article>
       </div>
+    </section>
+
+    <section class="factor-info-grid" *ngIf="hasTeams" aria-label="Význam hodnoticích faktorů">
+      <article class="factor-info-card" *ngFor="let factor of factorInfo" [style.--factor-color]="factor.color">
+        <div class="factor-icon" [attr.aria-label]="factor.label" role="img">
+          <svg *ngIf="factor.key === 'ecology'" viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M39 8C25 9 14 13 10 22c-3 7 1 14 8 16 8 2 16-2 18-10 2-6 2-13 3-20Z" />
+            <path d="M9 39c6-10 13-16 24-23" />
+            <path d="M18 30c-1-5-4-8-8-10" />
+          </svg>
+          <svg *ngIf="factor.key === 'finances'" viewBox="0 0 48 48" aria-hidden="true">
+            <circle cx="24" cy="24" r="16" />
+            <path d="M29 16c-1-2-3-3-6-3-4 0-6 2-6 5 0 7 12 3 12 9 0 3-2 5-6 5-3 0-5-1-6-3" />
+            <path d="M24 10v28" />
+          </svg>
+          <svg *ngIf="factor.key === 'stability'" viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M27 5 12 27h11l-2 16 15-23H25l2-15Z" />
+          </svg>
+          <svg *ngIf="factor.key === 'development'" viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M8 42V22l10-7 10 7v20" />
+            <path d="M28 42V11l10-5 2 36" />
+            <path d="M13 27h3m-3 7h3m7-7h3m-3 7h3m8-18h3m-3 7h3m-3 7h3" />
+          </svg>
+          <svg *ngIf="factor.key === 'popularity'" viewBox="0 0 48 48" aria-hidden="true">
+            <path d="m24 6 5 11 12 1-9 8 3 12-11-6-11 6 3-12-9-8 12-1 5-11Z" />
+          </svg>
+        </div>
+        <h2>{{ factor.label }}</h2>
+        <p>{{ factor.description }}</p>
+      </article>
     </section>
 
     <section class="panel chart-panel" *ngIf="hasTeams">

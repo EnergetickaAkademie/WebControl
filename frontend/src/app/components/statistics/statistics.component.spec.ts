@@ -86,6 +86,13 @@ describe('StatisticsComponent', () => {
     expect(component.getBoard(team)?.energy_balance).toBe(0);
   });
 
+  it('defines five explanatory factor cards in display order', () => {
+    expect(component.factorInfo.map(factor => factor.label)).toEqual([
+      'Ekologie', 'Finance', 'Stabilita', 'Rozvoj města', 'Popularita'
+    ]);
+    expect(component.factorInfo[4].description).toBe('Celkové hodnocení jako aritmetický průměr všech čtyř faktorů.');
+  });
+
   it('shows an explicit empty state when no teams are scored', () => {
     component.gameStatistics = {
       ...response.game_statistics,

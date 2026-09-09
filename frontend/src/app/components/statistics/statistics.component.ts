@@ -14,6 +14,13 @@ interface TeamEntry {
 
 type ScoreKey = 'ecology' | 'finances' | 'stability' | 'development';
 
+interface FactorInfo {
+  key: ScoreKey | 'popularity';
+  label: string;
+  description: string;
+  color: string;
+}
+
 @Component({
   selector: 'app-statistics',
   standalone: true,
@@ -34,6 +41,39 @@ export class StatisticsComponent implements OnInit, OnDestroy {
     { key: 'finances', label: 'Finance', color: '#d97706' },
     { key: 'stability', label: 'Stabilita', color: '#2563a6' },
     { key: 'development', label: 'Rozvoj města', color: '#7c3aed' }
+  ];
+
+  readonly factorInfo: FactorInfo[] = [
+    {
+      key: 'ecology',
+      label: 'Ekologie',
+      description: 'Jak šetrně jste pokrývali spotřebu elektřinou z nízkoemisních zdrojů.',
+      color: '#159447'
+    },
+    {
+      key: 'finances',
+      label: 'Finance',
+      description: 'Jak levně jste pokrývali spotřebu podle pořadí zdrojů v merit order.',
+      color: '#d97706'
+    },
+    {
+      key: 'stability',
+      label: 'Stabilita',
+      description: 'Jak stabilně jste udrželi rovnováhu mezi výrobou a spotřebou.',
+      color: '#2563a6'
+    },
+    {
+      key: 'development',
+      label: 'Rozvoj města',
+      description: 'Jak moc jste rozvinuli své město novou výstavbou.',
+      color: '#7c3aed'
+    },
+    {
+      key: 'popularity',
+      label: 'Popularita',
+      description: 'Celkové hodnocení jako aritmetický průměr všech čtyř faktorů.',
+      color: '#2563eb'
+    }
   ];
 
   constructor(
