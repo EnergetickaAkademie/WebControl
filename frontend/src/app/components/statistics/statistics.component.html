@@ -56,7 +56,6 @@
           <span class="rank-badge" [class.rank-winner]="getRank(team) === 1">{{ getRank(team) }}</span>
           <div class="leaderboard-team">
             <strong>{{ team.performance.team_name }}</strong>
-            <span>Deska {{ team.performance.team_number }}</span>
           </div>
           <div class="leaderboard-track" aria-hidden="true">
             <span [style.width.%]="team.performance.popularity"></span>
@@ -70,12 +69,28 @@
       <div class="section-heading">
         <div>
           <p class="eyebrow">POROVNÁNÍ FAKTORŮ</p>
-          <h2>Výsledky podle oblastí</h2>
+          <h2>Výsledky podle faktorů</h2>
         </div>
         <span class="section-note">0 až 100 %</span>
       </div>
-      <div class="chart-container">
-        <canvas id="teamComparisonChart" aria-label="Porovnání výsledků týmů podle faktorů"></canvas>
+      <div class="comparison-chart" aria-label="Porovnání výsledků týmů podle faktorů">
+        <article class="comparison-team" *ngFor="let team of sortedTeams">
+          <div class="comparison-team-name">
+            <strong>{{ team.performance.team_name }}</strong>
+          </div>
+          <div class="comparison-metrics">
+            <div class="comparison-metric" *ngFor="let metric of scoreMetrics">
+              <span class="comparison-label">
+                <i [style.backgroundColor]="metric.color" aria-hidden="true"></i>
+                {{ metric.label }}
+              </span>
+              <div class="comparison-track" aria-hidden="true">
+                <span [style.width.%]="getMetricValue(team, metric.key)" [style.backgroundColor]="metric.color"></span>
+              </div>
+              <strong>{{ formatScore(getMetricValue(team, metric.key)) }}</strong>
+            </div>
+          </div>
+        </article>
       </div>
     </section>
 
@@ -83,9 +98,8 @@
       <article class="team-card" *ngFor="let team of sortedTeams">
         <div class="team-card-header">
           <div>
-            <span class="team-rank">#{{ getRank(team) }}</span>
+            <span class="team-rank">{{ getRank(team) }}. místo</span>
             <h2>{{ team.performance.team_name }}</h2>
-            <span class="team-id">Deska {{ team.performance.team_number }}</span>
           </div>
           <div class="popularity-score">
             <span>Popularita</span>

@@ -26,7 +26,7 @@
 
 .statistics-page {
   min-height: 100vh;
-  max-width: 1440px;
+  max-width: 1900px;
   margin: 0 auto;
   padding: 24px;
 }
@@ -207,11 +207,11 @@ button:focus-visible {
 
 .leaderboard-team {
   display: grid;
-  min-width: 130px;
+  min-width: 0;
   gap: 2px;
 }
 
-.leaderboard-team strong { color: #243447; font-size: 17px; font-weight: 400; }
+.leaderboard-team strong { color: #243447; font-size: 20px; font-weight: 400; }
 .leaderboard-team span { color: #8494a6; font-size: 12px; }
 
 .leaderboard-track,
@@ -226,14 +226,52 @@ button:focus-visible {
 .leaderboard-track span { display: block; height: 100%; background: #2563eb; border-radius: inherit; }
 .leaderboard-score { min-width: 70px; color: #2563a6; text-align: right; }
 
-.chart-container {
-  position: relative;
-  height: 360px;
+.comparison-chart { display: grid; gap: 16px; }
+
+.comparison-team {
+  display: grid;
+  grid-template-columns: minmax(130px, 180px) 1fr;
+  gap: 20px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #edf0f4;
+  border-radius: 10px;
 }
+
+.comparison-team-name {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 3px;
+  padding: 0 20px;
+  border-right: 2px solid #cbd5e1;
+  text-align: center;
+}
+.comparison-team-name strong {
+  color: #243447;
+  font-family: 'DINPro-Black', Arial, sans-serif;
+  font-size: 26px;
+  font-weight: 900;
+}
+.comparison-team-name span { color: #8494a6; font-size: 12px; }
+.comparison-metrics { display: grid; gap: 10px; }
+
+.comparison-metric {
+  display: grid;
+  grid-template-columns: minmax(110px, 140px) 1fr 64px;
+  align-items: center;
+  gap: 12px;
+}
+
+.comparison-label { display: flex; align-items: center; gap: 7px; color: #52708d; font-size: 13px; }
+.comparison-label i { width: 9px; height: 9px; flex: 0 0 9px; border-radius: 50%; }
+.comparison-track { overflow: hidden; height: 8px; background: #e9eef4; border-radius: 999px; }
+.comparison-track span { display: block; height: 100%; border-radius: inherit; }
+.comparison-metric > strong { color: #34536e; font-size: 13px; text-align: right; }
 
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 16px;
   margin-top: 18px;
 }
@@ -250,7 +288,7 @@ button:focus-visible {
   letter-spacing: .08em;
 }
 
-.team-card h2 { margin: 2px 0 0; color: #243447; font-size: 24px; font-weight: 400; }
+.team-card h2 { margin: 2px 0 0; color: #243447; font-size: 28px; font-weight: 400; }
 .team-id { color: #8494a6; font-size: 12px; }
 
 .popularity-score { text-align: right; }
@@ -308,6 +346,10 @@ button:focus-visible {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+@media (max-width: 1200px) {
+  .team-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 @media (max-width: 800px) {
   .statistics-page { padding: 12px; }
   .page-header { align-items: flex-start; flex-direction: column; }
@@ -315,7 +357,13 @@ button:focus-visible {
   .summary-grid { grid-template-columns: repeat(2, 1fr); }
   .section-heading { align-items: flex-start; flex-direction: column; }
   .section-note { text-align: left; }
-  .chart-container { height: 300px; }
+  .comparison-team { grid-template-columns: 1fr; }
+  .comparison-team-name {
+    justify-items: start;
+    padding: 0;
+    border-right: 0;
+    text-align: left;
+  }
 }
 
 @media (max-width: 480px) {
@@ -328,4 +376,6 @@ button:focus-visible {
   .team-card-header { align-items: flex-start; flex-direction: column; }
   .popularity-score { text-align: left; }
   .energy-summary { align-items: flex-start; flex-direction: column; }
+  .comparison-metric { grid-template-columns: 1fr 54px; gap: 6px 10px; }
+  .comparison-label { grid-column: 1 / -1; }
 }

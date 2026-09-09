@@ -1,13 +1,10 @@
-import { Component, HostListener, isDevMode, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
-import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { AuthService } from '../../services/auth.service';
 import { BoardStatistics, GameStatistics, StatisticsResponse, TeamPerformance } from '../../models/game-statistics';
 import { STATISTICS_PREVIEW_RESPONSE } from './statistics-preview.data';
-
-Chart.register(...registerables);
 
 interface TeamEntry {
   boardId: string;
@@ -30,9 +27,7 @@ export class StatisticsComponent implements OnInit, OnDestroy {
   error: string | null = null;
   readonly previewMode: boolean;
 
-  private combinedChart: Chart | null = null;
   private statsSub: Subscription | null = null;
-  private chartInitTimeout: ReturnType<typeof setTimeout> | null = null;
 
   readonly scoreMetrics: Array<{ key: ScoreKey; label: string; color: string }> = [
     { key: 'ecology', label: 'Ekologie', color: '#159447' },
@@ -45,7 +40,8 @@ export class StatisticsComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router
   ) {
-    this.previewMode = isDevMode() && (this.router.url ?? '').split('?')[0] === '/statistics-preview';
+    const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    this.previewMode = path === '/statistics-preview';
   }
 
   ngOnInit(): void {
@@ -53,25 +49,15 @@ export class StatisticsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.destroyChart();
     if (this.statsSub) {
       this.statsSub.unsubscribe();
       this.statsSub = null;
-    }
-    if (this.chartInitTimeout) {
-      clearTimeout(this.chartInitTimeout);
-      this.chartInitTimeout = null;
     }
   }
 
   loadStatistics(): void {
     this.loading = true;
     this.error = null;
-    if (this.chartInitTimeout) {
-      clearTimeout(this.chartInitTimeout);
-      this.chartInitTimeout = null;
-    }
-    this.destroyChart();
 
     if (this.previewMode) {
       this.applyStatistics(STATISTICS_PREVIEW_RESPONSE);
@@ -97,10 +83,6 @@ export class StatisticsComponent implements OnInit, OnDestroy {
   private applyStatistics(response: StatisticsResponse): void {
     this.gameStatistics = response.game_statistics;
     this.loading = false;
-    this.chartInitTimeout = setTimeout(() => {
-      this.initializeChart();
-      this.chartInitTimeout = null;
-    }, 0);
   }
 
   get teamEntries(): TeamEntry[] {
@@ -166,7 +148,7 @@ export class StatisticsComponent implements OnInit, OnDestroy {
   }
 
   formatEnergy(value: number | undefined): string {
-    return `${(value ?? 0).toFixed(0)} MW`;
+    return `${(value ?? 0).toFixed(0)} MWh`;
   }
 
   getBalanceClass(value: number | undefined): string {
@@ -192,69 +174,4 @@ export class StatisticsComponent implements OnInit, OnDestroy {
     }
   }
 
-  private initializeChart(): void {
-    const canvas = document.getElementById('teamComparisonChart') as HTMLCanvasElement | null;
-    if (!canvas || !this.gameStatistics || !this.hasTeams) return;
-
-    this.destroyChart();
-    const teams = this.sortedTeams;
-    const configuration: ChartConfiguration<'bar'> = {
-      type: 'bar',
-      data: {
-        labels: teams.map(team => team.performance.team_name),
-        datasets: this.scoreMetrics.map(metric => ({
-          label: metric.label,
-          data: teams.map(team => this.getMetricValue(team, metric.key)),
-          backgroundColor: metric.color,
-          borderColor: metric.color,
-          borderWidth: 1,
-          borderRadius: 4,
-          maxBarThickness: 26
-        }))
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 100,
-            ticks: {
-              color: '#718096',
-              callback: value => `${value} %`
-            },
-            grid: { color: '#edf0f4' }
-          },
-          x: {
-            ticks: { color: '#52708d' },
-            grid: { display: false }
-          }
-        },
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              color: '#52708d',
-              usePointStyle: true,
-              padding: 18
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label: context => `${context.dataset.label}: ${Number(context.parsed.y).toFixed(1)} %`
-            }
-          }
-        }
-      }
-    };
-
-    this.combinedChart = new Chart(canvas, configuration);
-  }
-
-  private destroyChart(): void {
-    if (this.combinedChart) {
-      this.combinedChart.destroy();
-      this.combinedChart = null;
-    }
-  }
 }

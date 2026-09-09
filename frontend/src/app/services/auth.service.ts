@@ -92,6 +92,12 @@ export class AuthService {
   }
 
   private checkAuthStatus(): void {
+    // The statistics preview is a self-contained frontend page and must not
+    // wait for a CoreAPI session check.
+    if (window.location.pathname.replace(/\/+$/, '') === '/statistics-preview') {
+      return;
+    }
+
     // Only check if we have a token stored
     const token = localStorage.getItem('auth-token');
     if (token) {
