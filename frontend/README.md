@@ -12,6 +12,16 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+### Statistics preview
+
+To work on the statistics layout without running CoreAPI or connecting boards, open:
+
+```text
+http://localhost:4200/statistics-preview
+```
+
+This route uses representative mock data with five teams and six rounds.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
