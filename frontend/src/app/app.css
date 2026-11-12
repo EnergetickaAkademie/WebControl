@@ -2,7 +2,12 @@
 .app-container {
   width: 100%;
   min-height: 100vh;
-  background-color: #E8ECFF; /* Match dashboard background */
+  background-color: #e9ecef; /* grey, same as the login screen */
+}
+
+/* Game screens (dashboard, statistics) keep the purple background */
+.app-container.game-background {
+  background-color: #E8ECFF;
 }
 
 .content-wrapper {

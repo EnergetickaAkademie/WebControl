@@ -5,7 +5,7 @@
 services:
   # CoreAPI (Now uses Simple Auth)
   coreapi:
-    build: ./CoreAPI
+    image: ghcr.io/energetickaakademie/coreapi:latest
     container_name: webcontrol-coreapi-1
     environment:
       - JWT_SECRET=your-secret-key-change-in-production

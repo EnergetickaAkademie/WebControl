@@ -17,13 +17,18 @@
 }
 
 :host {
-  display: block;
+  /* Center the page vertically; taller content simply scrolls. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   min-height: 100vh;
   color: #243447;
   font-family: 'DINPro-Regular', Arial, sans-serif;
 }
 
 .firmware-page {
+  box-sizing: border-box;
+  width: 100%;
   max-width: 1440px;
   margin: 0 auto;
   padding: 24px;

@@ -1,12 +1,14 @@
 <div class="scenario-page-container">
   <!-- Header -->
   <div class="page-header">
-    <h1>Energetická akademie - Nastavení</h1>
+    <div class="page-title">
+      <h1>Energetická akademie</h1>
+      <span class="page-subtitle">Nastavení hry</span>
+    </div>
     <div class="header-controls">
       <span *ngIf="userInfo" class="user-info">
-        Vítejte, {{ userInfo.username }}! ({{ userInfo.user_type }})
+        Přihlášen: <strong>{{ userInfo.username }}</strong>
       </span>
-      <button class="logout-btn" (click)="router.navigate(['/firmware'])">Firmware</button>
       <button class="logout-btn" (click)="logout()">Odhlásit se</button>
     </div>
   </div>
@@ -21,16 +23,31 @@
   <!-- Main Content -->
   <div *ngIf="!isLoading && userInfo" class="page-content">
     
+    <div class="top-row">
     <!-- Scenario Selection -->
     <div class="scenario-controls-section">
       <h2>Výběr scénáře</h2>
       <div class="scenario-controls" *ngIf="scenarios.length > 0; else noScenarios">
         <select [value]="selectedScenario || ''" (change)="onScenarioChange($event)" class="scenario-select">
           <option value="" disabled>Vyberte scénář...</option>
-          <option *ngFor="let scenario of scenarios; trackBy: trackByScenario" [value]="scenario.id">
-            {{ scenario.name }}
-          </option>
+          <optgroup label="Výchozí scénáře">
+            <option *ngFor="let scenario of builtinScenarios(); trackBy: trackByScenario" [value]="scenario.id">
+              {{ scenario.name }}
+            </option>
+          </optgroup>
+          <optgroup label="Moje scénáře" *ngIf="customScenarios().length > 0">
+            <option *ngFor="let scenario of customScenarios(); trackBy: trackByScenario" [value]="scenario.id">
+              {{ scenario.name }}
+            </option>
+          </optgroup>
         </select>
+        <div class="scenario-manage">
+          <button class="btn btn-secondary" (click)="createScenario()" title="Vytvořit vlastní scénář">+ Nový scénář</button>
+          <button class="btn btn-secondary" (click)="editScenario()" [disabled]="!isCustomSelected()"
+                  title="Upravit vybraný vlastní scénář">Upravit</button>
+          <button class="btn btn-delete" (click)="deleteScenario()" [disabled]="!isCustomSelected() || isDeleting"
+                  title="Smazat vybraný vlastní scénář">Smazat</button>
+        </div>
         <button 
           class="btn btn-start" 
           (click)="onStartGame()" 
@@ -41,6 +58,14 @@
       <ng-template #noScenarios>
         <p style="margin:0; color:#555;">Žádné scénáře nejsou k dispozici nebo se nepodařilo načíst. Zkuste obnovit stránku.</p>
       </ng-template>
+    </div>
+
+    <!-- Firmware -->
+    <div class="firmware-section">
+      <h2>Firmware</h2>
+      <p class="section-description">Aktualizace firmwaru herních desek.</p>
+      <button class="btn btn-secondary" (click)="router.navigate(['/firmware'])">Spravovat firmware</button>
+    </div>
     </div>
 
     <!-- Keyboard Shortcuts Information -->

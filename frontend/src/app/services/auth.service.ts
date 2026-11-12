@@ -128,6 +128,38 @@ export class AuthService {
     return this.http.get(`${this.api}/scenarios`, { headers: this.getHeaders() });
   }
 
+  // Custom scenario editor
+  getScenarioDocument(scenarioId: string): Observable<any> {
+    return this.http.get(`${this.api}/scenarios/${encodeURIComponent(scenarioId)}/document`, { headers: this.getHeaders() });
+  }
+
+  getScenarioDefaults(): Observable<any> {
+    return this.http.get(`${this.api}/scenario_defaults`, { headers: this.getHeaders() });
+  }
+
+  createCustomScenario(document: any): Observable<any> {
+    return this.http.post(`${this.api}/custom_scenarios`, document, { headers: this.getHeaders() });
+  }
+
+  updateCustomScenario(scenarioId: string, document: any): Observable<any> {
+    return this.http.put(`${this.api}/custom_scenarios/${encodeURIComponent(scenarioId)}`, document, { headers: this.getHeaders() });
+  }
+
+  deleteCustomScenario(scenarioId: string): Observable<any> {
+    return this.http.delete(`${this.api}/custom_scenarios/${encodeURIComponent(scenarioId)}`, { headers: this.getHeaders() });
+  }
+
+  getPresentationFiles(): Observable<any> {
+    return this.http.get(`${this.api}/presentation_files`, { headers: this.getHeaders() });
+  }
+
+  uploadScenarioAsset(file: File): Observable<any> {
+    const form = new FormData();
+    form.append('file', file);
+    // No explicit Content-Type: the browser sets the multipart boundary.
+    return this.http.post(`${this.api}/scenario_assets`, form);
+  }
+
   startGameWithScenario(scenarioId: string): Observable<any> {
     return this.http.post(`${this.api}/start_game`, 
       { scenario_id: scenarioId }, 

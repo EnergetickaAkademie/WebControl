@@ -12,6 +12,9 @@ export const routes: Routes = [
   { path: 'dashboard', component: DashboardComponent, title: 'Energetická akademie - Dashboard', canActivate: [AuthGuard] },
   { path: 'statistics', component: StatisticsComponent, title: 'Energetická akademie - Statistiky', canActivate: [AuthGuard] },
   { path: 'statistics-preview', component: StatisticsComponent, title: 'Energetická akademie - Náhled statistik', data: { preview: true } },
+  // Lazy-loaded so Blockly is only downloaded when the editor is opened.
+  { path: 'scenario-editor', loadComponent: () => import('./components/scenario-editor/scenario-editor').then(m => m.ScenarioEditorComponent), title: 'Energetická akademie - Editor scénáře', canActivate: [AuthGuard] },
+  { path: 'scenario-editor/:id', loadComponent: () => import('./components/scenario-editor/scenario-editor').then(m => m.ScenarioEditorComponent), title: 'Energetická akademie - Editor scénáře', canActivate: [AuthGuard] },
   { path: 'firmware', component: FirmwareComponent, title: 'Energetická akademie - Aktualizace firmware', canActivate: [AuthGuard] },
   { path: '**', redirectTo: 'setup' }
 ];

@@ -1,0 +1,45 @@
+<div class="scenario-editor">
+  <div class="editor-header">
+    <h1>Editor scénáře</h1>
+    <div class="editor-toolbar">
+      <input class="name-input" type="text" [(ngModel)]="name" (ngModelChange)="onNameChange()"
+             placeholder="Název scénáře" maxlength="100">
+
+      <div class="template-import">
+        <select class="scenario-select" [(ngModel)]="selectedTemplate">
+          <option value="" disabled>Importovat šablonu...</option>
+          <optgroup label="Výchozí scénáře">
+            <option *ngFor="let t of builtinTemplates()" [value]="t.id">{{ t.name }}</option>
+          </optgroup>
+          <optgroup label="Moje scénáře" *ngIf="customTemplates().length">
+            <option *ngFor="let t of customTemplates()" [value]="t.id">{{ t.name }}</option>
+          </optgroup>
+        </select>
+        <button class="btn btn-secondary" (click)="importTemplate()" [disabled]="!selectedTemplate">Načíst</button>
+      </div>
+
+      <span class="status" *ngIf="dirty">Neuloženo</span>
+      <button class="btn btn-start" (click)="save()" [disabled]="isSaving || isLoading">
+        {{ isSaving ? 'Ukládání...' : 'Uložit' }}
+      </button>
+      <button class="btn btn-back" (click)="back()">Zpět</button>
+    </div>
+  </div>
+
+  <div class="editor-messages" *ngIf="message || errors.length">
+    <div class="message" *ngIf="message && !errors.length">{{ message }}</div>
+    <div class="errors" *ngIf="errors.length">
+      <strong>Scénář nelze uložit:</strong>
+      <ul>
+        <li *ngFor="let error of errors" (click)="focusError(error)">{{ error.message }}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="editor-body">
+    <div class="loading-overlay" *ngIf="isLoading">Načítání editoru...</div>
+    <div #blocklyHost class="blockly-host"></div>
+  </div>
+
+  <app-image-picker></app-image-picker>
+</div>

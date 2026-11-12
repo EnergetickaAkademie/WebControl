@@ -31,6 +31,7 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
   userInfo: any = null;
   isLoading = true;
   isLoadingStatistics = false;
+  isDeleting = false;
 
   private pollSubscription?: Subscription;
   private pollInFlight = false;
@@ -108,17 +109,66 @@ export class ScenarioSelectionComponent implements OnInit, OnDestroy {
           : (Array.isArray(response?.scenarios) ? response.scenarios : []);
         this.scenarios = rawList.map((s: any, idx: number) => {
           if (typeof s === 'string') {
-            return { id: s, name: s };
+            return { id: s, name: s, builtin: true };
           }
             const id = s.id ?? s.name ?? `scenario_${idx}`;
             const name = s.name ?? s.id ?? `Scenario ${idx + 1}`;
-            return { id, name };
+            return { id, name, builtin: s.builtin !== false };
         });
+        if (this.selectedScenario && !this.scenarios.some(s => s.id === this.selectedScenario)) {
+          this.selectedScenario = '';
+        }
         console.log('Scenarios:', this.scenarios);
       },
       error: (error: any) => {
         console.error('Error loading scenarios:', error);
         this.scenarios = [];
+      }
+    });
+  }
+
+  builtinScenarios(): any[] {
+    return this.scenarios.filter(s => s.builtin);
+  }
+
+  customScenarios(): any[] {
+    return this.scenarios.filter(s => !s.builtin);
+  }
+
+  isCustomSelected(): boolean {
+    return this.customScenarios().some(s => s.id === this.selectedScenario);
+  }
+
+  createScenario() {
+    this.router.navigate(['/scenario-editor']);
+  }
+
+  editScenario() {
+    if (!this.isCustomSelected()) {
+      return;
+    }
+    this.router.navigate(['/scenario-editor', this.selectedScenario]);
+  }
+
+  deleteScenario() {
+    const scenario = this.customScenarios().find(s => s.id === this.selectedScenario);
+    if (!scenario || this.isDeleting) {
+      return;
+    }
+    if (!confirm(`Opravdu smazat scénář „${scenario.name}“? Tuto akci nelze vrátit.`)) {
+      return;
+    }
+    this.isDeleting = true;
+    this.authService.deleteCustomScenario(scenario.id).pipe(
+      finalize(() => this.isDeleting = false)
+    ).subscribe({
+      next: () => {
+        this.selectedScenario = '';
+        this.loadScenarios();
+      },
+      error: (error: any) => {
+        console.error('Error deleting scenario:', error);
+        alert('Scénář se nepodařilo smazat.');
       }
     });
   }

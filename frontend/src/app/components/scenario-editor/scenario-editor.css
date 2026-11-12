@@ -1,0 +1,169 @@
+@font-face {
+  font-family: 'DINPro-Regular';
+  src: url('/fonts/DINPro-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+.scenario-editor {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  box-sizing: border-box;
+  background: #e9ecef; /* same grey as the login screen */
+  font-family: 'DINPro-Regular', Arial, sans-serif;
+}
+
+.scenario-editor .editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  background: white;
+  padding: 16px 20px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.scenario-editor h1 {
+  color: #2c3e50;
+  margin: 0;
+  font-size: 24px;
+}
+
+.scenario-editor .editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.scenario-editor .template-import {
+  display: flex;
+  gap: 8px;
+}
+
+.scenario-editor .name-input,
+.scenario-editor .scenario-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.scenario-editor .name-input {
+  min-width: 240px;
+}
+
+.scenario-editor .scenario-select {
+  min-width: 200px;
+}
+
+.scenario-editor .status {
+  color: #d35400;
+  font-size: 13px;
+}
+
+.scenario-editor .btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  font-family: inherit;
+  transition: background-color 0.2s;
+}
+
+.scenario-editor .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.scenario-editor .btn-start { background: #27ae60; color: white; }
+.scenario-editor .btn-start:hover:not(:disabled) { background: #219a52; }
+.scenario-editor .btn-secondary { background: #495057; color: white; }
+.scenario-editor .btn-secondary:hover:not(:disabled) { background: #343a40; }
+.scenario-editor .btn-back { background: #e74c3c; color: white; }
+.scenario-editor .btn-back:hover { background: #c0392b; }
+
+.scenario-editor .editor-messages {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+.scenario-editor .message { color: #27ae60; }
+.scenario-editor .errors { color: #c0392b; }
+.scenario-editor .errors ul { margin: 6px 0 0; padding-left: 20px; max-height: 110px; overflow-y: auto; }
+.scenario-editor .errors li { cursor: pointer; }
+.scenario-editor .errors li:hover { text-decoration: underline; }
+
+.scenario-editor .editor-body {
+  position: relative;
+  flex: 1;
+  min-height: 400px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.scenario-editor .blockly-host {
+  position: absolute;
+  inset: 0;
+}
+
+.scenario-editor .loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.85);
+  color: #495057;
+}
+
+/* Blockly toolbox in the app's card style */
+.scenario-editor .blocklyToolbox {
+  border-right: 1px solid #e0e0e0;
+  padding-top: 8px;
+  font-family: 'DINPro-Regular', Arial, sans-serif;
+}
+
+.scenario-editor .blocklyToolboxCategory {
+  margin: 2px 8px;
+  padding: 6px 10px 6px 0;
+  border-radius: 4px;
+  height: auto;
+}
+
+.scenario-editor .blocklyToolboxCategory:hover {
+  background: #f1f3f5;
+}
+
+.scenario-editor .blocklyToolboxSelected {
+  background: #495057 !important;
+}
+
+.scenario-editor .blocklyToolboxSelected .blocklyToolboxCategoryLabel {
+  color: white;
+}
+
+.scenario-editor .blocklyToolboxCategoryLabel {
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+.scenario-editor .blocklyFlyoutBackground {
+  fill: #eef1f4;
+}

@@ -21,10 +21,13 @@
 }
 
 .scenario-page-container {
-  margin: 0;
-  padding: 0;
+  margin: 0 auto;
+  padding: 24px;
+  max-width: 1600px;
+  justify-content: center; /* header + panels centered together */
+  gap: 20px;
   font-family: 'DINPro-Regular', Arial, sans-serif;
-  background-color: transparent;
+  background-color: #e9ecef; /* same grey as the login screen */
   min-height: 100vh;
   box-sizing: border-box;
   display: flex;
@@ -35,17 +38,30 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 0;
-  border-bottom: 2px solid #e0e0e0;
-  margin: 0 20px 30px 20px;
+  margin: 0;
   background-color: white;
-  padding: 20px;
+  padding: 16px 20px;
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.page-title {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 
 .page-header h1 {
   color: #2c3e50;
   margin: 0;
+  font-size: 28px;
+}
+
+.page-subtitle {
+  color: #6c757d;
+  font-size: 18px;
 }
 
 .header-controls {
@@ -59,17 +75,23 @@
   font-size: 14px;
 }
 
+.user-info strong {
+  color: #2c3e50;
+}
+
 .logout-btn {
-  background: #e74c3c;
-  color: white;
-  border: none;
+  background: white;
+  color: #495057;
+  border: 1px solid #ced4da;
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 14px;
 }
 
 .logout-btn:hover {
-  background: #c0392b;
+  background: #f1f3f5;
+  border-color: #adb5bd;
 }
 
 .loading {
@@ -81,12 +103,45 @@
 .page-content {
   display: flex;
   flex-direction: column;
-  gap: 30px;
-  padding: 20px;
+  gap: 20px;
+}
+
+.top-row {
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.top-row .scenario-controls-section {
   flex: 1;
+  min-width: 0;
+}
+
+.firmware-section {
+  flex: 0 0 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.section-description {
+  margin: 0 0 12px 0;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+@media (max-width: 1100px) {
+  .top-row {
+    flex-direction: column;
+  }
+
+  .firmware-section {
+    flex-basis: auto;
+  }
 }
 
 .scenario-controls-section,
+.firmware-section,
 .keyboard-shortcuts-section,
 .boards-section,
 .game-status {
@@ -98,11 +153,12 @@
 }
 
 .scenario-controls-section h2,
+.firmware-section h2,
 .keyboard-shortcuts-section h2,
 .boards-section h2,
 .game-status h2 {
   color: #000;
-  margin-bottom: 15px;
+  margin: 0 0 15px 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -169,6 +225,12 @@
 }
 
 /* Buttons */
+.btn,
+.logout-btn,
+.scenario-select {
+  font-family: inherit;
+}
+
 .btn {
   padding: 10px 20px;
   border: none;
@@ -193,6 +255,33 @@
   background: #219a52;
 }
 
+.scenario-controls {
+  flex-wrap: wrap;
+}
+
+.scenario-manage {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-secondary {
+  background: #495057;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #343a40;
+}
+
+.btn-delete {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-delete:hover:not(:disabled) {
+  background: #c0392b;
+}
+
 /* Board Layout */
 .boards-container {
   display: flex;
@@ -214,6 +303,11 @@
   height: auto;
   flex: none;
   justify-content: center;
+}
+
+.boards-container.setup-horizontal .boards-left,
+.boards-container.setup-horizontal .boards-right {
+  padding-top: 0;
 }
 
 .boards-container.setup-horizontal .board-card {
@@ -357,8 +451,8 @@
 }
 
 @media (max-width: 768px) {
-  .page-content {
-    padding: 10px;
+  .scenario-page-container {
+    padding: 12px;
   }
   
   .boards-container {
